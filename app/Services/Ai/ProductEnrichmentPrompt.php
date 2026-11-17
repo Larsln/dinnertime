@@ -34,9 +34,9 @@ final readonly class ProductEnrichmentPrompt
             'State typical values for this product:',
             '- store_section: the supermarket section where it is found.',
             '- base_unit: "g" for products bought by weight, "ml" for liquids bought by volume, "piece" for products bought by count such as eggs or lemons.',
-            '- is_pantry_staple: true only for basics every household has in stock and never writes on a shopping list, such as salt, pepper, tap water or cooking oil.',
+            '- is_pantry_staple: true only for basics every household has in stock and never writes on a shopping list, such as salt, pepper, cooking oil or the water used for cooking.',
             '- shelf_life_opened_days: number of days the product stays good after it was opened or cut, stored correctly. Use null if it keeps for months.',
-            '- packages: up to four common retail package sizes with a short label in the household language and the amount in the base unit. For products sold by the piece include a package with the amount 1.',
+            '- packages: up to four common retail package sizes with the amount in the base unit and a one-word label in the household language that names the kind of package without its size, such as "Becher" or "Dose". For products sold by the piece include a package with the amount 1.',
         ];
 
         if ($units !== '') {

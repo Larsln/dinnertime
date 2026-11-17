@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +20,10 @@ class GeminiClient
     private const int ATTEMPTS = 3;
 
     private const int BACKOFF_SECONDS = 2;
+
+    private const int UPLOAD_TIMEOUT_SECONDS = 300;
+
+    private const int PROCESSING_POLLS = 90;
 
     public function __construct(
         private readonly ?string $apiKey,
@@ -75,6 +80,51 @@ class GeminiClient
         }
 
         throw $failure;
+    }
+
+    /**
+     * Upload a local file and wait until Gemini has finished processing it.
+     *
+     * @throws GeminiException
+     */
+    public function uploadFile(string $path, string $mimeType): GeminiFile
+    {
+        $session = $this->request()
+            ->withHeaders([
+                'X-Goog-Upload-Protocol' => 'resumable',
+                'X-Goog-Upload-Command' => 'start',
+                'X-Goog-Upload-Header-Content-Length' => (string) filesize($path),
+                'X-Goog-Upload-Header-Content-Type' => $mimeType,
+            ])
+            ->post('/upload/v1beta/files', ['file' => ['display_name' => basename($path)]])
+            ->throw();
+
+        $file = Http::withHeaders(['X-Goog-Upload-Offset' => '0', 'X-Goog-Upload-Command' => 'upload, finalize'])
+            ->withBody(Utils::streamFor(fopen($path, 'r')), $mimeType)
+            ->timeout(self::UPLOAD_TIMEOUT_SECONDS)
+            ->post($session->header('X-Goog-Upload-URL'))
+            ->throw()
+            ->json('file');
+
+        for ($poll = 0; $file['state'] === 'PROCESSING' && $poll < self::PROCESSING_POLLS; $poll++) {
+            Sleep::for(self::BACKOFF_SECONDS)->seconds();
+            $file = $this->request()->get("/v1beta/{$file['name']}")->throw()->json();
+        }
+
+        if ($file['state'] !== 'ACTIVE') {
+            throw GeminiException::fileNotProcessed($file['state']);
+        }
+
+        return new GeminiFile($file['name'], $file['uri'], $file['mimeType']);
+    }
+
+    /**
+     * Delete an uploaded file. Failures are ignored because Gemini removes
+     * files on its own after two days.
+     */
+    public function deleteFile(GeminiFile $file): void
+    {
+        $this->request()->delete("/v1beta/{$file->name}");
     }
 
     /**

@@ -46,13 +46,7 @@ class RecipeWriter
     private function save(Recipe $recipe, array $data): Recipe
     {
         DB::transaction(function () use ($recipe, $data) {
-            $recipe->fill(Arr::except($data, self::NESTED));
-
-            if (array_key_exists('tag_ids', $data)) {
-                $recipe->meal_tags_locked = true;
-            }
-
-            $recipe->save();
+            $recipe->fill(Arr::except($data, self::NESTED))->save();
 
             if (array_key_exists('ingredients', $data)) {
                 $recipe->ingredients()->delete();

@@ -33,6 +33,14 @@ class GeminiException extends RuntimeException
         return new self("Gemini is unavailable (HTTP {$status}).");
     }
 
+    /**
+     * An uploaded file failed processing or took too long.
+     */
+    public static function fileNotProcessed(string $state): self
+    {
+        return new self("Gemini did not finish processing the uploaded file (state {$state}).");
+    }
+
     public static function notConfigured(): self
     {
         return new self('No Gemini API key is configured.');

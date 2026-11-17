@@ -53,7 +53,7 @@ class RecipeController extends Controller
      */
     public function store(RecipeRequest $request, RecipeWriter $writer): RecipeResource
     {
-        return new RecipeResource($writer->create($request->validated())->load(self::DETAIL_RELATIONS));
+        return new RecipeResource($writer->create($this->recipeData($request))->load(self::DETAIL_RELATIONS));
     }
 
     /**
@@ -61,7 +61,21 @@ class RecipeController extends Controller
      */
     public function update(RecipeRequest $request, Recipe $recipe, RecipeWriter $writer): RecipeResource
     {
-        return new RecipeResource($writer->update($recipe, $request->validated())->load(self::DETAIL_RELATIONS));
+        return new RecipeResource($writer->update($recipe, $this->recipeData($request))->load(self::DETAIL_RELATIONS));
+    }
+
+    /**
+     * Validated recipe data. Tags assigned by a user are locked so the AI
+     * does not overwrite them later.
+     *
+     * @return array<string, mixed>
+     */
+    private function recipeData(RecipeRequest $request): array
+    {
+        return [
+            ...$request->validated(),
+            ...($request->has('tag_ids') ? ['meal_tags_locked' => true] : []),
+        ];
     }
 
     /**

@@ -26,6 +26,10 @@ return [
         'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-3.5-flash-lite'),
     ],
 
+    'ytdlp' => [
+        'cookies' => env('YTDLP_COOKIES_FILE'),
+    ],
+
     'oidc' => [
         'issuer' => env('OIDC_ISSUER'),
         'client_id' => env('OIDC_CLIENT_ID'),

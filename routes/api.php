@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\MealPlanController;
 use App\Http\Controllers\Api\V1\PantryController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
@@ -27,6 +28,9 @@ Route::prefix('v1')->group(function () {
 
         Route::post('recipes/{recipe}/cover', [RecipeController::class, 'cover']);
         Route::apiResource('recipes', RecipeController::class);
+
+        Route::post('imports/{import}/retry', [ImportController::class, 'retry']);
+        Route::apiResource('imports', ImportController::class)->only(['index', 'store', 'show']);
 
         Route::get('review', [ProductController::class, 'review']);
         Route::post('products/{product}/confirm', [ProductController::class, 'confirm']);

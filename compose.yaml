@@ -16,7 +16,7 @@ services:
 
     queue:
         <<: *app
-        command: php artisan queue:work --queue=default,imports --tries=1
+        command: sh -c "yt-dlp -U; php artisan queue:work --queue=default,imports"
         restart: unless-stopped
         healthcheck:
             disable: true

@@ -1,0 +1,179 @@
+# API
+
+REST API with JSON bodies under `/api/v1`. Dates are `YYYY-MM-DD`, timestamps
+ISO 8601 in UTC. Amounts of a product are always given in its base unit
+(`g`, `ml` or `piece`).
+
+## Conventions
+
+- **Authentication:** `Authorization: Bearer <token>` on every endpoint except
+  `GET /server`, `POST /auth/login` and `POST /auth/oidc`. Missing or invalid
+  tokens are answered with `401`.
+- **Language:** built-in names (units, store sections, tags) and messages are
+  returned in the first supported language of the `Accept-Language` header.
+- **Envelope:** resources are wrapped in `{"data": ...}`. Paginated lists add
+  `links` and `meta` (`current_page`, `last_page`, `total`) and accept `?page=`.
+- **Errors:** validation failures are `422` with
+  `{"message": "...", "errors": {"field": ["..."]}}`. Other errors carry
+  `{"message": "..."}`.
+
+## Server and authentication
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| GET | `/server` | | `{name, content_locale, supported_locales, auth_methods, oidc}` |
+| POST | `/auth/login` | `username`, `password`, `device_name` | `{token, user}` |
+| POST | `/auth/oidc` | `id_token`, `device_name` | `{token, user}`; `404` without a provider |
+| POST | `/auth/logout` | | `204`, revokes the token in use |
+| GET | `/auth/user` | | User |
+
+`auth_methods` lists `password` and, if a provider is configured, `oidc`.
+`oidc` is `null` or `{issuer, client_id}`. Clients run the authorization code
+flow with PKCE against the issuer themselves and exchange the resulting ID
+token at `/auth/oidc`. `content_locale` is the language the household writes
+recipes in.
+
+**User:** `{id, username, name, email}`
+
+## Reference data
+
+| Method | Path | Answer |
+|---|---|---|
+| GET | `/units` | List of Unit |
+| GET | `/store-sections` | List of StoreSection, in walking order |
+| GET | `/tags` | List of Tag |
+
+- **Unit:** `{id, key, code, name, plural_name, kind, factor_to_base}`.
+  `kind` is `mass`, `volume` or `product_specific`. `key` is `null` for units
+  the household added.
+- **StoreSection:** `{id, key, name, position}`
+- **Tag:** `{id, type, key, name}`. `type` is `meal`, `category` or `tag`.
+  Meal keys are `breakfast`, `lunch`, `dinner`, `dessert`, `snack`.
+
+## Recipes
+
+| Method | Path | Body or query | Answer |
+|---|---|---|---|
+| GET | `/recipes` | `?search=`, `?tag=<tag id>` | Paginated RecipeSummary |
+| GET | `/recipes/{id}` | | Recipe |
+| POST | `/recipes` | RecipeInput | Recipe, `201` |
+| PATCH | `/recipes/{id}` | RecipeInput, all fields optional | Recipe |
+| POST | `/recipes/{id}/cover` | multipart `image` | Recipe |
+| DELETE | `/recipes/{id}` | | `204` |
+
+- **RecipeSummary:** `{id, title, slug, description, servings, yield_text,
+  prep_minutes, cook_minutes, cover_url, tags: [Tag]}`
+- **Recipe:** RecipeSummary plus `{source_url, source_platform,
+  meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [{id, name}]}`
+- **Ingredient:** `{id, position, section, quantity, unit: Unit|null,
+  product: Product|null, note, is_estimated, raw_text}`. A missing unit means
+  the quantity counts pieces. Lines without a product only carry `raw_text`.
+- **Step:** `{id, position, title, text}`
+- **RecipeInput:** `title`, `description`, `servings`, `yield_text`,
+  `prep_minutes`, `cook_minutes`, `source_url`, `tag_ids: [int]`,
+  `tools: [string]`, `ingredients: [{section, product_id, quantity, unit_id,
+  note, is_estimated, raw_text}]`, `steps: [{title, text}]`. Lists that are
+  present replace the stored ones as a whole. Sending `tag_ids` locks the tags
+  against later changes by the AI.
+
+## Imports
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| POST | `/imports` | `url` | Import; `202` when queued, `200` when the video was imported before |
+| GET | `/imports` | | The 30 most recent Imports |
+| GET | `/imports/{id}` | | Import |
+| POST | `/imports/{id}/retry` | | Import, `202`; `409` unless it failed |
+
+**Import:** `{id, url, status, error, error_message, created_at,
+recipe: RecipeSummary|null}`. `status` is `pending`, `processing`, `completed`
+or `failed`. Clients poll `GET /imports/{id}` until it is completed or failed.
+`error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
+
+## Products and review
+
+| Method | Path | Body or query | Answer |
+|---|---|---|---|
+| GET | `/products` | `?search=` (name or alias) | Paginated Product |
+| GET | `/products/{id}` | | Product with conversions and packages |
+| POST | `/products` | ProductInput | Product, `201` |
+| PATCH | `/products/{id}` | ProductInput, all fields optional | Product |
+| DELETE | `/products/{id}` | | `204`; `409` if a recipe uses it |
+| GET | `/review` | | Paginated Product awaiting confirmation |
+| POST | `/products/{id}/confirm` | | Product; confirms it with all conversions and packages |
+| POST | `/products/{id}/merge` | `into: <product id>` | The remaining Product |
+| PUT | `/products/{id}/conversions/{unit id}` | `amount_in_base` | Conversion |
+| DELETE | `/products/{id}/conversions/{unit id}` | | `204` |
+| POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
+| PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
+| DELETE | `/product-packages/{id}` | | `204` |
+| POST | `/products/{id}/aliases` | `name` | Product |
+| DELETE | `/product-aliases/{id}` | | `204` |
+
+- **Product:** `{id, name, plural_name, base_unit, is_pantry_staple,
+  shelf_life_opened_days, status, enriched_at, recipe_count,
+  store_section: StoreSection|null, aliases: [string],
+  conversions: [Conversion], packages: [Package]}`. `status` is `suggested`
+  or `confirmed`. `recipe_count`, `conversions` and `packages` are only
+  present on the detail and review endpoints.
+- **Conversion:** `{id, unit: Unit, amount_in_base, status, source}`: one
+  `unit` of the product equals `amount_in_base` of its base unit.
+- **Package:** `{id, label, amount_in_base, status, source}`
+- **ProductInput:** `name`, `plural_name`, `store_section_id`, `base_unit`,
+  `is_pantry_staple`, `shelf_life_opened_days`
+
+Values entered through the API count as confirmed. `source` is `ai`, `user`
+or `import`.
+
+## Meal plan
+
+| Method | Path | Body or query | Answer |
+|---|---|---|---|
+| GET | `/meal-plan` | `?from=&to=` | List of Entry |
+| POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` | Entry, `201` |
+| PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry |
+| DELETE | `/meal-plan/{id}` | | `204` |
+| POST | `/meal-plan/generate` | `from`, `to`, `meals: [meal]`, `servings` | The Entries that were added, `201` |
+
+**Entry:** `{id, date, meal, servings, cooked_at, recipe: RecipeSummary}`
+
+Generating fills every requested meal of the period that has no entry yet,
+choosing recipes so that opened packages are used up. Periods span at most
+31 days.
+
+## Pantry
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| GET | `/pantry` | | List of PantryItem, soonest expiry first |
+| POST | `/pantry` | `product_id`, `amount`, `opened_on`, `expires_on` | PantryItem, `201` |
+| PATCH | `/pantry/{id}` | any of the above | PantryItem |
+| DELETE | `/pantry/{id}` | | `204` |
+
+**PantryItem:** `{id, amount, opened_on, expires_on, product: Product}`.
+Without `expires_on` the expiry follows from the product's shelf life.
+
+## Shopping lists
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| POST | `/shopping-lists` | `from`, `to` | ShoppingList; `201` when created, `200` when refreshed |
+| GET | `/shopping-lists/current` | | ShoppingList of the latest period; `404` if none |
+| GET | `/shopping-lists/{id}` | | ShoppingList |
+| POST | `/shopping-lists/{id}/stock-leftovers` | | ShoppingList; `409` when done before |
+| POST | `/shopping-lists/{id}/items` | `label` | Item, `201` |
+| PATCH | `/shopping-list-items/{id}` | `checked: bool`, `label` | Item |
+| DELETE | `/shopping-list-items/{id}` | | `204` |
+
+- **ShoppingList:** `{id, starts_on, ends_on, leftovers_stocked_at,
+  items: [Item]}`. Items are ordered by store section.
+- **Item:** `{id, label, is_manual, needed_amount, purchase_amount,
+  packages: [{package_id, label, amount, count}], leftover_amount,
+  wasted_amount, uses: [{date, recipe_id, title, amount}], is_approximate,
+  checked_at, product: Product|null}`
+
+Generated items name a product and the packages to buy. `leftover_amount`
+remains usable after the period, `wasted_amount` expires before a recipe uses
+it. `is_approximate` marks amounts based on unconfirmed conversions. Items
+without a product are manual entries or ingredient lines without a product.
+Refreshing a list keeps manual items and the checked state of products.

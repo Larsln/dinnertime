@@ -1,0 +1,20 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the reference data every installation needs.
+     */
+    public function run(): void
+    {
+        $this->call([
+            StoreSectionSeeder::class,
+            UnitSeeder::class,
+            TagSeeder::class,
+        ]);
+    }
+}

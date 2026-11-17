@@ -1,0 +1,46 @@
+x-app: &app
+    build: .
+    volumes:
+        - .:/app
+    depends_on:
+        db:
+            condition: service_healthy
+
+services:
+    app:
+        <<: *app
+        environment:
+            SERVER_NAME: ":80"
+        ports:
+            - "8000:80"
+
+    queue:
+        <<: *app
+        command: php artisan queue:work --queue=default,imports --tries=1
+        restart: unless-stopped
+        healthcheck:
+            disable: true
+
+    scheduler:
+        <<: *app
+        command: php artisan schedule:work
+        restart: unless-stopped
+        healthcheck:
+            disable: true
+
+    db:
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_DB: mealplanner
+            POSTGRES_USER: mealplanner
+            POSTGRES_PASSWORD: mealplanner
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U mealplanner"]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
+volumes:
+    db-data:

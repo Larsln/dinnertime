@@ -15,9 +15,10 @@ use Illuminate\Support\Sleep;
 class VideoDownloader
 {
     /**
-     * 720p is enough for the AI and keeps uploads small.
+     * 720p is enough for the AI and keeps uploads small. Platforms that
+     * only offer separate video and audio streams get them merged.
      */
-    private const string FORMAT = 'best[ext=mp4][height<=720]/best[ext=mp4]/best';
+    private const string FORMAT = 'best[ext=mp4][height<=720]/bestvideo[height<=720]+bestaudio/best[height<=720]/best';
 
     private const int ATTEMPTS = 3;
 
@@ -49,7 +50,12 @@ class VideoDownloader
      */
     public function download(string $url, string $directory): string
     {
-        $this->run(['--format', self::FORMAT, '--output', "{$directory}/video.%(ext)s", $url]);
+        $this->run([
+            '--format', self::FORMAT,
+            '--merge-output-format', 'mp4',
+            '--output', "{$directory}/video.%(ext)s",
+            $url,
+        ]);
 
         return glob("{$directory}/video.*")[0]
             ?? throw new ImportFailedException(ImportError::DownloadFailed, 'yt-dlp wrote no file');

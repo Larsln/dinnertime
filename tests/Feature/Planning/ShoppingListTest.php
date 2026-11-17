@@ -112,7 +112,11 @@ class ShoppingListTest extends TestCase
         $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']]));
         $list = $this->createList()->json('data');
 
-        $this->postJson("/api/v1/shopping-lists/{$list['id']}/items", ['label' => 'Spülmittel'])->assertCreated();
+        $this->postJson("/api/v1/shopping-lists/{$list['id']}/items", ['label' => 'Spülmittel'])
+            ->assertCreated()
+            ->assertJsonPath('data.is_manual', true)
+            ->assertJsonPath('data.is_approximate', false)
+            ->assertJsonPath('data.leftover_amount', 0);
         $this->patchJson("/api/v1/shopping-list-items/{$list['items'][0]['id']}", ['checked' => true])
             ->assertOk()
             ->assertJsonPath('data.checked_at', fn (?string $checkedAt) => $checkedAt !== null);

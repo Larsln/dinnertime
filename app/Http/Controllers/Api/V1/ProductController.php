@@ -74,7 +74,7 @@ class ProductController extends Controller
 
         EnrichProduct::dispatch($product);
 
-        return new ProductResource($product->load(self::DETAIL_RELATIONS));
+        return new ProductResource($product->refresh()->load(self::DETAIL_RELATIONS));
     }
 
     /**

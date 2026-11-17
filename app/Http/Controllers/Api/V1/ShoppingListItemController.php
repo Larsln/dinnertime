@@ -22,7 +22,7 @@ class ShoppingListItemController extends Controller
             'is_manual' => true,
         ]);
 
-        return new ShoppingListItemResource($item);
+        return new ShoppingListItemResource($item->refresh());
     }
 
     /**

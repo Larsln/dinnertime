@@ -54,6 +54,7 @@ class ProductManagementTest extends TestCase
         $id = $this->postJson('/api/v1/products', ['name' => 'Hafermilch', 'base_unit' => 'ml'])
             ->assertCreated()
             ->assertJsonPath('data.status', 'confirmed')
+            ->assertJsonPath('data.is_pantry_staple', false)
             ->json('data.id');
 
         Queue::assertPushed(EnrichProduct::class);

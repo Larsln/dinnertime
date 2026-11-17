@@ -1,5 +1,7 @@
 x-app: &app
-    build: .
+    build:
+        context: .
+        target: dev
     volumes:
         - .:/app
     depends_on:

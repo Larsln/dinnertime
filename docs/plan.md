@@ -123,7 +123,6 @@ Gemini wird ausschließlich über einen `GeminiClient` angesprochen
 
 Regeln:
 
-- Die bewährten Prompts kommen aus `mealie-video-importer` (`video_recipe.py`).
 - `PROHIBITED_CONTENT` und leere Antworten werden abgefangen und bis zu
   dreimal wiederholt; danach steht im Import eine verständliche Meldung.
 - Zutaten → Produkt: erst exakter Treffer auf Name oder Alias, sonst legt der
@@ -189,4 +188,4 @@ Zugang über `MEALIE_URL` und `MEALIE_TOKEN` in `.env`.
 ## 8. Offene Punkte
 
 - **Name** für App und Repos (bis dahin Arbeitsname `mealplanner`).
-- **Lizenz** für Server und iOS-App.
+- **Lizenz:** Der Server steht unter AGPL-3.0, die iOS-App unter MIT.

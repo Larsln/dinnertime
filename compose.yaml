@@ -28,6 +28,15 @@ services:
         healthcheck:
             disable: true
 
+    vite:
+        image: node:24-alpine
+        working_dir: /app
+        volumes:
+            - .:/app
+        command: sh -c "npm install && npm run dev"
+        ports:
+            - "5173:5173"
+
     db:
         image: postgres:17-alpine
         environment:

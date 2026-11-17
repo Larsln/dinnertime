@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  *
  * Built-in units carry a key and are labelled by translation, units added
  * by the household carry their own code and names.
+ *
+ * @property UnitKind $kind
+ * @property ?float $factor_to_base
  */
 #[Fillable(['key', 'code', 'name', 'plural_name', 'kind', 'factor_to_base', 'mealie_unit_id'])]
 class Unit extends Model

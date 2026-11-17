@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Amount of a product, in its base unit, that one unit corresponds to.
+ *
+ * @property float $amount_in_base
+ * @property ReviewStatus $status
+ * @property ValueSource $source
  */
 #[Fillable(['product_id', 'unit_id', 'amount_in_base', 'status', 'source'])]
 class ProductConversion extends Model

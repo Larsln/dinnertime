@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Purchasable product that ingredient lines refer to.
+ *
+ * @property BaseUnit $base_unit
+ * @property ReviewStatus $status
+ * @property ?ReviewStatus $shelf_life_status
  */
 #[Fillable([
     'name',

@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Package size a product is typically sold in, measured in its base unit.
+ *
+ * @property float $amount_in_base
+ * @property ReviewStatus $status
+ * @property ValueSource $source
  */
 #[Fillable(['product_id', 'label', 'amount_in_base', 'status', 'source'])]
 class ProductPackage extends Model

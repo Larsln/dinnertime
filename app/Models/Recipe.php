@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Recipe with its ingredient lines, steps, tags and tools.
+ *
+ * @property ?SourcePlatform $source_platform
  */
 #[Fillable([
     'title',

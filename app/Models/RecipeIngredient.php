@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Single ingredient line of a recipe.
+ *
+ * @property ?float $quantity
  */
 #[Fillable([
     'recipe_id',

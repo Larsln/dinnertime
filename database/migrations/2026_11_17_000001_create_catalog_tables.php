@@ -41,8 +41,8 @@ return new class extends Migration
             $table->string('base_unit')->default(BaseUnit::Gram->value);
             $table->boolean('is_pantry_staple')->default(false);
             $table->unsignedSmallInteger('shelf_life_opened_days')->nullable();
-            $table->string('shelf_life_status')->nullable();
             $table->string('status')->default(ReviewStatus::Suggested->value);
+            $table->timestamp('enriched_at')->nullable();
             $table->uuid('mealie_food_id')->nullable()->unique();
             $table->timestamps();
         });

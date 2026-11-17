@@ -68,7 +68,7 @@ class MealieImportTest extends TestCase
 
         $product = Product::with('aliases', 'storeSection')->sole();
         $this->assertSame('Sojasoße', $product->name);
-        $this->assertSame(ReviewStatus::Confirmed, $product->status);
+        $this->assertSame(ReviewStatus::Suggested, $product->refresh()->status);
         $this->assertSame('chilled', $product->storeSection->key);
         $this->assertSame(['Sojasauce'], $product->aliases->pluck('name')->all());
         $this->assertSame(11, StoreSection::count());

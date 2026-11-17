@@ -3,7 +3,10 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\MealPlanController;
 use App\Http\Controllers\Api\V1\PantryController;
+use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductConversionController;
+use App\Http\Controllers\Api\V1\ProductPackageController;
 use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\ServerController;
 use App\Http\Controllers\Api\V1\ShoppingListController;
@@ -16,13 +19,28 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     Route::get('server', ServerController::class);
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('auth/oidc', [AuthController::class, 'oidc'])->middleware('throttle:10,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/user', [AuthController::class, 'user']);
 
-        Route::apiResource('recipes', RecipeController::class)->only(['index', 'show']);
-        Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+        Route::post('recipes/{recipe}/cover', [RecipeController::class, 'cover']);
+        Route::apiResource('recipes', RecipeController::class);
+
+        Route::get('review', [ProductController::class, 'review']);
+        Route::post('products/{product}/confirm', [ProductController::class, 'confirm']);
+        Route::post('products/{product}/merge', [ProductController::class, 'merge']);
+        Route::apiResource('products', ProductController::class);
+
+        Route::put('products/{product}/conversions/{unit}', [ProductConversionController::class, 'update']);
+        Route::delete('products/{product}/conversions/{unit}', [ProductConversionController::class, 'destroy']);
+        Route::post('products/{product}/packages', [ProductPackageController::class, 'store']);
+        Route::patch('product-packages/{package}', [ProductPackageController::class, 'update']);
+        Route::delete('product-packages/{package}', [ProductPackageController::class, 'destroy']);
+        Route::post('products/{product}/aliases', [ProductAliasController::class, 'store']);
+        Route::delete('product-aliases/{alias}', [ProductAliasController::class, 'destroy']);
+
         Route::get('store-sections', StoreSectionController::class);
         Route::get('tags', TagController::class);
         Route::get('units', UnitController::class);

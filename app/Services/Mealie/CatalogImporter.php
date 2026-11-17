@@ -2,7 +2,6 @@
 
 namespace App\Services\Mealie;
 
-use App\Enums\ReviewStatus;
 use App\Enums\UnitKind;
 use App\Models\Product;
 use App\Models\ProductAlias;
@@ -109,7 +108,8 @@ class CatalogImporter
     }
 
     /**
-     * Import foods as confirmed products together with their aliases.
+     * Import foods as products together with their aliases. They stay
+     * suggested because Mealie knows neither base unit nor shelf life.
      *
      * @param  array<string, int>  $sectionIds
      */
@@ -129,7 +129,6 @@ class CatalogImporter
                 'name' => $food['name'],
                 'plural_name' => $food['pluralName'],
                 'store_section_id' => $sectionIds[$food['labelId']] ?? null,
-                'status' => ReviewStatus::Confirmed,
                 'mealie_food_id' => $food['id'],
             ])->save();
 

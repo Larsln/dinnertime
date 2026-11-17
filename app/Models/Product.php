@@ -4,8 +4,11 @@ namespace App\Models;
 
 use App\Enums\BaseUnit;
 use App\Enums\ReviewStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,9 +17,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Purchasable product that ingredient lines refer to.
  *
+ * A product stays suggested until a household member has confirmed its
+ * details. Its conversions and packages are reviewed individually, so a
+ * confirmed product can receive new suggestions later.
+ *
  * @property BaseUnit $base_unit
  * @property ReviewStatus $status
- * @property ?ReviewStatus $shelf_life_status
+ * @property ?CarbonImmutable $enriched_at
  */
 #[Fillable([
     'name',
@@ -25,8 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'base_unit',
     'is_pantry_staple',
     'shelf_life_opened_days',
-    'shelf_life_status',
     'status',
+    'enriched_at',
     'mealie_food_id',
 ])]
 class Product extends Model
@@ -44,9 +51,33 @@ class Product extends Model
         return [
             'base_unit' => BaseUnit::class,
             'is_pantry_staple' => 'boolean',
-            'shelf_life_status' => ReviewStatus::class,
             'status' => ReviewStatus::class,
+            'enriched_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Products with details, conversions or packages awaiting confirmation.
+     *
+     * @param  Builder<Product>  $query
+     */
+    #[Scope]
+    protected function awaitingReview(Builder $query): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->where('status', ReviewStatus::Suggested)
+            ->orWhereRelation('conversions', 'status', ReviewStatus::Suggested)
+            ->orWhereRelation('packages', 'status', ReviewStatus::Suggested));
+    }
+
+    /**
+     * Ingredient lines that use the product.
+     *
+     * @return HasMany<RecipeIngredient, $this>
+     */
+    public function ingredients(): HasMany
+    {
+        return $this->hasMany(RecipeIngredient::class);
     }
 
     /**

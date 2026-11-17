@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\OidcVerifier;
 use Illuminate\Http\JsonResponse;
 
 class ServerController extends Controller
@@ -13,13 +14,14 @@ class ServerController extends Controller
      * The content locale is the language the household writes its recipes
      * in, independent of the language the interface is requested in.
      */
-    public function __invoke(): JsonResponse
+    public function __invoke(OidcVerifier $oidc): JsonResponse
     {
         return response()->json([
             'name' => config('app.name'),
             'content_locale' => config('app.content_locale'),
             'supported_locales' => config('app.supported_locales'),
-            'auth_methods' => ['password'],
+            'auth_methods' => $oidc->isConfigured() ? ['password', 'oidc'] : ['password'],
+            'oidc' => $oidc->isConfigured() ? config('services.oidc') : null,
         ]);
     }
 }

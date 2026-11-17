@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Ai\GeminiClient;
 use App\Services\Mealie\CatalogImporter;
 use App\Services\Mealie\RecipeImporter;
 use Illuminate\Console\Attributes\Description;
@@ -15,7 +16,7 @@ class ImportMealie extends Command
     /**
      * Execute the console command.
      */
-    public function handle(CatalogImporter $catalog, RecipeImporter $recipes): int
+    public function handle(CatalogImporter $catalog, RecipeImporter $recipes, GeminiClient $gemini): int
     {
         if (blank(config('services.mealie.token'))) {
             $this->components->error('MEALIE_TOKEN is not set.');
@@ -34,6 +35,10 @@ class ImportMealie extends Command
 
         if ($recipes->unknownTags() !== []) {
             $this->components->warn('Ignored tags outside the fixed lists: '.implode(', ', $recipes->unknownTags()));
+        }
+
+        if ($gemini->isConfigured()) {
+            $this->call(EnrichProducts::class);
         }
 
         return self::SUCCESS;

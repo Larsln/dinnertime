@@ -24,6 +24,11 @@ class Unit extends Model
     use HasFactory;
 
     /**
+     * Key of the built-in unit that counts whole items.
+     */
+    public const string PIECE_KEY = 'piece';
+
+    /**
      * Abbreviation in the current locale.
      */
     public function displayCode(): string

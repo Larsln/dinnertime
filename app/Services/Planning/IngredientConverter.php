@@ -4,7 +4,6 @@ namespace App\Services\Planning;
 
 use App\Enums\BaseUnit;
 use App\Enums\ReviewStatus;
-use App\Enums\UnitKind;
 use App\Models\Product;
 use App\Models\ProductConversion;
 use App\Models\RecipeIngredient;
@@ -18,8 +17,6 @@ use App\Models\Unit;
  */
 class IngredientConverter
 {
-    private const string PIECE_KEY = 'piece';
-
     /**
      * Amount in the product's base unit, or null when it cannot be derived.
      */
@@ -33,7 +30,7 @@ class IngredientConverter
             return null;
         }
 
-        if ($this->measuresBaseUnit($product->base_unit, $unit)) {
+        if ($product->base_unit->isMeasuredBy($unit)) {
             return new ConvertedAmount($quantity * ($unit->factor_to_base ?? 1), false);
         }
 
@@ -54,19 +51,6 @@ class IngredientConverter
     }
 
     /**
-     * Whether the unit measures the same dimension as the base unit, so the
-     * quantity converts by the unit's fixed factor alone.
-     */
-    private function measuresBaseUnit(BaseUnit $baseUnit, ?Unit $unit): bool
-    {
-        return match ($baseUnit) {
-            BaseUnit::Gram => $unit?->kind === UnitKind::Mass,
-            BaseUnit::Milliliter => $unit?->kind === UnitKind::Volume,
-            BaseUnit::Piece => $unit === null || $unit->key === self::PIECE_KEY,
-        };
-    }
-
-    /**
      * Find the product's conversion for the unit. A missing unit counts as
      * pieces, and mass or volume units fall back to the conversion stored
      * for another unit of the same dimension.
@@ -77,7 +61,7 @@ class IngredientConverter
 
         if ($unit === null) {
             return $conversions->first(
-                fn (ProductConversion $conversion) => $conversion->unit->key === self::PIECE_KEY,
+                fn (ProductConversion $conversion) => $conversion->unit->key === Unit::PIECE_KEY,
             );
         }
 

@@ -65,9 +65,23 @@ class ProductEnricher
             ]);
         }
 
+        if ($product->isDirty('base_unit')) {
+            $this->dropSuggestionsInOldBaseUnit($product);
+        }
+
         $product->icon ??= ProductIcons::has($suggestion['icon'] ?? null) ? $suggestion['icon'] : ProductIcons::named($product->name);
         $product->enriched_at = now()->toImmutable();
         $product->save();
+    }
+
+    /**
+     * Package sizes and conversions are amounts in the base unit, so
+     * unconfirmed ones lose their meaning when the base unit changes.
+     */
+    private function dropSuggestionsInOldBaseUnit(Product $product): void
+    {
+        $product->packages()->where('status', ReviewStatus::Suggested)->delete();
+        $product->conversions()->where('status', ReviewStatus::Suggested)->delete();
     }
 
     /**

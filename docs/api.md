@@ -148,7 +148,7 @@ its changes later. Three things make that safe.
 |---|---|---|---|
 | GET | `/sync` | `since` (default `0`), `limit` (1–500, default 200) | Changes |
 
-**Changes:** `{version, has_more, changed, deleted, household}`
+**Changes:** `{version, has_more, changed, deleted, household, peer_key}`
 
 - Every change to a record gives it the next number of one counter.
   `version` is the number up to which this answer is complete; the client
@@ -168,6 +168,10 @@ its changes later. Three things make that safe.
   Clients show their own copy of the embedded record where they have one,
   and count recipes per product or tool themselves.
 - `household` is the current HouseholdSettings.
+- `peer_key` is a secret all signed-in devices of the household share.
+  Devices that meet without a connection to the server prove with it that
+  they belong to the same household before they exchange changes directly.
+  It is never shown and never sent to anything but such a device.
 - The address of a cover image never shows another image, so a downloaded
   image can be kept for good. `cover_thumb_url` is a version 480 pixels wide
   for lists, `null` when the server could not create one.

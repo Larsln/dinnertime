@@ -30,6 +30,7 @@ class SyncController extends Controller
             'changed' => $changes->changed,
             'deleted' => (object) $changes->deleted,
             'household' => ['default_servings' => $settings->defaultServings()],
+            'peer_key' => $settings->peerKey(),
         ]]);
     }
 }

@@ -32,6 +32,7 @@ class SyncTest extends TestCase
             ->assertJsonPath('data.changed.recipes.0.title', 'Lasagne')
             ->assertJsonPath('data.changed.tools.0.name', 'Backofen')
             ->assertJsonPath('data.household.default_servings', 2)
+            ->assertJsonPath('data.peer_key', fn (string $key) => strlen($key) === 48)
             ->json('data.version');
 
         $this->getJson("/api/v1/sync?since={$first}")

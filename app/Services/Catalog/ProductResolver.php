@@ -16,13 +16,20 @@ class ProductResolver
 {
     public function resolve(string $name): Product
     {
+        return $this->find($name) ?? Product::create(['name' => trim($name), 'status' => ReviewStatus::Suggested]);
+    }
+
+    /**
+     * The product known under the name, if any.
+     */
+    public function find(string $name): ?Product
+    {
         $needle = mb_strtolower(trim($name));
 
         return Product::query()
             ->whereRaw('lower(name) = ?', [$needle])
             ->orWhereRaw('lower(plural_name) = ?', [$needle])
             ->orWhereHas('aliases', fn ($query) => $query->whereRaw('lower(name) = ?', [$needle]))
-            ->first()
-            ?? Product::create(['name' => trim($name), 'status' => ReviewStatus::Suggested]);
+            ->first();
     }
 }

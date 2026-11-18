@@ -328,7 +328,7 @@ Without `expires_on` the expiry follows from the product's shelf life.
 | GET | `/shopping-lists/current` | | ShoppingList of the latest period; `404` if none |
 | GET | `/shopping-lists/{id}` | | ShoppingList |
 | POST | `/shopping-lists/{id}/stock-leftovers` | | ShoppingList; `409` when done before |
-| POST | `/shopping-lists/{id}/items` | `label` | Item, `201` |
+| POST | `/shopping-lists/{id}/items` | `label` or `product_id` | Manual Item, `201`. A label that names a product is linked to it. A product added by hand before is answered with its Item, unchecked, `200` |
 | PATCH | `/shopping-list-items/{id}` | `checked: bool`, `label` | Item |
 | DELETE | `/shopping-list-items/{id}` | | `204` |
 

@@ -34,8 +34,8 @@ export const shoppingApi = {
     sync: (period: Period) => data(api.post<{ data: ShoppingList }>('/shopping-lists', period)),
     stockLeftovers: (id: number) =>
         data(api.post<{ data: ShoppingList }>(`/shopping-lists/${id}/stock-leftovers`)),
-    addItem: (listId: number, label: string) =>
-        data(api.post<{ data: ShoppingListItem }>(`/shopping-lists/${listId}/items`, { label })),
+    addItem: (listId: number, entry: { label: string } | { product_id: number }) =>
+        data(api.post<{ data: ShoppingListItem }>(`/shopping-lists/${listId}/items`, entry)),
     setChecked: (itemId: number, checked: boolean) =>
         data(api.patch<{ data: ShoppingListItem }>(`/shopping-list-items/${itemId}`, { checked })),
     removeItem: (itemId: number) => api.delete(`/shopping-list-items/${itemId}`),

@@ -9,12 +9,12 @@ import type { ShoppingListItem } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { addDays, startOfWeek, toIsoDate } from '@/lib/dates';
 import { formatDay } from '@/lib/format';
+import ShoppingAddField from '@/components/ShoppingAddField.vue';
 import ShoppingTile from '@/components/ShoppingTile.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
-import TextField from '@/components/ui/TextField.vue';
 
 /**
  * The current shopping list as tiles grouped by store section. What is
@@ -39,7 +39,6 @@ const list = useQuery({
         }),
 });
 
-const manualLabel = ref('');
 const isStocking = ref(false);
 
 const sections = computed(() => {
@@ -84,11 +83,9 @@ const sync = useMutation({
 });
 
 const addManual = useMutation({
-    mutationFn: () => shoppingApi.addItem(list.data.value?.id ?? 0, manualLabel.value.trim()),
-    onSuccess: () => {
-        manualLabel.value = '';
-        refresh();
-    },
+    mutationFn: (entry: { label: string } | { product_id: number }) =>
+        shoppingApi.addItem(list.data.value?.id ?? 0, entry),
+    onSuccess: refresh,
     onError: showError,
 });
 
@@ -117,10 +114,11 @@ const stock = useMutation({
             </AppButton>
         </PageHeader>
 
-        <form class="mb-6 flex items-end gap-2" @submit.prevent="addManual.mutate()">
-            <TextField v-model="manualLabel" class="flex-1" :label="t('shopping.addManual')" required />
-            <AppButton type="submit" :disabled="addManual.isPending.value">{{ t('common.add') }}</AppButton>
-        </form>
+        <ShoppingAddField
+            class="mb-6"
+            @product="(product) => addManual.mutate({ product_id: product.id })"
+            @text="(label) => addManual.mutate({ label })"
+        />
 
         <section v-for="section in sections" :key="section.title" class="mb-6">
             <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">

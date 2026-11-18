@@ -159,7 +159,9 @@ const messages: typeof de = {
         stockDescription:
             'Moves the expected leftovers of this week into the pantry, replacing the stock of the affected products.',
         stocked: 'Leftovers moved to the pantry',
-        addManual: 'Custom item',
+        add: 'Add',
+        addPlaceholder: 'Search a product or type anything',
+        addText: 'Add “{name}”',
         empty: 'No shopping list yet',
         emptyHint: 'The list is built from the meal plan.',
         createForThisWeek: 'Create for this week',
@@ -187,6 +189,9 @@ const messages: typeof de = {
         create: 'Create “{name}”',
         reviewTab: 'To review ({count})',
         allTab: 'All products',
+        add: 'New product',
+        reviewHint:
+            'These values were estimated by the AI. Confirm or correct them so the shopping list and conversions are right.',
         reviewEmpty: 'Everything reviewed',
         reviewEmptyHint: 'New suggestions appear here as recipes are imported.',
         suggested: 'Suggestion',

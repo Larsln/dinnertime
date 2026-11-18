@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validates a manual shopping list position or a change to any position.
@@ -17,7 +18,8 @@ class ShoppingListItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'label' => [$this->isMethod('POST') ? 'required' : 'sometimes', 'string', 'max:255'],
+            'label' => [$this->isMethod('POST') ? 'required_without:product_id' : 'sometimes', 'string', 'max:255'],
+            'product_id' => ['sometimes', 'integer', Rule::exists('products', 'id')],
             'checked' => ['sometimes', 'boolean'],
         ];
     }

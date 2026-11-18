@@ -159,6 +159,33 @@ class ShoppingListTest extends TestCase
         $this->getJson('/api/v1/shopping-lists/current')->assertJsonPath('data.id', $list['id']);
     }
 
+    public function test_a_manual_position_is_linked_to_its_product(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $milk = $this->product('Milch', [1000]);
+        $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']]));
+        $list = $this->createList()->json('data');
+        $items = "/api/v1/shopping-lists/{$list['id']}/items";
+
+        $id = $this->postJson($items, ['product_id' => $milk->id])
+            ->assertCreated()
+            ->assertJsonPath('data.is_manual', true)
+            ->assertJsonPath('data.label', null)
+            ->assertJsonPath('data.product.id', $milk->id)
+            ->json('data.id');
+        $this->patchJson("/api/v1/shopping-list-items/{$id}", ['checked' => true])->assertOk();
+
+        $this->postJson($items, ['label' => 'milch'])
+            ->assertOk()
+            ->assertJsonPath('data.id', $id)
+            ->assertJsonPath('data.checked_at', null);
+        $this->postJson($items, ['label' => 'Geschenkpapier'])->assertCreated()->assertJsonPath('data.product', null);
+        $this->postJson($items, [])->assertUnprocessable();
+        $this->postJson($items, ['product_id' => 0])->assertUnprocessable();
+
+        $this->assertCount(3, $this->createList()->json('data.items'));
+    }
+
     public function test_it_moves_leftovers_to_the_pantry_once(): void
     {
         $cream = $this->product('Sahne', [200], ['shelf_life_opened_days' => 4]);

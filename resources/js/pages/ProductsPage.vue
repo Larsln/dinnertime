@@ -51,6 +51,15 @@ const addTool = useMutation({
     onError: showError,
 });
 
+const addProduct = useMutation({
+    mutationFn: () => productsApi.create({ name: search.value.trim() }),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        queryClient.invalidateQueries({ queryKey: ['review'] });
+    },
+    onError: showError,
+});
+
 const products = useQuery({
     queryKey: ['products', debouncedSearch],
     queryFn: () => productsApi.list({ search: debouncedSearch.value }),
@@ -71,6 +80,9 @@ const products = useQuery({
         </TabsList>
 
         <TabsContent value="review" class="space-y-4">
+            <p v-if="review.data.value?.data.length" class="text-sm text-stone-500">
+                {{ t('products.reviewHint') }}
+            </p>
             <ProductCard v-for="product in review.data.value?.data" :key="product.id" :product="product" />
             <EmptyState
                 v-if="review.data.value?.data.length === 0"
@@ -80,12 +92,17 @@ const products = useQuery({
         </TabsContent>
 
         <TabsContent value="all">
-            <TextField
-                v-model="search"
-                class="mb-4"
-                type="search"
-                :placeholder="t('products.searchPlaceholder')"
-            />
+            <form class="mb-4 flex gap-2" @submit.prevent="addProduct.mutate()">
+                <TextField
+                    v-model="search"
+                    class="flex-1"
+                    type="search"
+                    :placeholder="t('products.searchPlaceholder')"
+                />
+                <AppButton type="submit" :disabled="search.trim() === '' || addProduct.isPending.value">
+                    <Plus class="size-4" />{{ t('products.add') }}
+                </AppButton>
+            </form>
             <ul class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
                 <ProductRow
                     v-for="product in products.data.value?.data"

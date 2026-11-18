@@ -166,7 +166,9 @@ export default {
         stockDescription:
             'Übernimmt die erwarteten Reste dieser Woche in den Vorrat und ersetzt dort die Bestände der betroffenen Produkte.',
         stocked: 'Reste in den Vorrat übernommen',
-        addManual: 'Eigener Eintrag',
+        add: 'Hinzufügen',
+        addPlaceholder: 'Produkt suchen oder etwas eintragen',
+        addText: '„{name}“ hinzufügen',
         empty: 'Noch keine Einkaufsliste',
         emptyHint: 'Die Liste entsteht aus dem Wochenplan.',
         createForThisWeek: 'Für diese Woche erstellen',
@@ -194,6 +196,9 @@ export default {
         create: '„{name}“ neu anlegen',
         reviewTab: 'Zu prüfen ({count})',
         allTab: 'Alle Produkte',
+        add: 'Produkt anlegen',
+        reviewHint:
+            'Diese Werte hat die KI geschätzt. Bestätige oder korrigiere sie, damit Einkaufsliste und Umrechnungen stimmen.',
         reviewEmpty: 'Alles geprüft',
         reviewEmptyHint: 'Neue Vorschläge erscheinen hier, sobald Rezepte importiert werden.',
         suggested: 'Vorschlag',

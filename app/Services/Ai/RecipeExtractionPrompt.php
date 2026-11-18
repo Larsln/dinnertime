@@ -61,6 +61,7 @@ final readonly class RecipeExtractionPrompt
         Steps:
         - Write well-formed steps in the imperative like a cookbook, including amounts, times, temperatures and signs of doneness.
         - Do not quote the original wording and do not split into tiny steps.
+        - Put the number of every amount of food or liquid mentioned in a step, water included, in curly braces as a plain number, so it can be scaled with the servings: "{250} g Mehl", "{2} Eier", "{0.5} TL Salz", "{2}-{3} EL Öl". Never put times, temperatures, sizes or appliance levels in curly braces.
         - Group the steps of separate components such as base, filling and decoration by giving all steps of a component the same section name. Leave section null when the dish has no separate components.
 
         Tools:

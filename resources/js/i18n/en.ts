@@ -84,6 +84,7 @@ const messages: typeof de = {
         addGroup: 'Add group',
         removeGroup: 'Remove group',
         groupsHint: 'Steps can be gathered in groups such as base, filling and decoration.',
+        amountsHint: "Amounts in curly braces, e.g. {'{'}200{'}'} g, adapt to the servings.",
         stepText: 'Step',
         addStep: 'Add step',
         deleteTitle: 'Delete recipe',

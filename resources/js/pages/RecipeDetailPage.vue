@@ -10,6 +10,7 @@ import type { Ingredient, Step } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { toIsoDate } from '@/lib/dates';
 import { formatNumber, formatQuantity } from '@/lib/format';
+import { scaledStepSegments } from '@/lib/stepText';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import RatingControl from '@/components/RatingControl.vue';
@@ -285,7 +286,18 @@ const remove = useMutation({
                             >
                                 {{ step.position }}
                             </span>
-                            <p class="text-stone-800">{{ step.text }}</p>
+                            <p class="text-stone-800">
+                                <span
+                                    v-for="(segment, segmentIndex) in scaledStepSegments(
+                                        step.text,
+                                        scale,
+                                        locale,
+                                    )"
+                                    :key="segmentIndex"
+                                    :class="{ 'font-semibold': segment.isAmount }"
+                                    >{{ segment.text }}</span
+                                >
+                            </p>
                         </li>
                     </ol>
                 </div>

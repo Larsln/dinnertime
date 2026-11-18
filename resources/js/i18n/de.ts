@@ -82,6 +82,7 @@ export default {
         addGroup: 'Gruppe hinzufügen',
         removeGroup: 'Gruppe entfernen',
         groupsHint: 'Schritte lassen sich in Gruppen zusammenfassen, etwa Boden, Füllung und Dekoration.',
+        amountsHint: "Mengen in geschweiften Klammern, z. B. {'{'}200{'}'} g, passen sich den Portionen an.",
         stepText: 'Arbeitsschritt',
         addStep: 'Schritt hinzufügen',
         deleteTitle: 'Rezept löschen',

@@ -272,7 +272,9 @@ const save = useMutation({
 
         <section class="rounded-2xl border border-stone-200 bg-white p-4">
             <h2 class="mb-1 text-lg font-semibold">{{ t('recipes.steps') }}</h2>
-            <p class="mb-3 text-sm text-stone-500">{{ t('recipes.groupsHint') }}</p>
+            <p class="mb-3 text-sm text-stone-500">
+                {{ t('recipes.groupsHint') }} {{ t('recipes.amountsHint') }}
+            </p>
             <RecipeStepsEditor v-model="stepGroups" />
         </section>
     </form>

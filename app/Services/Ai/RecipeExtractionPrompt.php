@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Enums\Course;
 use App\Enums\TagType;
 use App\Models\Tag;
 use App\Models\Unit;
@@ -56,8 +57,9 @@ final readonly class RecipeExtractionPrompt
         - List kitchen tools in singular. Always include the cooking appliance such as oven, pan, pot, deep fryer, airfryer, grill, microwave or kitchen torch, and for oven dishes the dish or tray.
 
         Classification:
+        - course: the one main category of the dish, such as starter, main or dessert.
         - meals: one to three meals the dish suits.
-        - categories and tags: only values that clearly apply. "quick" means less than 30 minutes in total.
+        - tags: only values that clearly apply. "quick" means less than 30 minutes in total.
 
         Cover image:
         - cover_seconds: two to four moments of the video, in seconds, that show the finished dish as appetisingly as possible. Leave empty if there is no video.
@@ -95,7 +97,7 @@ final readonly class RecipeExtractionPrompt
             'steps' => $this->listOf(['title' => $optionalString, 'text' => $string]),
             'tools' => ['type' => 'ARRAY', 'items' => $string],
             'meals' => $this->keysOf(TagType::Meal),
-            'categories' => $this->keysOf(TagType::Category),
+            'course' => ['type' => 'STRING', 'enum' => array_column(Course::cases(), 'value')],
             'tags' => $this->keysOf(TagType::Tag),
             'cover_seconds' => ['type' => 'ARRAY', 'items' => ['type' => 'NUMBER']],
         ];

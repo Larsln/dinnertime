@@ -2,6 +2,7 @@
 
 namespace App\Services\Import;
 
+use App\Enums\Course;
 use App\Enums\TagType;
 use App\Models\Recipe;
 use App\Models\Tag;
@@ -33,6 +34,7 @@ class RecipeDraftWriter
         return $this->writer->create([
             'title' => $draft['title'],
             'description' => $draft['description'] ?: null,
+            'course' => Course::tryFrom($draft['course']),
             'servings' => $draft['servings'] > 0 ? $draft['servings'] : null,
             'yield_text' => $draft['yield_text'] ?: null,
             'prep_minutes' => $draft['prep_minutes'],
@@ -45,7 +47,6 @@ class RecipeDraftWriter
             'tools' => array_values(array_unique($draft['tools'])),
             'tag_ids' => [
                 ...$this->tagIds(TagType::Meal, $draft['meals']),
-                ...$this->tagIds(TagType::Category, $draft['categories']),
                 ...$this->tagIds(TagType::Tag, $draft['tags']),
             ],
         ]);

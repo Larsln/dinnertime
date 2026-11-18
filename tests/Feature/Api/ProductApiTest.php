@@ -82,7 +82,7 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.6.plural_name', 'Prisen');
 
         $this->getJson('/api/v1/units', ['Accept-Language' => 'en'])->assertJsonPath('data.4.code', 'tbsp');
-        $this->getJson('/api/v1/tags', ['Accept-Language' => 'en'])->assertJsonCount(30, 'data');
+        $this->getJson('/api/v1/tags', ['Accept-Language' => 'en'])->assertJsonCount(20, 'data');
     }
 
     public function test_it_falls_back_to_the_instance_locale_for_unsupported_languages(): void

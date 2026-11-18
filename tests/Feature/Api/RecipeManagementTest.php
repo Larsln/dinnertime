@@ -38,6 +38,7 @@ class RecipeManagementTest extends TestCase
 
         $response = $this->postJson('/api/v1/recipes', [
             'title' => 'Zwiebelkuchen',
+            'course' => 'main',
             'servings' => 4,
             'tag_ids' => [$dinner],
             'tools' => ['Backofen', 'Springform'],
@@ -54,6 +55,9 @@ class RecipeManagementTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.slug', 'zwiebelkuchen')
+            ->assertJsonPath('data.course', 'main')
+            ->assertJsonPath('data.rating', null)
+            ->assertJsonPath('data.is_favorite', false)
             ->assertJsonPath('data.meal_tags_locked', true)
             ->assertJsonPath('data.ingredients.0.section', 'Teig')
             ->assertJsonPath('data.ingredients.1.product.name', 'Zwiebel')

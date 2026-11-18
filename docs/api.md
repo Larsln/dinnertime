@@ -39,6 +39,7 @@ recipes in.
 
 | Method | Path | Answer |
 |---|---|---|
+| GET | `/courses` | List of Course |
 | GET | `/units` | List of Unit |
 | GET | `/store-sections` | List of StoreSection, in walking order |
 | GET | `/tags` | List of Tag |
@@ -47,29 +48,39 @@ recipes in.
   `kind` is `mass`, `volume` or `product_specific`. `key` is `null` for units
   the household added.
 - **StoreSection:** `{id, key, name, position}`
-- **Tag:** `{id, type, key, name}`. `type` is `meal`, `category` or `tag`.
+- **Tag:** `{id, type, key, name}`. `type` is `meal` or `tag`.
   Meal keys are `breakfast`, `lunch`, `dinner`, `dessert`, `snack`.
+- **Course:** `{key, name}`. The main category of a dish: `starter`, `soup`,
+  `salad`, `main`, `side`, `dessert`, `baking`, `snack` or `drink`. A recipe
+  has at most one.
 
 ## Recipes
 
 | Method | Path | Body or query | Answer |
 |---|---|---|---|
-| GET | `/recipes` | `?search=`, `?tag=<tag id>` | Paginated RecipeSummary |
+| GET | `/recipes` | `?search=`, `?tag=<tag id>`, `?course=<key>`, `?favorite=1` | Paginated RecipeSummary |
 | GET | `/recipes/{id}` | | Recipe |
 | POST | `/recipes` | RecipeInput | Recipe, `201` |
 | PATCH | `/recipes/{id}` | RecipeInput, all fields optional | Recipe |
 | POST | `/recipes/{id}/cover` | multipart `image` | Recipe |
+| PUT | `/recipes/{id}/rating` | `rating`: 0 to 10, or `null` to withdraw | RecipeSummary |
+| PUT | `/recipes/{id}/favorite` | `favorite: bool` | RecipeSummary |
 | DELETE | `/recipes/{id}` | | `204` |
 
-- **RecipeSummary:** `{id, title, slug, description, servings, yield_text,
-  prep_minutes, cook_minutes, cover_url, tags: [Tag]}`
+- **RecipeSummary:** `{id, title, slug, description, course, course_name,
+  servings, yield_text, prep_minutes, cook_minutes, cover_url, tags: [Tag],
+  rating, is_favorite, average_rating, rating_count}`. `rating` (0 bad to 10
+  good) and `is_favorite` belong to the signed-in user, `average_rating` is
+  the mean over all household members with one decimal. The four fields are
+  present on the recipe endpoints and absent where a recipe is embedded in
+  another resource.
 - **Recipe:** RecipeSummary plus `{source_url, source_platform,
   meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [{id, name}]}`
 - **Ingredient:** `{id, position, section, quantity, unit: Unit|null,
   product: Product|null, note, is_estimated, raw_text}`. A missing unit means
   the quantity counts pieces. Lines without a product only carry `raw_text`.
 - **Step:** `{id, position, title, text}`
-- **RecipeInput:** `title`, `description`, `servings`, `yield_text`,
+- **RecipeInput:** `title`, `description`, `course`, `servings`, `yield_text`,
   `prep_minutes`, `cook_minutes`, `source_url`, `tag_ids: [int]`,
   `tools: [string]`, `ingredients: [{section, product_id, quantity, unit_id,
   note, is_estimated, raw_text}]`, `steps: [{title, text}]`. Lists that are

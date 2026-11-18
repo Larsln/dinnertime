@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Course;
 use App\Enums\ReviewStatus;
 use App\Enums\SourcePlatform;
 use App\Enums\TagType;
@@ -82,10 +83,8 @@ class MealieImportTest extends TestCase
         $this->assertSame(SourcePlatform::Tiktok, $recipe->source_platform);
         $this->assertSame('7668426929069903137', $recipe->source_video_id);
         $this->assertSame(['Airfryer'], $recipe->tools->pluck('name')->all());
-        $this->assertEqualsCanonicalizing(
-            [TagType::Meal, TagType::Category],
-            $recipe->tags->pluck('type')->all(),
-        );
+        $this->assertSame([TagType::Meal], $recipe->tags->pluck('type')->all());
+        $this->assertSame(Course::Dessert, $recipe->course);
 
         [$sauce, $free] = $recipe->ingredients;
         $this->assertSame('Soße', $sauce->section);
@@ -152,7 +151,7 @@ class MealieImportTest extends TestCase
             'prepTimeSeconds' => 900,
             'performTimeSeconds' => null,
             'orgURL' => 'https://www.tiktok.com/@koch/video/7668426929069903137',
-            'recipeCategory' => [['name' => 'Abendessen']],
+            'recipeCategory' => [['name' => 'Abendessen'], ['name' => 'Dessert']],
             'tags' => [['name' => 'Abendessen'], ['name' => 'Video-KI']],
             'tools' => [['name' => 'Airfryer']],
             'recipeIngredient' => [

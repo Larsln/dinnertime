@@ -2,6 +2,7 @@
 
 namespace App\Services\Mealie;
 
+use App\Enums\Course;
 use App\Enums\TagType;
 use App\Models\Product;
 use App\Models\Recipe;
@@ -100,6 +101,7 @@ class RecipeImporter
             'title' => $data['name'],
             'slug' => $data['slug'],
             'description' => $data['description'] ?: null,
+            'course' => $this->courseOf($data['recipeCategory']),
             'servings' => $data['recipeServings'] > 0 ? (int) round($data['recipeServings']) : null,
             'yield_text' => $this->yieldText($data),
             'prep_minutes' => $this->minutes($data['prepTimeSeconds']),
@@ -180,7 +182,35 @@ class RecipeImporter
     }
 
     /**
-     * Resolve Mealie categories and tags against the fixed lists.
+     * Derive the course from the Mealie categories. The first category that
+     * names a course wins. Categories that name a meal make the dish a main
+     * course, because Mealie used them for both purposes.
+     *
+     * @param  list<array<string, mixed>>  $categories
+     */
+    private function courseOf(array $categories): ?Course
+    {
+        $namesMeal = false;
+
+        foreach ($categories as $category) {
+            $course = ReferenceTranslations::findKey('reference.courses', $category['name']);
+
+            if ($course !== null) {
+                return Course::from($course);
+            }
+
+            if (ReferenceTranslations::findKey('reference.tags.meal', $category['name']) !== null) {
+                $namesMeal = true;
+            } else {
+                $this->unknownTags[$category['name']] = true;
+            }
+        }
+
+        return $namesMeal ? Course::Main : null;
+    }
+
+    /**
+     * Resolve Mealie tags against the fixed lists.
      *
      * @param  array<string, mixed>  $data
      * @return list<int>
@@ -188,10 +218,6 @@ class RecipeImporter
     private function tagIds(array $data): array
     {
         $ids = [];
-
-        foreach ($data['recipeCategory'] as $category) {
-            $ids[] = $this->findTagId($category['name'], [TagType::Category]);
-        }
 
         foreach ($data['tags'] as $tag) {
             $ids[] = $this->findTagId($tag['name'], [TagType::Meal, TagType::Tag]);

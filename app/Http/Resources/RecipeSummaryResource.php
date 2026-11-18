@@ -23,12 +23,18 @@ class RecipeSummaryResource extends JsonResource
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
+            'course' => $this->course,
+            'course_name' => $this->course?->label(),
             'servings' => $this->servings,
             'yield_text' => $this->yield_text,
             'prep_minutes' => $this->prep_minutes,
             'cook_minutes' => $this->cook_minutes,
             'cover_url' => $this->cover_image_path ? asset("storage/{$this->cover_image_path}") : null,
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'rating' => $this->whenLoaded('marks', fn () => $this->marks->first()?->rating),
+            'is_favorite' => $this->whenLoaded('marks', fn () => (bool) $this->marks->first()?->is_favorite),
+            'average_rating' => $this->whenHas('average_rating', fn (mixed $average) => $average === null ? null : round((float) $average, 1)),
+            'rating_count' => $this->whenHas('rating_count'),
         ];
     }
 }

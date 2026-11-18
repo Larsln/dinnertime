@@ -32,6 +32,18 @@ return [
         'packet' => ['code' => 'Päckchen', 'name' => 'Päckchen', 'plural' => 'Päckchen'],
     ],
 
+    'courses' => [
+        'starter' => 'Vorspeise',
+        'soup' => 'Suppe',
+        'salad' => 'Salat',
+        'main' => 'Hauptgericht',
+        'side' => 'Beilage',
+        'dessert' => 'Dessert',
+        'baking' => 'Backen',
+        'snack' => 'Snack',
+        'drink' => 'Getränk',
+    ],
+
     'tags' => [
         'meal' => [
             'breakfast' => 'Frühstück',
@@ -39,18 +51,6 @@ return [
             'dinner' => 'Abendessen',
             'dessert' => 'Dessert',
             'snack' => 'Snack',
-        ],
-        'category' => [
-            'breakfast' => 'Frühstück',
-            'lunch' => 'Mittagessen',
-            'dinner' => 'Abendessen',
-            'dessert' => 'Dessert',
-            'snack' => 'Snack',
-            'side' => 'Beilage',
-            'salad' => 'Salat',
-            'soup' => 'Suppe',
-            'baking' => 'Backen',
-            'beverage' => 'Getränk',
         ],
         'tag' => [
             'vegetarian' => 'Vegetarisch',

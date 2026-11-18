@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Import;
 
+use App\Enums\Course;
 use App\Enums\ImportError;
 use App\Enums\ImportStatus;
 use App\Enums\ReviewStatus;
@@ -78,6 +79,7 @@ class RecipeImportTest extends TestCase
         $this->assertSame('7668426929069903137', $recipe->source_video_id);
         $this->assertSame(self::RESOLVED_URL, $recipe->source_url);
         $this->assertFalse($recipe->meal_tags_locked);
+        $this->assertSame(Course::Main, $recipe->course);
         $this->assertEqualsCanonicalizing(['dinner', 'quick'], $recipe->tags->pluck('key')->all());
         $this->assertSame(['Airfryer'], $recipe->tools->pluck('name')->all());
 
@@ -293,7 +295,7 @@ class RecipeImportTest extends TestCase
             ],
             'tools' => ['Airfryer'],
             'meals' => ['dinner'],
-            'categories' => [],
+            'course' => 'main',
             'tags' => ['quick'],
             'cover_seconds' => [3.5, 12],
         ];

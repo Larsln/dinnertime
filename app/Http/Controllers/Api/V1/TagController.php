@@ -10,7 +10,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class TagController extends Controller
 {
     /**
-     * List the fixed meal types, categories and tags.
+     * List the fixed meal types and tags.
      */
     public function __invoke(): AnonymousResourceCollection
     {

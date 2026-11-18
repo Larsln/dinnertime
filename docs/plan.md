@@ -66,7 +66,8 @@ Mengen werden intern immer in der **Basiseinheit des Produkts** gerechnet
 | `recipes` | `title`, `slug`, `description`, `servings` (Zahl), `yield_text`, `prep_minutes`, `cook_minutes`, `source_url`, `source_platform`, `source_video_id`, `cover_image_path`, `meal_tags_locked` | Rezept; Duplikate über `source_platform` + `source_video_id` |
 | `recipe_ingredients` | `recipe_id`, `position`, `section`, `product_id`, `quantity`, `unit_id`, `note`, `is_estimated`, `raw_text` | Zutatenzeile, zeigt auf ein Produkt |
 | `recipe_steps` | `recipe_id`, `position`, `title`, `text` | Arbeitsschritt, Titel nur am Beginn einer Komponente |
-| `tags` | `type` (`meal`, `category`, `tag`), `key` | Feste Listen, per Seeder, Namen aus Sprachdateien |
+| `tags` | `type` (`meal`, `tag`), `key` | Feste Listen, per Seeder, Namen aus Sprachdateien |
+| `recipe_marks` | `recipe_id`, `user_id`, `rating` (0–10), `is_favorite` | Bewertung und Favorit je Haushaltsmitglied |
 | `recipe_tag` | `recipe_id`, `tag_id` | Zuordnung |
 | `tools`, `recipe_tool` | `name` | Utensilien, deutsch, Singular |
 | `recipe_imports` | `url`, `platform`, `video_id`, `status`, `attempts`, `error`, `recipe_id`, `user_id` | Importauftrag mit Verlauf und Fehlermeldung |

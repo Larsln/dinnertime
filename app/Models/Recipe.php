@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\Course;
 use App\Enums\SourcePlatform;
 use Database\Factories\RecipeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,12 +16,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Recipe with its ingredient lines, steps, tags and tools.
  *
+ * @property ?Course $course
  * @property ?SourcePlatform $source_platform
  */
 #[Fillable([
     'title',
     'slug',
     'description',
+    'course',
     'servings',
     'yield_text',
     'prep_minutes',
@@ -43,9 +48,35 @@ class Recipe extends Model
     protected function casts(): array
     {
         return [
+            'course' => Course::class,
             'source_platform' => SourcePlatform::class,
             'meal_tags_locked' => 'boolean',
         ];
+    }
+
+    /**
+     * Load what the household thinks of each recipe: the average rating,
+     * the number of ratings and the given user's own mark.
+     *
+     * @param  Builder<Recipe>  $query
+     */
+    #[Scope]
+    protected function withMarksOf(Builder $query, User $user): void
+    {
+        $query
+            ->withAvg('marks as average_rating', 'rating')
+            ->withCount(['marks as rating_count' => fn (Builder $query) => $query->whereNotNull('rating')])
+            ->with(['marks' => fn (HasMany $query) => $query->where('user_id', $user->id)]);
+    }
+
+    /**
+     * Ratings and favorites of the household members.
+     *
+     * @return HasMany<RecipeMark, $this>
+     */
+    public function marks(): HasMany
+    {
+        return $this->hasMany(RecipeMark::class);
     }
 
     /**
@@ -69,7 +100,7 @@ class Recipe extends Model
     }
 
     /**
-     * Meal types, categories and tags assigned to the recipe.
+     * Meal types and tags assigned to the recipe.
      *
      * @return BelongsToMany<Tag, $this>
      */

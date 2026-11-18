@@ -12,10 +12,6 @@ class TagSeeder extends Seeder
         TagType::Meal->value => [
             'breakfast', 'lunch', 'dinner', 'dessert', 'snack',
         ],
-        TagType::Category->value => [
-            'breakfast', 'lunch', 'dinner', 'dessert', 'snack',
-            'side', 'salad', 'soup', 'baking', 'beverage',
-        ],
         TagType::Tag->value => [
             'vegetarian', 'vegan', 'quick', 'low_carb', 'high_protein',
             'meal_prep', 'asian', 'italian', 'mexican', 'middle_eastern',
@@ -24,7 +20,7 @@ class TagSeeder extends Seeder
     ];
 
     /**
-     * Seed the fixed meal types, categories and tags.
+     * Seed the fixed meal types and tags.
      */
     public function run(): void
     {

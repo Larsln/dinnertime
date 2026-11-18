@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Course;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validates a recipe. The title is required when creating a recipe,
@@ -21,6 +23,7 @@ class RecipeRequest extends FormRequest
         return [
             'title' => [$this->isMethod('POST') ? 'required' : 'sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'course' => ['sometimes', 'nullable', Rule::enum(Course::class)],
             'servings' => ['sometimes', 'nullable', 'integer', 'between:1,100'],
             'yield_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'prep_minutes' => ['sometimes', 'nullable', 'integer', 'between:0,10000'],

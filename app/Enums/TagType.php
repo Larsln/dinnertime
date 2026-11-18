@@ -8,6 +8,5 @@ namespace App\Enums;
 enum TagType: string
 {
     case Meal = 'meal';
-    case Category = 'category';
     case Tag = 'tag';
 }

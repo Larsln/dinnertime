@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Course;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RecipeRequest;
 use App\Http\Resources\RecipeResource;
@@ -9,31 +10,44 @@ use App\Http\Resources\RecipeSummaryResource;
 use App\Models\Recipe;
 use App\Services\Recipes\RecipeWriter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RecipeController extends Controller
 {
     private const array DETAIL_RELATIONS = ['ingredients.product', 'ingredients.unit', 'steps', 'tags', 'tools'];
 
     /**
-     * List recipes, optionally filtered by title and tag.
+     * List recipes, optionally filtered by title, tag, course and favorites.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'tag' => ['nullable', 'integer', 'exists:tags,id'],
+            'course' => ['nullable', Rule::enum(Course::class)],
+            'favorite' => ['nullable', 'boolean'],
         ]);
 
+        $user = $request->user();
+
         $recipes = Recipe::query()
+            ->withMarksOf($user)
             ->with('tags')
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query
                 ->whereLike('title', "%{$search}%"))
             ->when($filters['tag'] ?? null, fn (Builder $query, int $tagId) => $query
                 ->whereRelation('tags', 'tags.id', $tagId))
+            ->when($filters['course'] ?? null, fn (Builder $query, string $course) => $query
+                ->where('course', $course))
+            ->when($request->boolean('favorite'), fn (Builder $query) => $query
+                ->whereHas('marks', fn (Builder $query) => $query
+                    ->where('user_id', $user->id)
+                    ->where('is_favorite', true)))
             ->orderBy('title')
             ->paginate(50);
 
@@ -43,17 +57,19 @@ class RecipeController extends Controller
     /**
      * Show a recipe with ingredients, steps, tags and tools.
      */
-    public function show(Recipe $recipe): RecipeResource
+    public function show(Request $request, Recipe $recipe): RecipeResource
     {
-        return new RecipeResource($recipe->load(self::DETAIL_RELATIONS));
+        return $this->detail($request, $recipe);
     }
 
     /**
      * Create a recipe by hand.
      */
-    public function store(RecipeRequest $request, RecipeWriter $writer): RecipeResource
+    public function store(RecipeRequest $request, RecipeWriter $writer): JsonResponse
     {
-        return new RecipeResource($writer->create($this->recipeData($request))->load(self::DETAIL_RELATIONS));
+        return $this->detail($request, $writer->create($this->recipeData($request)))
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
@@ -61,7 +77,17 @@ class RecipeController extends Controller
      */
     public function update(RecipeRequest $request, Recipe $recipe, RecipeWriter $writer): RecipeResource
     {
-        return new RecipeResource($writer->update($recipe, $this->recipeData($request))->load(self::DETAIL_RELATIONS));
+        return $this->detail($request, $writer->update($recipe, $this->recipeData($request)));
+    }
+
+    /**
+     * The recipe with everything needed to cook it and the user's marks.
+     */
+    private function detail(Request $request, Recipe $recipe): RecipeResource
+    {
+        return new RecipeResource(
+            Recipe::withMarksOf($request->user())->with(self::DETAIL_RELATIONS)->findOrFail($recipe->id),
+        );
     }
 
     /**
@@ -94,7 +120,7 @@ class RecipeController extends Controller
             Storage::disk('public')->delete($previous);
         }
 
-        return new RecipeResource($recipe->load(self::DETAIL_RELATIONS));
+        return $this->detail($request, $recipe);
     }
 
     /**

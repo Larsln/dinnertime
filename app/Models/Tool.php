@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BroadcastsChanges;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,6 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable(['name', 'is_owned'])]
 class Tool extends Model
 {
+    use BroadcastsChanges;
+
+    public static function broadcastArea(): string
+    {
+        return 'tools';
+    }
+
     /**
      * Get the attributes that should be cast.
      *

@@ -11,8 +11,20 @@ x-app: &app
 services:
     app:
         <<: *app
+        env_file: .env
         environment:
             SERVER_NAME: ":80"
+            CADDY_SERVER_EXTRA_DIRECTIVES: |
+                mercure {
+                    issuer mealplanner {
+                        publisher {
+                            jwt {env.MERCURE_JWT_KEY} HS256
+                        }
+                        subscriber {
+                            jwt {env.MERCURE_JWT_KEY} HS256
+                        }
+                    }
+                }
         ports:
             - "8000:80"
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductConversionController;
 use App\Http\Controllers\Api\V1\ProductPackageController;
+use App\Http\Controllers\Api\V1\RealtimeController;
 use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\RecipeMarkController;
 use App\Http\Controllers\Api\V1\ServerController;
@@ -34,6 +35,8 @@ Route::prefix('v1')->group(function () {
         Route::put('recipes/{recipe}/rating', [RecipeMarkController::class, 'rate']);
         Route::put('recipes/{recipe}/favorite', [RecipeMarkController::class, 'favorite']);
         Route::apiResource('recipes', RecipeController::class);
+
+        Route::get('realtime', RealtimeController::class);
 
         Route::get('settings/import', [ImportSettingsController::class, 'show']);
         Route::patch('settings/import', [ImportSettingsController::class, 'update']);

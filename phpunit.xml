@@ -25,6 +25,7 @@
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_DATABASE" value="mealplanner_test"/>
         <env name="GEMINI_API_KEY" value=""/>
+        <env name="MERCURE_JWT_KEY" value=""/>
         <env name="OIDC_ISSUER" value=""/>
         <env name="OIDC_CLIENT_ID" value=""/>
         <env name="MEALIE_URL" value=""/>

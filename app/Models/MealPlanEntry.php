@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MealType;
+use App\Models\Concerns\BroadcastsChanges;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['date', 'meal', 'recipe_id', 'servings', 'cooked_at'])]
 class MealPlanEntry extends Model
 {
+    use BroadcastsChanges;
+
+    public static function broadcastArea(): string
+    {
+        return 'plan';
+    }
+
     /**
      * Get the attributes that should be cast.
      *

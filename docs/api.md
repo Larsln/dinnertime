@@ -35,6 +35,20 @@ recipes in.
 
 **User:** `{id, username, name, email}`
 
+## Realtime
+
+| Method | Path | Answer |
+|---|---|---|
+| GET | `/realtime` | `{url, token}`; `404` on servers without realtime |
+
+Clients open `url` as a Server-Sent Events stream and send `token` as bearer
+token in the `Authorization` header. Every event carries
+`{"areas": [...]}` naming what changed: `shopping`, `pantry`, `plan`,
+`recipes`, `products` or `tools`. Clients then reload that data. The token is
+valid for twelve hours; on any error clients request a new one and reconnect.
+The stream is served by the Mercure hub built into the web server, enabled by
+setting `MERCURE_JWT_KEY`.
+
 ## Reference data
 
 | Method | Path | Answer |

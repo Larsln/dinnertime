@@ -12,6 +12,7 @@ import {
     ShoppingCart,
 } from 'lucide-vue-next';
 import { productsApi } from '@/api/products';
+import { useRealtime } from '@/composables/useRealtime';
 import { useSessionStore } from '@/stores/session';
 
 /**
@@ -32,6 +33,8 @@ const links = computed(() => [
     { name: 'products', label: t('nav.products'), icon: ClipboardCheck, badge: reviewCount.value },
     { name: 'settings', label: t('nav.settings'), icon: Settings, badge: 0 },
 ]);
+
+useRealtime();
 
 onMounted(() => session.loadUser());
 </script>

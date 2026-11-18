@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BaseUnit;
 use App\Enums\ReviewStatus;
+use App\Models\Concerns\BroadcastsChanges;
 use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -39,7 +40,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory;
+    use BroadcastsChanges, HasFactory;
+
+    public static function broadcastArea(): string
+    {
+        return 'products';
+    }
 
     /**
      * Get the attributes that should be cast.

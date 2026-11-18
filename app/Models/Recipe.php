@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Course;
 use App\Enums\SourcePlatform;
+use App\Models\Concerns\BroadcastsChanges;
 use Database\Factories\RecipeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -38,7 +39,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Recipe extends Model
 {
     /** @use HasFactory<RecipeFactory> */
-    use HasFactory;
+    use BroadcastsChanges, HasFactory;
+
+    public static function broadcastArea(): string
+    {
+        return 'recipes';
+    }
 
     /**
      * Get the attributes that should be cast.

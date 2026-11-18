@@ -26,6 +26,12 @@ return [
         'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-3.5-flash-lite'),
     ],
 
+    'mercure' => [
+        'key' => env('MERCURE_JWT_KEY'),
+        'issuer' => env('MERCURE_ISSUER', 'mealplanner'),
+        'publish_url' => env('MERCURE_PUBLISH_URL', 'http://app/.well-known/mercure'),
+    ],
+
     'ytdlp' => [
         'cookies' => env('YTDLP_COOKIES_FILE'),
     ],

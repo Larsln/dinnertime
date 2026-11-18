@@ -5,15 +5,16 @@ import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { ChevronLeft, ChevronRight, Plus, ShoppingCart, Sparkles, Trash2 } from 'lucide-vue-next';
 import { mealPlanApi, shoppingApi } from '@/api/planning';
-import type { MealPlanEntry, MealType } from '@/api/types';
+import type { MealPlanEntry } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { addDays, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
 import { formatDay } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
+import { presetSlots, slotKey, type PlanSlot } from '@/lib/planSlots';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
+import PlanMatrix from '@/components/PlanMatrix.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
-import ChipGroup from '@/components/ui/ChipGroup.vue';
 import DialogPanel from '@/components/ui/DialogPanel.vue';
 import NumberField from '@/components/ui/NumberField.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
@@ -55,9 +56,9 @@ const entriesByDay = computed(() => {
 const addingFor = ref(today);
 const isAdding = ref(false);
 const isGenerating = ref(false);
-const meals = ref<MealType[]>(['dinner']);
+const slots = ref<PlanSlot[]>([]);
+const plannedSlots = computed(() => new Set((entries.data.value ?? []).map(slotKey)));
 const servings = ref<number | null>(2);
-const mealOptions = computed(() => MEAL_TYPES.map((value) => ({ value, label: t(`meals.${value}`) })));
 
 function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['meal-plan'] });
@@ -67,13 +68,21 @@ function shiftWeek(weeks: number): void {
     monday.value = addDays(monday.value, weeks * DAYS_PER_WEEK);
 }
 
+/**
+ * Open the generator with the open dinners of the week ticked.
+ */
+function openGenerator(): void {
+    slots.value = presetSlots(days.value, 'all', ['dinner'], plannedSlots.value);
+    isGenerating.value = true;
+}
+
 function startAdding(day: string): void {
     addingFor.value = day;
     isAdding.value = true;
 }
 
 const generate = useMutation({
-    mutationFn: () => mealPlanApi.generate(period.value, meals.value, servings.value ?? 2),
+    mutationFn: () => mealPlanApi.generate(period.value, slots.value, servings.value ?? 2),
     onSuccess: (added) => {
         refresh();
         isGenerating.value = false;
@@ -116,9 +125,7 @@ const createList = useMutation({
         <AppButton size="icon" :aria-label="t('plan.nextWeek')" @click="shiftWeek(1)"
             ><ChevronRight class="size-4"
         /></AppButton>
-        <AppButton @click="isGenerating = true"
-            ><Sparkles class="size-4" />{{ t('plan.generate') }}</AppButton
-        >
+        <AppButton @click="openGenerator"><Sparkles class="size-4" />{{ t('plan.generate') }}</AppButton>
         <AppButton variant="primary" :disabled="createList.isPending.value" @click="createList.mutate()">
             <ShoppingCart class="size-4" />{{ t('plan.createList') }}
         </AppButton>
@@ -185,15 +192,15 @@ const createList = useMutation({
         :description="t('plan.generateDescription')"
         :close-label="t('common.close')"
     >
-        <ChipGroup v-model="meals" :options="mealOptions" />
+        <PlanMatrix v-model="slots" :days="days" :planned="plannedSlots" />
         <NumberField v-model="servings" :label="t('recipes.servings')" :min="1" :max="50" steppers />
         <template #actions>
             <AppButton
                 variant="primary"
-                :disabled="meals.length === 0 || generate.isPending.value"
+                :disabled="slots.length === 0 || generate.isPending.value"
                 @click="generate.mutate()"
             >
-                {{ t('plan.generate') }}
+                {{ t('plan.generateCount', { count: slots.length }) }}
             </AppButton>
         </template>
     </DialogPanel>

@@ -13,8 +13,8 @@ export const mealPlanApi = {
     update: (id: number, changes: { servings?: number; cooked?: boolean }) =>
         data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
     remove: (id: number) => api.delete(`/meal-plan/${id}`),
-    generate: (period: Period, meals: MealType[], servings: number) =>
-        data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/generate', { ...period, meals, servings })),
+    generate: (period: Period, slots: { date: string; meal: MealType }[], servings: number) =>
+        data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/generate', { ...period, slots, servings })),
 };
 
 export const pantryApi = {

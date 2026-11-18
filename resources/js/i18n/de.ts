@@ -106,8 +106,13 @@ export default {
         nextWeek: 'Nächste Woche',
         generate: 'Woche füllen',
         generateDescription:
-            'Füllt die freien Mahlzeiten dieser Woche so, dass angebrochene Packungen aufgebraucht werden. Vorhandene Einträge bleiben.',
+            'Tippe die Felder an, die gefüllt werden sollen. Die Rezepte werden so gewählt, dass angebrochene Packungen aufgebraucht werden. Bereits Geplantes bleibt, wie es ist.',
         generated: '{count} Mahlzeiten geplant',
+        generateCount: '{count} Mahlzeiten füllen',
+        planned: 'geplant',
+        showMoreMeals: 'Weitere Mahlzeiten einblenden',
+        days: { all: 'Alle Tage', weekdays: 'Werktage', weekend: 'Wochenende' },
+        mealPresets: { dinner: 'Abends', lunch: 'Mittags', allMeals: 'Alle Mahlzeiten' },
         createList: 'Einkaufsliste',
     },
     shopping: {

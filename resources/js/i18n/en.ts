@@ -108,8 +108,13 @@ const messages: typeof de = {
         nextWeek: 'Next week',
         generate: 'Fill week',
         generateDescription:
-            'Fills the open meals of this week so that opened packages get used up. Existing entries are kept.',
+            'Tap the cells to fill. Recipes are chosen so that opened packages get used up. What is planned already stays as it is.',
         generated: '{count} meals planned',
+        generateCount: 'Fill {count} meals',
+        planned: 'planned',
+        showMoreMeals: 'Show more meals',
+        days: { all: 'All days', weekdays: 'Weekdays', weekend: 'Weekend' },
+        mealPresets: { dinner: 'Dinner', lunch: 'Lunch', allMeals: 'All meals' },
         createList: 'Shopping list',
     },
     shopping: {

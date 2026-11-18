@@ -159,7 +159,7 @@ its changes later. Three things make that safe.
   stores it and sends it as `since` next time. With `has_more` it asks again
   at once.
 - `changed` holds the new and changed records by kind, each in the shape of
-  its detail endpoint: `units`, `store_sections`, `tags`, `tools`,
+  its detail endpoint: `units`, `store_sections`, `tags`, `tools`, `stores`,
   `products`, `recipes` (with the marks of the user), `meal_plan_entries`,
   `pantry_items` and `shopping_lists` (with their items). A recipe counts as
   changed when its ingredients, steps, tags, tools or marks change, a product

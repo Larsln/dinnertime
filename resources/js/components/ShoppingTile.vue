@@ -106,7 +106,7 @@ const remove = useMutation({
                     as="button"
                     type="button"
                     :aria-pressed="isChecked"
-                    class="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl p-1.5 text-center transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                    class="relative flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl p-1.5 text-center transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
                     :class="
                         isChecked
                             ? 'bg-stone-200 text-stone-400 hover:bg-stone-300'
@@ -114,6 +114,10 @@ const remove = useMutation({
                     "
                     @click="toggle.mutate()"
                 >
+                    <span
+                        v-if="item.product?.note"
+                        class="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-current opacity-80"
+                    />
                     <ProductIcon
                         :icon="item.product?.icon"
                         :section-key="item.product?.store_section?.key"
@@ -148,6 +152,12 @@ const remove = useMutation({
                     </p>
                     <p v-if="item.is_approximate" class="mt-1 text-stone-500">
                         {{ t('shopping.approximate') }}
+                    </p>
+                    <p
+                        v-if="item.product?.note"
+                        class="mt-2 border-t border-stone-100 pt-2 whitespace-pre-line"
+                    >
+                        {{ item.product.note }}
                     </p>
                     <ContextMenuItem
                         v-if="item.is_manual"

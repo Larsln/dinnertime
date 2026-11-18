@@ -33,6 +33,7 @@ class ProductRequest extends FormRequest
             'base_unit' => ['sometimes', Rule::enum(BaseUnit::class)],
             'is_pantry_staple' => ['sometimes', 'boolean'],
             'shelf_life_opened_days' => ['sometimes', 'nullable', 'integer', 'between:1,3650'],
+            'note' => ['sometimes', 'nullable', 'string', 'max:500'],
         ];
     }
 }

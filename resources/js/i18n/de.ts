@@ -214,6 +214,8 @@ export default {
         noSection: 'Ohne Bereich',
         baseUnit: 'Gekauft in',
         shelfLife: 'Haltbar nach dem Öffnen (Tage)',
+        note: 'Notiz',
+        notePlaceholder: 'z. B. Laden, Größe oder Preis',
         shelfLifeUnlimited: 'lange',
         pantryStaple: 'Immer vorrätig, kommt nie auf die Einkaufsliste',
         packages: 'Packungsgrößen ({unit})',

@@ -27,6 +27,18 @@ class ProductManagementTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
+    public function test_a_product_keeps_a_note(): void
+    {
+        $product = Product::factory()->create(['name' => 'Halloumi']);
+
+        $this->patchJson("/api/v1/products/{$product->id}", ['note' => 'Bei Lidl, 225 g für 2,59'])
+            ->assertOk()
+            ->assertJsonPath('data.note', 'Bei Lidl, 225 g für 2,59')
+            ->assertJsonPath('data.name', 'Halloumi');
+        $this->patchJson("/api/v1/products/{$product->id}", ['note' => str_repeat('a', 501)])->assertUnprocessable();
+        $this->patchJson("/api/v1/products/{$product->id}", ['note' => null])->assertOk()->assertJsonPath('data.note', null);
+    }
+
     public function test_the_review_list_shows_everything_that_awaits_confirmation(): void
     {
         $this->product('Bestätigt');

@@ -17,6 +17,7 @@ import FieldLabel from '@/components/ui/FieldLabel.vue';
 import NumberField from '@/components/ui/NumberField.vue';
 import SelectField from '@/components/ui/SelectField.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
+import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
@@ -55,6 +56,7 @@ const details = reactive({
     baseUnit: 'g' as BaseUnit | null,
     isPantryStaple: false,
     shelfLife: null as number | null,
+    note: '',
 });
 
 const packages = ref<PackageRow[]>([]);
@@ -74,6 +76,7 @@ watch(
             baseUnit: product.base_unit,
             isPantryStaple: product.is_pantry_staple,
             shelfLife: product.shelf_life_opened_days,
+            note: product.note ?? '',
         });
 
         packages.value = (product.packages ?? []).map((entry) => ({
@@ -176,6 +179,7 @@ const save = useMutation({
             base_unit: details.baseUnit ?? 'g',
             is_pantry_staple: details.isPantryStaple,
             shelf_life_opened_days: details.shelfLife,
+            note: details.note.trim() || null,
         });
         await savePackages();
         await saveConversions();
@@ -254,6 +258,14 @@ const remove = useMutation({
                 :label="t('products.pantryStaple')"
             />
         </div>
+
+        <TextArea
+            v-model="details.note"
+            class="mt-4"
+            :rows="2"
+            :label="t('products.note')"
+            :placeholder="t('products.notePlaceholder')"
+        />
 
         <IconPicker
             v-model="details.icon"

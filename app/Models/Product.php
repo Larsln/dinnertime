@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'base_unit',
     'is_pantry_staple',
     'shelf_life_opened_days',
+    'note',
     'status',
     'enriched_at',
     'mealie_food_id',

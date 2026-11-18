@@ -252,7 +252,7 @@ to signed-in users; its content is never returned.
 | DELETE | `/product-aliases/{id}` | | `204` |
 
 - **Product:** `{id, name, plural_name, icon, base_unit, is_pantry_staple,
-  shelf_life_opened_days, status, enriched_at, recipe_count,
+  shelf_life_opened_days, note, status, enriched_at, recipe_count,
   store_section: StoreSection|null, aliases: [string],
   conversions: [Conversion], packages: [Package]}`. `status` is `suggested`
   or `confirmed`. `icon` is the key of a line icon for the shopping list
@@ -265,7 +265,7 @@ to signed-in users; its content is never returned.
   this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
 - **ProductInput:** `name`, `plural_name`, `icon`, `store_section_id`, `base_unit`,
-  `is_pantry_staple`, `shelf_life_opened_days`
+  `is_pantry_staple`, `shelf_life_opened_days`, `note` (free text for the shopper, at most 500 characters)
 
 Values entered through the API count as confirmed. `source` is `ai`, `user`
 or `import`.

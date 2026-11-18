@@ -207,6 +207,8 @@ const messages: typeof de = {
         noSection: 'No section',
         baseUnit: 'Bought in',
         shelfLife: 'Shelf life once opened (days)',
+        note: 'Note',
+        notePlaceholder: 'e.g. shop, size or price',
         shelfLifeUnlimited: 'long',
         pantryStaple: 'Always in stock, never on the shopping list',
         packages: 'Package sizes ({unit})',

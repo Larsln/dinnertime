@@ -26,6 +26,7 @@ class ProductResource extends JsonResource
             'base_unit' => $this->base_unit,
             'is_pantry_staple' => $this->is_pantry_staple,
             'shelf_life_opened_days' => $this->shelf_life_opened_days,
+            'note' => $this->note,
             'status' => $this->status,
             'enriched_at' => $this->enriched_at,
             'recipe_count' => $this->whenCounted('ingredients'),

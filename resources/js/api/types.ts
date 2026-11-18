@@ -87,6 +87,7 @@ export interface Product {
     base_unit: BaseUnit;
     is_pantry_staple: boolean;
     shelf_life_opened_days: number | null;
+    note: string | null;
     status: ReviewStatus;
     enriched_at: string | null;
     recipe_count?: number;
@@ -104,6 +105,7 @@ export interface ProductInput {
     base_unit?: BaseUnit;
     is_pantry_staple?: boolean;
     shelf_life_opened_days?: number | null;
+    note?: string | null;
 }
 
 export interface RecipeSummary {

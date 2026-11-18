@@ -58,15 +58,17 @@ class PreferenceCost
     }
 
     /**
-     * Number of meals that repeat a recipe already in the plan.
+     * How much the plan repeats itself. Every further use of a recipe
+     * weighs more than the one before, so unavoidable repeats are spread
+     * over several recipes instead of one being cooked all week.
      *
      * @param  list<PlannedMeal>  $meals
      */
     private function repeats(array $meals): int
     {
-        $recipeIds = array_map(fn (PlannedMeal $meal) => $meal->recipe->id, $meals);
+        $uses = array_count_values(array_map(fn (PlannedMeal $meal) => $meal->recipe->id, $meals));
 
-        return count($recipeIds) - count(array_unique($recipeIds));
+        return array_sum(array_map(fn (int $count) => ($count - 1) ** 2, $uses));
     }
 
     /**

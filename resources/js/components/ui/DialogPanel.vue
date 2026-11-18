@@ -15,8 +15,9 @@ import { X } from 'lucide-vue-next';
  */
 const open = defineModel<boolean>('open', { required: true });
 
-withDefaults(defineProps<{ title: string; description?: string; closeLabel: string }>(), {
+withDefaults(defineProps<{ title: string; description?: string; closeLabel: string; size?: 'md' | 'lg' }>(), {
     description: undefined,
+    size: 'md',
 });
 </script>
 
@@ -25,7 +26,8 @@ withDefaults(defineProps<{ title: string; description?: string; closeLabel: stri
         <DialogPortal>
             <DialogOverlay class="fixed inset-0 z-40 bg-stone-900/40" />
             <DialogContent
-                class="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-xl focus:outline-none"
+                :class="size === 'lg' ? 'max-w-xl' : 'max-w-md'"
+                class="fixed top-1/2 left-1/2 z-50 max-h-[90dvh] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-xl focus:outline-none"
             >
                 <div class="mb-4 flex items-start justify-between gap-4">
                     <div>

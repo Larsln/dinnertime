@@ -106,6 +106,17 @@ class MealPlanTest extends TestCase
         $this->assertSame(['2026-11-17', '2026-11-18'], $response->json('data.*.date'));
     }
 
+    public function test_unavoidable_repeats_are_spread_over_the_recipes(): void
+    {
+        $this->recipe('Lasagne', []);
+        $this->recipe('Suppe', []);
+        $this->recipe('Curry', []);
+
+        $titles = $this->suggest('2026-11-16', '2026-11-21')->json('data.*.recipe.title');
+
+        $this->assertSame(['Curry' => 2, 'Lasagne' => 2, 'Suppe' => 2], collect($titles)->countBy()->sortKeys()->all());
+    }
+
     public function test_a_suggestion_covers_only_chosen_slots_that_have_recipes(): void
     {
         $this->recipe('Lasagne', []);

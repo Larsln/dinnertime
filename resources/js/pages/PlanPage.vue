@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
@@ -10,14 +10,12 @@ import { useToasts } from '@/composables/useToasts';
 import { addDays, isoWeek, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
 import { formatDay, formatLongDay } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
-import { presetSlots, slotKey, type PlanSlot } from '@/lib/planSlots';
+import { slotKey } from '@/lib/planSlots';
 import PlanEntryCard from '@/components/PlanEntryCard.vue';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
-import PlanMatrix from '@/components/PlanMatrix.vue';
+import PlanWizard from '@/components/PlanWizard.vue';
 import WeekStrip from '@/components/WeekStrip.vue';
 import AppButton from '@/components/ui/AppButton.vue';
-import DialogPanel from '@/components/ui/DialogPanel.vue';
-import NumberField from '@/components/ui/NumberField.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
@@ -30,7 +28,7 @@ const DAYS_PER_WEEK = 7;
 const { t, locale } = useI18n();
 const router = useRouter();
 const queryClient = useQueryClient();
-const { showError, showSuccess } = useToasts();
+const { showError } = useToasts();
 
 const monday = ref(startOfWeek(new Date()));
 const period = computed(() => ({
@@ -58,9 +56,7 @@ const entriesByDay = computed(() => {
 const addingFor = ref(today);
 const isAdding = ref(false);
 const isGenerating = ref(false);
-const slots = ref<PlanSlot[]>([]);
 const plannedSlots = computed(() => new Set((entries.data.value ?? []).map(slotKey)));
-const servings = ref<number | null>(2);
 
 const daysWithEntries = computed(() => new Set((entries.data.value ?? []).map((entry) => entry.date)));
 
@@ -77,33 +73,21 @@ function shiftWeek(weeks: number): void {
 }
 
 /**
- * Open the generator with the open dinners of the week ticked.
+ * Reload the plan after the wizard saved it and, if asked, go on to the
+ * shopping list of the week.
  */
-function openGenerator(): void {
-    slots.value = presetSlots(days.value, 'all', ['dinner'], plannedSlots.value);
-    isGenerating.value = true;
-}
+function onPlanSaved(createsList: boolean): void {
+    refresh();
 
-watch(plannedSlots, (planned) => {
-    if (isGenerating.value) {
-        slots.value = presetSlots(days.value, 'all', ['dinner'], planned);
+    if (createsList) {
+        createList.mutate();
     }
-});
+}
 
 function startAdding(day: string): void {
     addingFor.value = day;
     isAdding.value = true;
 }
-
-const generate = useMutation({
-    mutationFn: () => mealPlanApi.generate(period.value, slots.value, servings.value ?? 2),
-    onSuccess: (added) => {
-        refresh();
-        isGenerating.value = false;
-        showSuccess(t('plan.generated', { count: added.length }));
-    },
-    onError: showError,
-});
 
 const setCooked = useMutation({
     mutationFn: (change: { id: number; cooked: boolean }) =>
@@ -142,7 +126,9 @@ const createList = useMutation({
         <AppButton v-if="!days.includes(today)" @click="monday = startOfWeek(new Date())">
             {{ t('plan.currentWeek') }}
         </AppButton>
-        <AppButton @click="openGenerator"><Sparkles class="size-4" />{{ t('plan.generate') }}</AppButton>
+        <AppButton @click="isGenerating = true"
+            ><Sparkles class="size-4" />{{ t('plan.generate') }}</AppButton
+        >
         <AppButton variant="primary" :disabled="createList.isPending.value" @click="createList.mutate()">
             <ShoppingCart class="size-4" />{{ t('plan.createList') }}
         </AppButton>
@@ -185,33 +171,12 @@ const createList = useMutation({
 
     <PlanEntryDialog v-model:open="isAdding" :date="addingFor" />
 
-    <DialogPanel
+    <PlanWizard
         v-model:open="isGenerating"
-        :title="t('plan.generate')"
-        :description="t('plan.generateDescription')"
-        :close-label="t('common.close')"
-    >
-        <div class="flex items-center justify-between gap-2">
-            <AppButton size="icon" :aria-label="t('plan.previousWeek')" @click="shiftWeek(-1)">
-                <ChevronLeft class="size-4" />
-            </AppButton>
-            <p class="text-sm font-medium">
-                {{ formatDay(period.from, locale) }} – {{ formatDay(period.to, locale) }}
-            </p>
-            <AppButton size="icon" :aria-label="t('plan.nextWeek')" @click="shiftWeek(1)">
-                <ChevronRight class="size-4" />
-            </AppButton>
-        </div>
-        <PlanMatrix v-model="slots" :days="days" :planned="plannedSlots" />
-        <NumberField v-model="servings" :label="t('recipes.servings')" :min="1" :max="50" steppers />
-        <template #actions>
-            <AppButton
-                variant="primary"
-                :disabled="slots.length === 0 || generate.isPending.value"
-                @click="generate.mutate()"
-            >
-                {{ t('plan.generateCount', { count: slots.length }) }}
-            </AppButton>
-        </template>
-    </DialogPanel>
+        :days="days"
+        :period="period"
+        :planned="plannedSlots"
+        @shift-week="shiftWeek"
+        @saved="onPlanSaved"
+    />
 </template>

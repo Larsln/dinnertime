@@ -1,4 +1,5 @@
 import { api, data } from './client';
+import type { SuggestBody, Suggestion } from '@/lib/planWizard';
 import type { MealPlanEntry, MealType, PantryItem, ShoppingList, ShoppingListItem } from './types';
 
 export interface Period {
@@ -13,8 +14,10 @@ export const mealPlanApi = {
     update: (id: number, changes: { servings?: number; cooked?: boolean }) =>
         data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
     remove: (id: number) => api.delete(`/meal-plan/${id}`),
-    generate: (period: Period, slots: { date: string; meal: MealType }[], servings: number) =>
-        data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/generate', { ...period, slots, servings })),
+    suggest: (body: SuggestBody) =>
+        api.post<{ data: Suggestion[]; meta: { candidate_count: number } }>('/meal-plan/suggest', body),
+    saveBatch: (entries: { date: string; meal: MealType; recipe_id: number; servings: number }[]) =>
+        data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/batch', { entries })),
 };
 
 export const pantryApi = {

@@ -47,7 +47,7 @@ const meals = computed(() => (props.recipe.tags ?? []).filter((tag) => tag.type 
                 }}</span>
                 <span v-if="recipe.average_rating != null" class="inline-flex items-center gap-1">
                     <Star class="size-3.5 fill-amber-400 text-amber-400" />
-                    {{ formatNumber(recipe.average_rating, locale) }}
+                    {{ formatNumber(recipe.average_rating / 2, locale, 1) }}
                 </span>
                 <span v-if="totalMinutes > 0" class="inline-flex items-center gap-1">
                     <Clock class="size-3.5" />

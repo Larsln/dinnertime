@@ -163,7 +163,7 @@ const remove = useMutation({
                     <p v-if="recipe.data.value.average_rating != null" class="text-sm text-stone-500">
                         {{
                             t('recipes.averageRating', {
-                                average: formatNumber(recipe.data.value.average_rating, locale),
+                                average: formatNumber(recipe.data.value.average_rating / 2, locale, 1),
                                 count: recipe.data.value.rating_count,
                             })
                         }}

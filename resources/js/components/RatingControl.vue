@@ -6,7 +6,8 @@ import { Star, X } from 'lucide-vue-next';
 import AppButton from '@/components/ui/AppButton.vue';
 
 /**
- * Rating from 0 (bad) to 10 (good) shown as five stars in half steps.
+ * Rating shown and named as zero to five stars in half steps; stored as
+ * points from 0 to 10, one per half star.
  * Dragging or tapping across the stars sets the value, which is stored
  * when released and can be withdrawn again.
  */
@@ -75,7 +76,10 @@ function fillOf(star: number): string {
             {{
                 draft === null
                     ? t('recipes.notRated')
-                    : t('recipes.ratingValue', { value: draft, maximum: MAXIMUM })
+                    : t('recipes.ratingValue', {
+                          value: formatNumber(draft / 2, locale),
+                          maximum: MAXIMUM / 2,
+                      })
             }}
         </span>
         <AppButton

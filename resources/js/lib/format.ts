@@ -10,8 +10,8 @@ const BASE_UNIT_LABELS: Record<Exclude<BaseUnit, 'piece'>, { small: string; larg
 /**
  * Format a number with at most two decimals in the given locale.
  */
-export function formatNumber(value: number, locale: string): string {
-    return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
+export function formatNumber(value: number, locale: string, maximumFractionDigits = 2): string {
+    return new Intl.NumberFormat(locale, { maximumFractionDigits }).format(value);
 }
 
 /**

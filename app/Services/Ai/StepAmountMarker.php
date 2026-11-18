@@ -30,7 +30,7 @@ class StepAmountMarker
         }
 
         $answer = $this->gemini->generate(
-            config('services.gemini.text_model'),
+            config('services.gemini.video_model'),
             [['text' => $this->prompt($recipe, $steps->pluck('text')->all())]],
             ['type' => 'OBJECT', 'properties' => ['steps' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']]], 'required' => ['steps']],
         );

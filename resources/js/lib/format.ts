@@ -46,6 +46,15 @@ export function formatQuantity(ingredient: Ingredient, scale: number, locale: st
 }
 
 /**
+ * Format a `YYYY-MM-DD` date in full, e.g. "Wednesday, 18 November".
+ */
+export function formatLongDay(isoDate: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(
+        new Date(`${isoDate}T00:00:00`),
+    );
+}
+
+/**
  * Format a `YYYY-MM-DD` date as weekday and day, e.g. "Mon, 16 Nov".
  */
 export function formatDay(isoDate: string, locale: string): string {

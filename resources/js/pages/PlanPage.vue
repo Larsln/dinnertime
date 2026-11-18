@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { ChevronLeft, ChevronRight, Plus, ShoppingCart, Sparkles, Trash2 } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, Plus, ShoppingCart, Sparkles } from 'lucide-vue-next';
 import { mealPlanApi, shoppingApi } from '@/api/planning';
 import type { MealPlanEntry } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
-import { addDays, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
-import { formatDay } from '@/lib/format';
+import { addDays, isoWeek, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
+import { formatDay, formatLongDay } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
 import { presetSlots, slotKey, type PlanSlot } from '@/lib/planSlots';
+import PlanEntryCard from '@/components/PlanEntryCard.vue';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
 import PlanMatrix from '@/components/PlanMatrix.vue';
+import WeekStrip from '@/components/WeekStrip.vue';
 import AppButton from '@/components/ui/AppButton.vue';
-import CheckboxField from '@/components/ui/CheckboxField.vue';
 import DialogPanel from '@/components/ui/DialogPanel.vue';
 import NumberField from '@/components/ui/NumberField.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
+import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 /**
  * The meal plan of one week with manual entries, the leftover-aware
@@ -60,6 +62,12 @@ const slots = ref<PlanSlot[]>([]);
 const plannedSlots = computed(() => new Set((entries.data.value ?? []).map(slotKey)));
 const servings = ref<number | null>(2);
 
+const daysWithEntries = computed(() => new Set((entries.data.value ?? []).map((entry) => entry.date)));
+
+function scrollToDay(day: string): void {
+    document.getElementById(`day-${day}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['meal-plan'] });
 }
@@ -75,6 +83,12 @@ function openGenerator(): void {
     slots.value = presetSlots(days.value, 'all', ['dinner'], plannedSlots.value);
     isGenerating.value = true;
 }
+
+watch(plannedSlots, (planned) => {
+    if (isGenerating.value) {
+        slots.value = presetSlots(days.value, 'all', ['dinner'], planned);
+    }
+});
 
 function startAdding(day: string): void {
     addingFor.value = day;
@@ -117,7 +131,7 @@ const createList = useMutation({
 <template>
     <PageHeader
         :title="t('nav.plan')"
-        :subtitle="`${formatDay(period.from, locale)} – ${formatDay(period.to, locale)}`"
+        :subtitle="`${t('plan.week', { number: isoWeek(monday) })} · ${formatDay(period.from, locale)} – ${formatDay(period.to, locale)}`"
     >
         <AppButton size="icon" :aria-label="t('plan.previousWeek')" @click="shiftWeek(-1)"
             ><ChevronLeft class="size-4"
@@ -125,22 +139,24 @@ const createList = useMutation({
         <AppButton size="icon" :aria-label="t('plan.nextWeek')" @click="shiftWeek(1)"
             ><ChevronRight class="size-4"
         /></AppButton>
+        <AppButton v-if="!days.includes(today)" @click="monday = startOfWeek(new Date())">
+            {{ t('plan.currentWeek') }}
+        </AppButton>
         <AppButton @click="openGenerator"><Sparkles class="size-4" />{{ t('plan.generate') }}</AppButton>
         <AppButton variant="primary" :disabled="createList.isPending.value" @click="createList.mutate()">
             <ShoppingCart class="size-4" />{{ t('plan.createList') }}
         </AppButton>
     </PageHeader>
 
-    <div class="space-y-3">
-        <section
-            v-for="day in days"
-            :key="day"
-            class="rounded-2xl border bg-white p-4"
-            :class="day === today ? 'border-emerald-300' : 'border-stone-200'"
-        >
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold">{{ formatDay(day, locale) }}</h2>
+    <WeekStrip :days="days" :today="today" :planned="daysWithEntries" @select="scrollToDay" />
+
+    <div class="space-y-6">
+        <section v-for="day in days" :id="`day-${day}`" :key="day" class="scroll-mt-4">
+            <div class="mb-2 flex items-center gap-3">
+                <h2 class="text-lg font-semibold">{{ formatLongDay(day, locale) }}</h2>
+                <StatusBadge v-if="day === today" tone="success">{{ t('plan.today') }}</StatusBadge>
                 <AppButton
+                    class="ml-auto"
                     size="icon"
                     variant="ghost"
                     :aria-label="t('plan.addEntry')"
@@ -149,38 +165,21 @@ const createList = useMutation({
                     <Plus class="size-4" />
                 </AppButton>
             </div>
-            <ul class="divide-y divide-stone-100">
-                <li
+            <ul v-if="entriesByDay.get(day)?.length" class="space-y-2">
+                <PlanEntryCard
                     v-for="entry in entriesByDay.get(day)"
                     :key="entry.id"
-                    class="flex items-center gap-3 py-2 text-sm"
-                >
-                    <CheckboxField
-                        :model-value="entry.cooked_at !== null"
-                        :aria-label="t('plan.cooked')"
-                        @update:model-value="(cooked) => setCooked.mutate({ id: entry.id, cooked })"
-                    />
-                    <span class="w-24 shrink-0 text-stone-500">{{ t(`meals.${entry.meal}`) }}</span>
-                    <RouterLink
-                        :to="{ name: 'recipe', params: { id: entry.recipe.id } }"
-                        class="min-w-0 flex-1 truncate font-medium hover:text-emerald-700"
-                        :class="{ 'text-stone-400 line-through': entry.cooked_at !== null }"
-                    >
-                        {{ entry.recipe.title }}
-                    </RouterLink>
-                    <span class="shrink-0 text-stone-500">{{
-                        t('plan.servings', { count: entry.servings })
-                    }}</span>
-                    <AppButton
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="t('common.delete')"
-                        @click="remove.mutate(entry.id)"
-                    >
-                        <Trash2 class="size-4" />
-                    </AppButton>
-                </li>
+                    :entry="entry"
+                    @cooked="(cooked) => setCooked.mutate({ id: entry.id, cooked })"
+                    @remove="remove.mutate(entry.id)"
+                />
             </ul>
+            <p
+                v-else
+                class="rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-sm text-stone-500"
+            >
+                {{ t('plan.nothingPlanned') }}
+            </p>
         </section>
     </div>
 
@@ -192,6 +191,17 @@ const createList = useMutation({
         :description="t('plan.generateDescription')"
         :close-label="t('common.close')"
     >
+        <div class="flex items-center justify-between gap-2">
+            <AppButton size="icon" :aria-label="t('plan.previousWeek')" @click="shiftWeek(-1)">
+                <ChevronLeft class="size-4" />
+            </AppButton>
+            <p class="text-sm font-medium">
+                {{ formatDay(period.from, locale) }} – {{ formatDay(period.to, locale) }}
+            </p>
+            <AppButton size="icon" :aria-label="t('plan.nextWeek')" @click="shiftWeek(1)">
+                <ChevronRight class="size-4" />
+            </AppButton>
+        </div>
         <PlanMatrix v-model="slots" :days="days" :planned="plannedSlots" />
         <NumberField v-model="servings" :label="t('recipes.servings')" :min="1" :max="50" steppers />
         <template #actions>

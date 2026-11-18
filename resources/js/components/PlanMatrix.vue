@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Toggle } from 'reka-ui';
-import { Check, Plus } from 'lucide-vue-next';
+import { Check, Minus, Plus } from 'lucide-vue-next';
 import type { MealType } from '@/api/types';
 import { fromIsoDate } from '@/lib/dates';
 import { MEAL_TYPES } from '@/lib/meals';
@@ -46,6 +46,15 @@ function toggle(slot: PlanSlot, isOn: boolean): void {
     const others = model.value.filter((entry) => slotKey(entry) !== slotKey(slot));
 
     model.value = isOn ? [...others, slot] : others;
+}
+
+/**
+ * Show or hide the additional meals. Hiding them also unticks their slots,
+ * so nothing invisible gets generated.
+ */
+function toggleMoreMeals(): void {
+    showsAllMeals.value = !showsAllMeals.value;
+    model.value = model.value.filter((slot) => meals.value.includes(slot.meal));
 }
 
 function applyMeals(presetMeals: MealType[]): void {
@@ -133,8 +142,9 @@ function applyDays(preset: DayPreset): void {
             </table>
         </div>
 
-        <AppButton v-if="!showsAllMeals" size="sm" variant="ghost" @click="showsAllMeals = true">
-            <Plus class="size-4" />{{ t('plan.showMoreMeals') }}
+        <AppButton size="sm" variant="ghost" @click="toggleMoreMeals">
+            <component :is="showsAllMeals ? Minus : Plus" class="size-4" />
+            {{ showsAllMeals ? t('plan.showFewerMeals') : t('plan.showMoreMeals') }}
         </AppButton>
     </div>
 </template>

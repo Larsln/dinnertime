@@ -38,6 +38,17 @@ export function weekDays(monday: Date): Date[] {
 }
 
 /**
+ * ISO 8601 number of the week the date lies in.
+ */
+export function isoWeek(date: Date): number {
+    const thursday = addDays(date, 3 - ((date.getDay() + 6) % 7));
+    const newYear = new Date(thursday.getFullYear(), 0, 1);
+    const dayOfYear = Math.round((thursday.getTime() - newYear.getTime()) / MILLISECONDS_PER_DAY) + 1;
+
+    return Math.ceil(dayOfYear / 7);
+}
+
+/**
  * Whole days from today until the date, negative when it lies in the past.
  */
 export function daysUntil(isoDate: string): number {

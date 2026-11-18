@@ -73,6 +73,13 @@ class SyncTest extends TestCase
         $item->delete();
 
         $this->getJson("/api/v1/sync?since={$since}")->assertJsonCount(0, 'data.changed.shopping_lists.0.items');
+
+        $since = $this->getJson('/api/v1/sync')->json('data.version');
+        $product->offers()->create(['store' => 'Lidl', 'price' => 1.99]);
+
+        $this->getJson("/api/v1/sync?since={$since}")
+            ->assertJsonPath('data.changed.products.0.offers.0.store', 'Lidl')
+            ->assertJsonPath('data.household.currency', 'EUR');
     }
 
     public function test_a_large_backlog_arrives_in_parts_without_gaps(): void

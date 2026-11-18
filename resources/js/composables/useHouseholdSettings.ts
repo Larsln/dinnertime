@@ -5,12 +5,17 @@ import { householdSettingsApi } from '@/api/settings';
 export const HOUSEHOLD_SETTINGS_KEY = ['household-settings'];
 
 const FALLBACK_SERVINGS = 2;
+const FALLBACK_CURRENCY = 'EUR';
 
 /**
  * What the household decided once for everyday use, such as the number of
- * servings a meal is planned for unless another number is chosen.
+ * servings a meal is planned for unless another number is chosen, and
+ * the currency prices are noted in.
  */
-export function useHouseholdSettings(): { defaultServings: ComputedRef<number> } {
+export function useHouseholdSettings(): {
+    defaultServings: ComputedRef<number>;
+    currency: ComputedRef<string>;
+} {
     const settings = useQuery({
         queryKey: HOUSEHOLD_SETTINGS_KEY,
         queryFn: householdSettingsApi.get,
@@ -19,5 +24,6 @@ export function useHouseholdSettings(): { defaultServings: ComputedRef<number> }
 
     return {
         defaultServings: computed(() => settings.data.value?.default_servings ?? FALLBACK_SERVINGS),
+        currency: computed(() => settings.data.value?.currency ?? FALLBACK_CURRENCY),
     };
 }

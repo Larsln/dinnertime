@@ -119,6 +119,16 @@ class Product extends Model
     }
 
     /**
+     * Stores that sell the product, with package size and price.
+     *
+     * @return HasMany<ProductOffer, $this>
+     */
+    public function offers(): HasMany
+    {
+        return $this->hasMany(ProductOffer::class)->orderBy('id');
+    }
+
+    /**
      * Package sizes the product is typically sold in.
      *
      * @return HasMany<ProductPackage, $this>

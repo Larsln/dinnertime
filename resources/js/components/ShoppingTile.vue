@@ -15,7 +15,8 @@ import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
 import { useToasts } from '@/composables/useToasts';
-import { formatDay, formatNumber } from '@/lib/format';
+import { formatDay, formatNumber, formatOffer } from '@/lib/format';
+import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import ProductIcon from '@/components/ProductIcon.vue';
 
 /**
@@ -28,6 +29,7 @@ const props = defineProps<{ item: ShoppingListItem }>();
 
 const { t, locale } = useI18n();
 const { amount } = useAmounts();
+const { currency } = useHouseholdSettings();
 const { showError } = useToasts();
 const queryClient = useQueryClient();
 
@@ -115,7 +117,7 @@ const remove = useMutation({
                     @click="toggle.mutate()"
                 >
                     <span
-                        v-if="item.product?.note"
+                        v-if="item.product?.note || item.product?.offers?.length"
                         class="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-current opacity-80"
                     />
                     <ProductIcon
@@ -153,6 +155,11 @@ const remove = useMutation({
                     <p v-if="item.is_approximate" class="mt-1 text-stone-500">
                         {{ t('shopping.approximate') }}
                     </p>
+                    <ul v-if="item.product?.offers?.length" class="mt-2 border-t border-stone-100 pt-2">
+                        <li v-for="offer in item.product.offers" :key="offer.id">
+                            {{ formatOffer(offer, baseUnit, locale, currency, t('units.piece')) }}
+                        </li>
+                    </ul>
                     <p
                         v-if="item.product?.note"
                         class="mt-2 border-t border-stone-100 pt-2 whitespace-pre-line"

@@ -18,6 +18,7 @@ class HouseholdSettingsController extends Controller
     {
         return response()->json(['data' => [
             'default_servings' => $this->settings->defaultServings(),
+            'currency' => $this->settings->currency(),
         ]]);
     }
 

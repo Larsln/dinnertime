@@ -1,4 +1,4 @@
-import type { BaseUnit, Ingredient } from '@/api/types';
+import type { BaseUnit, Ingredient, ProductOffer } from '@/api/types';
 
 const LARGE_UNIT_THRESHOLD = 1000;
 
@@ -30,6 +30,30 @@ export function formatAmount(amount: number, baseUnit: BaseUnit, locale: string,
     return amount >= LARGE_UNIT_THRESHOLD
         ? `${formatNumber(amount / LARGE_UNIT_THRESHOLD, locale)} ${labels.large}`
         : `${formatNumber(amount, locale)} ${labels.small}`;
+}
+
+/**
+ * Store, package size and price of an offer in one line, leaving out
+ * what is not known.
+ */
+export function formatOffer(
+    offer: ProductOffer,
+    baseUnit: BaseUnit,
+    locale: string,
+    currency: string,
+    pieceLabel: string,
+): string {
+    return [
+        offer.store,
+        offer.amount_in_base === null
+            ? null
+            : formatAmount(offer.amount_in_base, baseUnit, locale, pieceLabel),
+        offer.price === null
+            ? null
+            : new Intl.NumberFormat(locale, { style: 'currency', currency }).format(offer.price),
+    ]
+        .filter((part) => part !== null)
+        .join(' · ');
 }
 
 /**

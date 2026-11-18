@@ -37,6 +37,14 @@ class HouseholdSettings
         return Setting::firstOrCreate(['key' => self::PEER_KEY], ['value' => Str::random(48)])->value;
     }
 
+    /**
+     * ISO 4217 code of the currency prices are noted in.
+     */
+    public function currency(): string
+    {
+        return config('app.currency');
+    }
+
     public function setDefaultServings(int $servings): void
     {
         Setting::updateOrCreate(['key' => self::SERVINGS_KEY], ['value' => $servings]);

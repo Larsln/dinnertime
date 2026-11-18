@@ -79,6 +79,13 @@ export interface ProductPackage {
     source: ValueSource;
 }
 
+export interface ProductOffer {
+    id: number;
+    store: string;
+    amount_in_base: number | null;
+    price: number | null;
+}
+
 export interface Product {
     id: number;
     name: string;
@@ -95,6 +102,7 @@ export interface Product {
     aliases?: string[];
     conversions?: Conversion[];
     packages?: ProductPackage[];
+    offers?: ProductOffer[];
 }
 
 export interface ProductInput {

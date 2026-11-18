@@ -11,7 +11,7 @@ use App\Services\Planning\ShoppingListSynchronizer;
 
 class ShoppingListController extends Controller
 {
-    private const array ITEM_RELATIONS = ['items.product.storeSection'];
+    private const array ITEM_RELATIONS = ['items.product.storeSection', 'items.product.offers'];
 
     /**
      * Show the list of the latest period.

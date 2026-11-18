@@ -211,7 +211,8 @@ marks made offline still find it.
 | GET | `/settings/household` | | HouseholdSettings |
 | PATCH | `/settings/household` | `default_servings: 1–50` | HouseholdSettings |
 
-**HouseholdSettings:** `{default_servings}`: the number of servings a meal is
+**HouseholdSettings:** `{default_servings, currency}`. `currency` is the ISO 4217
+code prices are noted in, set with `APP_CURRENCY`. `default_servings` is the number of servings a meal is
 planned and shopped for unless another number is chosen. Clients preset it
 when planning and show recipes scaled to it. `2` until the household changes
 it.
@@ -248,6 +249,10 @@ to signed-in users; its content is never returned.
 | POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
 | PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
 | DELETE | `/product-packages/{id}` | | `204` |
+| POST | `/products/{id}/offers` | `store`, `amount_in_base?`, `price?` | Offer, `201` |
+| PATCH | `/product-offers/{id}` | `store?`, `amount_in_base?`, `price?` | Offer |
+| DELETE | `/product-offers/{id}` | | `204` |
+| GET | `/stores` | | `[string]`: the store names used so far, most used first |
 | POST | `/products/{id}/aliases` | `name` | Product |
 | DELETE | `/product-aliases/{id}` | | `204` |
 
@@ -264,6 +269,12 @@ to signed-in users; its content is never returned.
   `amount_in_base` of `null` states that the unit cannot be converted for
   this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
+- **Offer:** `{id, store, amount_in_base, price}`: where the product can be
+  bought. `store` is the name of the shop, `amount_in_base` the size of the
+  package it sells in the product's base unit and `price` what that package
+  costs, in the currency of the household settings; both may be `null`.
+  Products carry their `offers` on the detail and review endpoints, inside
+  shopping list items and in the sync feed.
 - **ProductInput:** `name`, `plural_name`, `icon`, `store_section_id`, `base_unit`,
   `is_pantry_staple`, `shelf_life_opened_days`, `note` (free text for the shopper, at most 500 characters)
 

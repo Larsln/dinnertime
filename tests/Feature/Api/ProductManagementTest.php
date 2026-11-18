@@ -27,6 +27,31 @@ class ProductManagementTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
+    public function test_it_notes_where_a_product_is_sold(): void
+    {
+        $halloumi = Product::factory()->create(['name' => 'Halloumi']);
+        $butter = Product::factory()->create(['name' => 'Butter']);
+
+        $id = $this->postJson("/api/v1/products/{$halloumi->id}/offers", ['store' => ' Lidl ', 'amount_in_base' => 225, 'price' => 2.59])
+            ->assertCreated()
+            ->assertJsonPath('data.store', 'Lidl')
+            ->assertJsonPath('data.amount_in_base', 225)
+            ->assertJsonPath('data.price', 2.59)
+            ->json('data.id');
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl'])->assertCreated()->assertJsonPath('data.price', null);
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Rewe', 'price' => 1.99])->assertCreated();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['price' => 1.99])->assertUnprocessable();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Rewe', 'amount_in_base' => 0])->assertUnprocessable();
+
+        $this->getJson('/api/v1/stores')->assertOk()->assertExactJson(['data' => ['Lidl', 'Rewe']]);
+        $this->patchJson("/api/v1/product-offers/{$id}", ['price' => 2.79])->assertOk()->assertJsonPath('data.price', 2.79)->assertJsonPath('data.store', 'Lidl');
+        $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonPath('data.offers.0.price', 2.79);
+        $this->getJson('/api/v1/settings/household')->assertJsonPath('data.currency', 'EUR');
+
+        $this->deleteJson("/api/v1/product-offers/{$id}")->assertNoContent();
+        $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonCount(0, 'data.offers');
+    }
+
     public function test_a_product_keeps_a_note(): void
     {
         $product = Product::factory()->create(['name' => 'Halloumi']);

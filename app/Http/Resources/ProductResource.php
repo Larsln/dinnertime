@@ -34,6 +34,7 @@ class ProductResource extends JsonResource
             'aliases' => $this->whenLoaded('aliases', fn () => $this->aliases->pluck('name')),
             'conversions' => ProductConversionResource::collection($this->whenLoaded('conversions')),
             'packages' => ProductPackageResource::collection($this->whenLoaded('packages')),
+            'offers' => ProductOfferResource::collection($this->whenLoaded('offers')),
         ];
     }
 }

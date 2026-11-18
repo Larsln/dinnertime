@@ -130,7 +130,7 @@ class SyncFeed
             'tags' => [Tag::query(), TagResource::class],
             'tools' => [Tool::query()->withCount('recipes'), ToolResource::class],
             'products' => [
-                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'packages'])->withCount('ingredients'),
+                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers'])->withCount('ingredients'),
                 ProductResource::class,
             ],
             'recipes' => [
@@ -139,7 +139,7 @@ class SyncFeed
             ],
             'meal_plan_entries' => [MealPlanEntry::query()->with('recipe.tags'), MealPlanEntryResource::class],
             'pantry_items' => [PantryItem::query()->with('product.storeSection'), PantryItemResource::class],
-            'shopping_lists' => [ShoppingList::query()->with('items.product.storeSection'), ShoppingListResource::class],
+            'shopping_lists' => [ShoppingList::query()->with(['items.product.storeSection', 'items.product.offers']), ShoppingListResource::class],
         ];
     }
 }

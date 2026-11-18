@@ -82,6 +82,17 @@ return [
 
     'content_locale' => env('APP_LOCALE', 'en'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Currency
+    |--------------------------------------------------------------------------
+    |
+    | ISO 4217 code of the currency the household notes prices in.
+    |
+    */
+
+    'currency' => env('APP_CURRENCY', 'EUR'),
+
     'supported_locales' => ['de', 'en'],
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),

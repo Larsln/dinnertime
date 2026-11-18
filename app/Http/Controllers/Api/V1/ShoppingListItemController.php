@@ -32,7 +32,7 @@ class ShoppingListItemController extends Controller
                 ['checked_at' => null, 'checked_by' => null],
             );
 
-        return new ShoppingListItemResource($item->refresh()->load('product.storeSection'));
+        return new ShoppingListItemResource($item->refresh()->load(['product.storeSection', 'product.offers']));
     }
 
     /**
@@ -51,7 +51,7 @@ class ShoppingListItemController extends Controller
 
         $item->save();
 
-        return new ShoppingListItemResource($item->load('product.storeSection'));
+        return new ShoppingListItemResource($item->load(['product.storeSection', 'product.offers']));
     }
 
     /**

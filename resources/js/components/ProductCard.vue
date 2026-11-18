@@ -8,6 +8,7 @@ import type { BaseUnit, Product } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
 import IconPicker from '@/components/IconPicker.vue';
+import ProductOffers from '@/components/ProductOffers.vue';
 import ProductPicker from '@/components/ProductPicker.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
@@ -259,13 +260,9 @@ const remove = useMutation({
             />
         </div>
 
-        <TextArea
-            v-model="details.note"
-            class="mt-4"
-            :rows="2"
-            :label="t('products.note')"
-            :placeholder="t('products.notePlaceholder')"
-        />
+        <TextArea v-model="details.note" class="mt-4" :rows="2" :label="t('products.note')" />
+
+        <ProductOffers class="mt-4" :product="product" />
 
         <IconPicker
             v-model="details.icon"

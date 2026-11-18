@@ -13,6 +13,7 @@ export interface ImportSettings {
  */
 export interface HouseholdSettings {
     default_servings: number;
+    currency: string;
 }
 
 export const householdSettingsApi = {

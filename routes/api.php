@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\PantryController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductConversionController;
+use App\Http\Controllers\Api\V1\ProductOfferController;
 use App\Http\Controllers\Api\V1\ProductPackageController;
 use App\Http\Controllers\Api\V1\RealtimeController;
 use App\Http\Controllers\Api\V1\RecipeController;
@@ -67,6 +68,10 @@ Route::prefix('v1')->group(function () {
         Route::post('products/{product}/packages', [ProductPackageController::class, 'store']);
         Route::patch('product-packages/{package}', [ProductPackageController::class, 'update']);
         Route::delete('product-packages/{package}', [ProductPackageController::class, 'destroy']);
+        Route::get('stores', [ProductOfferController::class, 'stores']);
+        Route::post('products/{product}/offers', [ProductOfferController::class, 'store']);
+        Route::patch('product-offers/{offer}', [ProductOfferController::class, 'update']);
+        Route::delete('product-offers/{offer}', [ProductOfferController::class, 'destroy']);
         Route::post('products/{product}/aliases', [ProductAliasController::class, 'store']);
         Route::delete('product-aliases/{alias}', [ProductAliasController::class, 'destroy']);
 

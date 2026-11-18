@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Api\V1\ImportController;
+use App\Http\Controllers\Api\V1\ImportSettingsController;
 use App\Http\Controllers\Api\V1\MealPlanController;
 use App\Http\Controllers\Api\V1\PantryController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
@@ -33,6 +34,11 @@ Route::prefix('v1')->group(function () {
         Route::put('recipes/{recipe}/rating', [RecipeMarkController::class, 'rate']);
         Route::put('recipes/{recipe}/favorite', [RecipeMarkController::class, 'favorite']);
         Route::apiResource('recipes', RecipeController::class);
+
+        Route::get('settings/import', [ImportSettingsController::class, 'show']);
+        Route::patch('settings/import', [ImportSettingsController::class, 'update']);
+        Route::post('settings/import/cookies', [ImportSettingsController::class, 'storeCookies']);
+        Route::delete('settings/import/cookies', [ImportSettingsController::class, 'destroyCookies']);
 
         Route::post('imports/{import}/retry', [ImportController::class, 'retry']);
         Route::get('imports/{import}/wait', [ImportController::class, 'wait']);

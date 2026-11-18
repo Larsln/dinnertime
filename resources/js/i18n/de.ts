@@ -233,5 +233,17 @@ export default {
     settings: {
         account: 'Konto',
         language: 'Sprache der Oberfläche',
+        import: {
+            title: 'Import',
+            browser: 'Als Browser ausgeben',
+            browserHint:
+                'Manche Kochseiten weisen den Importer ab. Mit dieser Option ruft der Server Seiten mit der Kennung eines Browsers ab.',
+            cookies: 'Anmeldung für Videoplattformen',
+            cookiesStored: 'hinterlegt',
+            cookiesHint:
+                'Instagram zeigt manche Videos nur angemeldeten Nutzern. Exportiere dafür die Cookies eines angemeldeten Browsers als cookies.txt (Netscape-Format) und lade die Datei hier hoch. Nimm am besten ein Zweitkonto.',
+            uploadCookies: 'Cookie-Datei hochladen',
+            deleteCookies: 'Entfernen',
+        },
     },
 };

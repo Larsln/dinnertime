@@ -94,7 +94,7 @@ export const api = {
     post: <T>(path: string, body?: unknown) => sendJson<T>('POST', path, body),
     put: <T>(path: string, body?: unknown) => sendJson<T>('PUT', path, body),
     patch: <T>(path: string, body?: unknown) => sendJson<T>('PATCH', path, body),
-    delete: (path: string) => sendJson<void>('DELETE', path),
+    delete: <T = void>(path: string) => sendJson<T>('DELETE', path),
     upload: <T>(path: string, form: FormData) => send<T>('POST', buildUrl(path), form),
 };
 

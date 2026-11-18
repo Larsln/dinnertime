@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Services\Ai\GeminiClient;
 use App\Services\Auth\OidcVerifier;
-use App\Services\Import\VideoDownloader;
 use App\Services\Mealie\MealieClient;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,10 +17,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(GeminiClient::class, fn () => new GeminiClient(
             config('services.gemini.key'),
             (string) config('services.gemini.base_url'),
-        ));
-
-        $this->app->singleton(VideoDownloader::class, fn () => new VideoDownloader(
-            config('services.ytdlp.cookies'),
         ));
 
         $this->app->singleton(OidcVerifier::class, fn () => new OidcVerifier(

@@ -26,10 +26,7 @@ class VideoDownloader
 
     private const int TIMEOUT_SECONDS = 180;
 
-    /**
-     * @param  ?string  $cookiesFile  Netscape cookie file for platforms that require a login.
-     */
-    public function __construct(private readonly ?string $cookiesFile) {}
+    public function __construct(private readonly ImportSettings $settings) {}
 
     /**
      * Metadata of the video behind a link, including its id and caption.
@@ -72,7 +69,7 @@ class VideoDownloader
             'yt-dlp',
             '--no-playlist',
             '--no-warnings',
-            ...(filled($this->cookiesFile) ? ['--cookies', $this->cookiesFile] : []),
+            ...(filled($this->settings->cookiesFile()) ? ['--cookies', $this->settings->cookiesFile()] : []),
             ...$arguments,
         ];
 

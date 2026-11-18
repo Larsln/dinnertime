@@ -5,12 +5,13 @@ import { useI18n } from 'vue-i18n';
 import { useQueryClient } from '@tanstack/vue-query';
 import { SUPPORTED_LOCALES, currentLocale, setLocale, type Locale } from '@/i18n';
 import { useSessionStore } from '@/stores/session';
+import ImportSettingsCard from '@/components/ImportSettingsCard.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import SelectField from '@/components/ui/SelectField.vue';
 
 /**
- * Account, interface language and sign-out.
+ * Account, interface language, sign-out and how links are imported.
  */
 const { t } = useI18n();
 const router = useRouter();
@@ -48,5 +49,6 @@ async function signOut(): Promise<void> {
         <section class="rounded-2xl border border-stone-200 bg-white p-4">
             <SelectField v-model="locale" :options="localeOptions" :label="t('settings.language')" />
         </section>
+        <ImportSettingsCard />
     </div>
 </template>

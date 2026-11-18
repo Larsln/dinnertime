@@ -22,8 +22,6 @@ use Illuminate\Support\Str;
  */
 class WebRecipeImporter implements RecipeSourceImporter
 {
-    private const string USER_AGENT = 'Mozilla/5.0 (compatible; MealplannerBot/1.0)';
-
     private const int MAX_TEXT_LENGTH = 30000;
 
     private const array IMAGE_EXTENSIONS = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
@@ -31,6 +29,7 @@ class WebRecipeImporter implements RecipeSourceImporter
     public function __construct(
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
+        private readonly ImportSettings $settings,
     ) {}
 
     public function import(string $url, Closure $report): Recipe
@@ -70,7 +69,7 @@ class WebRecipeImporter implements RecipeSourceImporter
     private function fetch(string $url): string
     {
         try {
-            return Http::withUserAgent(self::USER_AGENT)->timeout(30)->get($url)->throw()->body();
+            return Http::withUserAgent($this->settings->userAgent())->timeout(30)->get($url)->throw()->body();
         } catch (RequestException|ConnectionException $exception) {
             throw new ImportFailedException(ImportError::DownloadFailed, $exception->getMessage());
         }
@@ -99,7 +98,7 @@ class WebRecipeImporter implements RecipeSourceImporter
             return;
         }
 
-        $image = rescue(fn () => Http::withUserAgent(self::USER_AGENT)->timeout(30)->get(html_entity_decode($match[1])), report: false);
+        $image = rescue(fn () => Http::withUserAgent($this->settings->userAgent())->timeout(30)->get(html_entity_decode($match[1])), report: false);
         $extension = self::IMAGE_EXTENSIONS[Str::before((string) $image?->header('Content-Type'), ';')] ?? null;
 
         if ($image?->successful() && $extension !== null) {

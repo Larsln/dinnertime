@@ -8,4 +8,6 @@ return [
 
     'tool_in_use' => 'Das Hilfsmittel wird in Rezepten verwendet und kann nicht gelöscht werden.',
 
+    'invalid_cookie_file' => 'Die Datei ist kein Cookie-Export im Netscape-Format.',
+
 ];

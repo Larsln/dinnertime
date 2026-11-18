@@ -8,4 +8,6 @@ return [
 
     'tool_in_use' => 'The tool is used in recipes and cannot be deleted.',
 
+    'invalid_cookie_file' => 'The file is not a cookie export in Netscape format.',
+
 ];

@@ -226,6 +226,18 @@ const messages: typeof de = {
     settings: {
         account: 'Account',
         language: 'Interface language',
+        import: {
+            title: 'Import',
+            browser: 'Identify as a browser',
+            browserHint:
+                'Some recipe sites turn the importer away. With this option the server fetches pages with the user agent of a browser.',
+            cookies: 'Sign-in for video platforms',
+            cookiesStored: 'stored',
+            cookiesHint:
+                'Instagram shows some videos to signed-in users only. Export the cookies of a signed-in browser as cookies.txt (Netscape format) and upload the file here. Preferably use a secondary account.',
+            uploadCookies: 'Upload cookie file',
+            deleteCookies: 'Remove',
+        },
     },
 };
 

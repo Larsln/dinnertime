@@ -123,6 +123,21 @@ or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 request to `/imports/{id}/wait` open to learn the outcome.
 `error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
 
+## Import settings
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| GET | `/settings/import` | | ImportSettings |
+| PATCH | `/settings/import` | `identify_as_browser: bool` | ImportSettings |
+| POST | `/settings/import/cookies` | multipart `cookies` | ImportSettings |
+| DELETE | `/settings/import/cookies` | | ImportSettings |
+
+**ImportSettings:** `{identify_as_browser, has_cookies}`. With
+`identify_as_browser` web pages are fetched with the user agent of a browser,
+for sites that turn the importer away. The cookie file is a Netscape format
+export from a browser signed in to a video platform that only serves videos
+to signed-in users; its content is never returned.
+
 ## Products and review
 
 | Method | Path | Body or query | Answer |

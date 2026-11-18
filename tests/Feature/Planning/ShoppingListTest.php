@@ -98,6 +98,33 @@ class ShoppingListTest extends TestCase
         $this->assertNull($items[2]['needed_amount']);
     }
 
+    public function test_it_lists_amounts_that_cannot_be_converted_in_the_recipe_unit(): void
+    {
+        $apple = $this->product('Apfel', [1000]);
+        $this->plan('2026-11-16', $this->recipe('Kuchen', [[$apple, 3], [$apple, 200, 'gram']]));
+        $this->plan('2026-11-17', $this->recipe('Kompott', [[$apple, 2], [$apple, 1, 'bunch']]), servings: 4);
+
+        $item = $this->createList()->json('data.items.0', []);
+
+        $this->assertEquals(200, $item['needed_amount']);
+        $this->assertEquals(1000, $item['purchase_amount']);
+        $this->assertEqualsCanonicalizing(
+            [['quantity' => 7, 'unit_code' => 'pc'], ['quantity' => 2, 'unit_code' => 'bunch']],
+            $item['extra_amounts'],
+        );
+    }
+
+    public function test_a_product_needed_only_in_an_unconvertible_unit_is_still_listed(): void
+    {
+        $lemon = $this->product('Zitrone');
+        $this->plan('2026-11-16', $this->recipe('Limonade', [[$lemon, 2]]));
+
+        $this->createList()
+            ->assertJsonPath('data.items.0.product.name', 'Zitrone')
+            ->assertJsonPath('data.items.0.purchase_amount', null)
+            ->assertJsonPath('data.items.0.extra_amounts.0.quantity', 2);
+    }
+
     public function test_it_flags_amounts_based_on_unconfirmed_conversions(): void
     {
         $cream = $this->product('Sahne', [200]);

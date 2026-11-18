@@ -80,6 +80,14 @@ class ProductManagementTest extends TestCase
             ->assertJsonPath('data.status', 'confirmed')
             ->assertJsonPath('data.source', 'user');
 
+        $piece = Unit::firstWhere('key', 'piece');
+        $this->putJson("/api/v1/products/{$flour->id}/conversions/{$piece->id}", ['amount_in_base' => null])
+            ->assertCreated()
+            ->assertJsonPath('data.amount_in_base', null)
+            ->assertJsonPath('data.status', 'confirmed');
+        $this->putJson("/api/v1/products/{$flour->id}/conversions/{$piece->id}", [])->assertUnprocessable();
+        $this->deleteJson("/api/v1/products/{$flour->id}/conversions/{$piece->id}")->assertNoContent();
+
         $packageId = $this->postJson("/api/v1/products/{$flour->id}/packages", ['label' => 'Tüte', 'amount_in_base' => 500])
             ->assertCreated()
             ->json('data.id');

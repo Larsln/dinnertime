@@ -51,7 +51,7 @@ final readonly class RecipeExtractionPrompt
         Steps:
         - Write well-formed steps in the imperative like a cookbook, including amounts, times, temperatures and signs of doneness.
         - Do not quote the original wording and do not split into tiny steps.
-        - Set a step title only on the first step of a separate component such as dough or filling, never on every step.
+        - Group the steps of separate components such as base, filling and decoration by giving all steps of a component the same section name. Leave section null when the dish has no separate components.
 
         Tools:
         - List kitchen tools in singular. Always include the cooking appliance such as oven, pan, pot, deep fryer, airfryer, grill, microwave or kitchen torch, and for oven dishes the dish or tray.
@@ -94,7 +94,7 @@ final readonly class RecipeExtractionPrompt
                 'note' => $optionalString,
                 'is_estimated' => ['type' => 'BOOLEAN'],
             ]),
-            'steps' => $this->listOf(['title' => $optionalString, 'text' => $string]),
+            'steps' => $this->listOf(['section' => $optionalString, 'text' => $string]),
             'tools' => ['type' => 'ARRAY', 'items' => $string],
             'meals' => $this->keysOf(TagType::Meal),
             'course' => ['type' => 'STRING', 'enum' => array_column(Course::cases(), 'value')],

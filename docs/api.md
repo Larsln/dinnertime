@@ -75,17 +75,36 @@ recipes in.
   present on the recipe endpoints and absent where a recipe is embedded in
   another resource.
 - **Recipe:** RecipeSummary plus `{source_url, source_platform,
-  meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [{id, name}]}`
+  meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [Tool]}`
 - **Ingredient:** `{id, position, section, quantity, unit: Unit|null,
   product: Product|null, note, is_estimated, raw_text}`. A missing unit means
   the quantity counts pieces. Lines without a product only carry `raw_text`.
-- **Step:** `{id, position, title, text}`
+- **Step:** `{id, position, section, text}`. Consecutive steps with the same
+  free-text `section` form a group, for example "Base", "Filling" and
+  "Decoration" of a cake.
 - **RecipeInput:** `title`, `description`, `course`, `servings`, `yield_text`,
   `prep_minutes`, `cook_minutes`, `source_url`, `tag_ids: [int]`,
-  `tools: [string]`, `ingredients: [{section, product_id, quantity, unit_id,
-  note, is_estimated, raw_text}]`, `steps: [{title, text}]`. Lists that are
+  `tool_ids: [int]`, `ingredients: [{section, product_id, quantity, unit_id,
+  note, is_estimated, raw_text}]`, `steps: [{section, text}]`. Lists that are
   present replace the stored ones as a whole. Sending `tag_ids` locks the tags
   against later changes by the AI.
+
+## Tools
+
+Tools form a catalog of the household, like products. Recipes refer to them
+by id.
+
+| Method | Path | Body or query | Answer |
+|---|---|---|---|
+| GET | `/tools` | `?search=` | List of Tool, not paginated |
+| POST | `/tools` | `name`, `is_owned` | Tool, `201` |
+| PATCH | `/tools/{id}` | `name`, `is_owned` | Tool |
+| DELETE | `/tools/{id}` | | `204`; `409` if a recipe needs it |
+| POST | `/tools/{id}/merge` | `into: <tool id>` | The remaining Tool |
+
+**Tool:** `{id, name, is_owned, recipe_count}`. `is_owned` states whether the
+household has the tool and defaults to `true`. `recipe_count` is present on
+the tool endpoints only.
 
 ## Imports
 
@@ -113,7 +132,7 @@ or `failed`. Clients poll `GET /imports/{id}` until it is completed or failed.
 | GET | `/review` | | Paginated Product awaiting confirmation |
 | POST | `/products/{id}/confirm` | | Product; confirms it with all conversions and packages |
 | POST | `/products/{id}/merge` | `into: <product id>` | The remaining Product |
-| PUT | `/products/{id}/conversions/{unit id}` | `amount_in_base` | Conversion |
+| PUT | `/products/{id}/conversions/{unit id}` | `amount_in_base`: number, or `null` for "cannot be converted" | Conversion |
 | DELETE | `/products/{id}/conversions/{unit id}` | | `204` |
 | POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
 | PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
@@ -128,7 +147,9 @@ or `failed`. Clients poll `GET /imports/{id}` until it is completed or failed.
   or `confirmed`. `recipe_count`, `conversions` and `packages` are only
   present on the detail and review endpoints.
 - **Conversion:** `{id, unit: Unit, amount_in_base, status, source}`: one
-  `unit` of the product equals `amount_in_base` of its base unit.
+  `unit` of the product equals `amount_in_base` of its base unit. An
+  `amount_in_base` of `null` states that the unit cannot be converted for
+  this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
 - **ProductInput:** `name`, `plural_name`, `store_section_id`, `base_unit`,
   `is_pantry_staple`, `shelf_life_opened_days`
@@ -181,10 +202,12 @@ Without `expires_on` the expiry follows from the product's shelf life.
 - **Item:** `{id, label, is_manual, needed_amount, purchase_amount,
   packages: [{package_id, label, amount, count}], leftover_amount,
   wasted_amount, uses: [{date, recipe_id, title, amount}], is_approximate,
-  checked_at, product: Product|null}`
+  extra_amounts: [{quantity, unit_code}], checked_at, product: Product|null}`
 
 Generated items name a product and the packages to buy. `leftover_amount`
 remains usable after the period, `wasted_amount` expires before a recipe uses
-it. `is_approximate` marks amounts based on unconfirmed conversions. Items
+it. `is_approximate` marks amounts based on unconfirmed conversions.
+`extra_amounts` lists what recipes need in units that cannot be converted
+into the base unit, to be bought in addition, for example 3 pieces. Items
 without a product are manual entries or ingredient lines without a product.
 Refreshing a list keeps manual items and the checked state of products.

@@ -8,18 +8,20 @@ use App\Models\Recipe;
 use App\Models\Tag;
 use App\Models\Unit;
 use App\Services\Catalog\ProductResolver;
+use App\Services\Catalog\ToolResolver;
 use App\Services\Recipes\RecipeWriter;
 use App\Support\SourceLink;
 
 /**
- * Stores a recipe the AI extracted, linking ingredients to products and
- * resolving unit and tag keys.
+ * Stores a recipe the AI extracted, linking ingredients to products, tools
+ * to the catalog and resolving unit and tag keys.
  */
 class RecipeDraftWriter
 {
     public function __construct(
         private readonly RecipeWriter $writer,
         private readonly ProductResolver $products,
+        private readonly ToolResolver $tools,
     ) {}
 
     /**
@@ -43,8 +45,8 @@ class RecipeDraftWriter
             'source_platform' => $source->platform,
             'source_video_id' => $videoId ?? $source->videoId,
             'ingredients' => $this->ingredientRows($draft['ingredients']),
-            'steps' => array_map(fn (array $step) => ['title' => $step['title'] ?: null, 'text' => $step['text']], $draft['steps']),
-            'tools' => array_values(array_unique($draft['tools'])),
+            'steps' => array_map(fn (array $step) => ['section' => $step['section'] ?: null, 'text' => $step['text']], $draft['steps']),
+            'tool_ids' => $this->toolIds($draft['tools']),
             'tag_ids' => [
                 ...$this->tagIds(TagType::Meal, $draft['meals']),
                 ...$this->tagIds(TagType::Tag, $draft['tags']),
@@ -75,6 +77,17 @@ class RecipeDraftWriter
         }
 
         return $rows;
+    }
+
+    /**
+     * @param  list<string>  $names
+     * @return list<int>
+     */
+    private function toolIds(array $names): array
+    {
+        $ids = array_map(fn (string $name) => $this->tools->resolve($name)->id, array_filter($names));
+
+        return array_values(array_unique($ids));
     }
 
     /**

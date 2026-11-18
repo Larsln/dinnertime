@@ -18,7 +18,9 @@ use App\Models\Unit;
 class IngredientConverter
 {
     /**
-     * Amount in the product's base unit, or null when it cannot be derived.
+     * Amount in the product's base unit, or null when it cannot be derived:
+     * the quantity is missing, no conversion is known, or the household
+     * marked the unit as not convertible for the product.
      */
     public function convert(RecipeIngredient $ingredient): ?ConvertedAmount
     {
@@ -35,6 +37,10 @@ class IngredientConverter
         }
 
         $conversion = $this->findConversion($product, $unit);
+
+        if ($conversion?->amount_in_base === null && $conversion !== null) {
+            return null;
+        }
 
         if ($conversion !== null) {
             return new ConvertedAmount(

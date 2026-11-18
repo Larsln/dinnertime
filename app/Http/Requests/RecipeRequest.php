@@ -33,8 +33,8 @@ class RecipeRequest extends FormRequest
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['integer', 'distinct', 'exists:tags,id'],
 
-            'tools' => ['sometimes', 'array'],
-            'tools.*' => ['string', 'distinct', 'max:100'],
+            'tool_ids' => ['sometimes', 'array'],
+            'tool_ids.*' => ['integer', 'distinct', 'exists:tools,id'],
 
             'ingredients' => ['sometimes', 'array'],
             'ingredients.*.section' => ['nullable', 'string', 'max:255'],
@@ -46,7 +46,7 @@ class RecipeRequest extends FormRequest
             'ingredients.*.raw_text' => ['nullable', 'string', 'max:255', 'required_without:ingredients.*.product_id'],
 
             'steps' => ['sometimes', 'array'],
-            'steps.*.title' => ['nullable', 'string', 'max:255'],
+            'steps.*.section' => ['nullable', 'string', 'max:255'],
             'steps.*.text' => ['required', 'string', 'max:5000'],
         ];
     }

@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Single preparation step of a recipe.
+ * Single preparation step of a recipe. Consecutive steps with the same
+ * section form a group such as "Boden" or "Füllung".
  */
-#[Fillable(['recipe_id', 'position', 'title', 'text'])]
+#[Fillable(['recipe_id', 'position', 'section', 'text'])]
 class RecipeStep extends Model
 {
     /**

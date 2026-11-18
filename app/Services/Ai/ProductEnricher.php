@@ -90,9 +90,10 @@ class ProductEnricher
 
     /**
      * Store conversions for the units that do not measure the base unit.
+     * A missing amount records that the unit cannot be converted.
      *
      * @param  Collection<int, Unit>  $units
-     * @param  list<array{unit: string, amount: float|int}>  $conversions
+     * @param  list<array{unit: string, amount: float|int|null}>  $conversions
      */
     private function applyConversions(Product $product, Collection $units, array $conversions): void
     {
@@ -101,10 +102,12 @@ class ProductEnricher
         foreach ($conversions as $conversion) {
             $unit = $unitsByLabel->get($conversion['unit']);
 
-            if ($unit !== null && $conversion['amount'] > 0 && ! $product->base_unit->isMeasuredBy($unit)) {
+            $amount = $conversion['amount'] ?? null;
+
+            if ($unit !== null && ($amount === null || $amount > 0) && ! $product->base_unit->isMeasuredBy($unit)) {
                 $product->conversions()->firstOrCreate(
                     ['unit_id' => $unit->id],
-                    ['amount_in_base' => round($conversion['amount'], 3), 'status' => ReviewStatus::Suggested, 'source' => ValueSource::Ai],
+                    ['amount_in_base' => $amount === null ? null : round($amount, 3), 'status' => ReviewStatus::Suggested, 'source' => ValueSource::Ai],
                 );
             }
         }

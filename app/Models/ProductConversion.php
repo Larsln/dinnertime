@@ -11,7 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Amount of a product, in its base unit, that one unit corresponds to.
  *
- * @property float $amount_in_base
+ * A conversion without an amount states that the unit cannot be converted
+ * for the product, as with pieces of fruit that vary in weight.
+ *
+ * @property ?float $amount_in_base
  * @property ReviewStatus $status
  * @property ValueSource $source
  */

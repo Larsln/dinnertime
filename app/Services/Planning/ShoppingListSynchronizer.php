@@ -64,6 +64,10 @@ class ShoppingListSynchronizer
                 'amount' => round($demand->amount, 3),
             ], $forecast->uses),
             'is_approximate' => $forecast->approximate,
+            'extra_amounts' => array_map(fn (UnconvertedAmount $amount) => [
+                'unit_id' => $amount->unitId,
+                'quantity' => round($amount->quantity, 3),
+            ], $forecast->unconverted),
         ];
     }
 

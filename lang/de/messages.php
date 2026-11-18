@@ -6,4 +6,6 @@ return [
 
     'product_in_use' => 'Das Produkt wird in Rezepten verwendet und kann nicht gelöscht werden.',
 
+    'tool_in_use' => 'Das Hilfsmittel wird in Rezepten verwendet und kann nicht gelöscht werden.',
+
 ];

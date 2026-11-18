@@ -6,4 +6,6 @@ return [
 
     'product_in_use' => 'The product is used in recipes and cannot be deleted.',
 
+    'tool_in_use' => 'The tool is used in recipes and cannot be deleted.',
+
 ];

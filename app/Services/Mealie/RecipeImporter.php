@@ -163,17 +163,23 @@ class RecipeImporter
     }
 
     /**
+     * Build step rows. Mealie titles only the first step of a component,
+     * so the title is carried forward as section of the following steps.
+     *
      * @param  list<array<string, mixed>>  $steps
      * @return list<array<string, mixed>>
      */
     private function stepRows(array $steps): array
     {
+        $section = null;
         $rows = [];
 
         foreach ($steps as $index => $step) {
+            $section = $step['title'] ?: $section;
+
             $rows[] = [
                 'position' => $index + 1,
-                'title' => $step['title'] ?: null,
+                'section' => $section,
                 'text' => $step['text'],
             ];
         }

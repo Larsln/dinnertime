@@ -40,7 +40,7 @@ final readonly class ProductEnrichmentPrompt
         ];
 
         if ($units !== '') {
-            $lines[] = "- conversions: for each of these recipe units, the amount of the product in the base unit that one unit corresponds to: {$units}.";
+            $lines[] = "- conversions: for each of these recipe units, the amount of the product in the base unit that one unit corresponds to: {$units}. Use null where no fixed amount exists because single items vary too much.";
         }
 
         return implode("\n", $lines);
@@ -73,7 +73,7 @@ final readonly class ProductEnrichmentPrompt
                     'type' => 'OBJECT',
                     'properties' => [
                         'unit' => ['type' => 'STRING', 'enum' => $this->units->map(self::unitLabel(...))->all()],
-                        'amount' => ['type' => 'NUMBER'],
+                        'amount' => ['type' => 'NUMBER', 'nullable' => true],
                     ],
                     'required' => ['unit', 'amount'],
                 ],

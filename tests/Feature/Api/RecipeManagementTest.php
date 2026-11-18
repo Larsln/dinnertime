@@ -6,6 +6,7 @@ use App\Enums\TagType;
 use App\Jobs\EnrichProduct;
 use App\Models\Recipe;
 use App\Models\Tag;
+use App\Models\Tool;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,20 +36,22 @@ class RecipeManagementTest extends TestCase
         $flour = $this->product('Mehl', attributes: ['enriched_at' => now()]);
         $onion = $this->product('Zwiebel', attributes: ['enriched_at' => now()]);
         $dinner = Tag::where('type', TagType::Meal)->where('key', 'dinner')->value('id');
+        $oven = Tool::create(['name' => 'Backofen']);
+        $pan = Tool::create(['name' => 'Springform', 'is_owned' => false]);
 
         $response = $this->postJson('/api/v1/recipes', [
             'title' => 'Zwiebelkuchen',
             'course' => 'main',
             'servings' => 4,
             'tag_ids' => [$dinner],
-            'tools' => ['Backofen', 'Springform'],
+            'tool_ids' => [$oven->id, $pan->id],
             'ingredients' => [
                 ['section' => 'Teig', 'product_id' => $flour->id, 'quantity' => 250, 'unit_id' => Unit::where('key', 'gram')->value('id')],
                 ['product_id' => $onion->id, 'quantity' => 3, 'note' => 'in Ringen'],
                 ['raw_text' => 'etwas Kümmel'],
             ],
             'steps' => [
-                ['title' => 'Teig', 'text' => 'Mehl mit Wasser verkneten.'],
+                ['section' => 'Teig', 'text' => 'Mehl mit Wasser verkneten.'],
                 ['text' => 'Zwiebeln andünsten.'],
             ],
         ]);
@@ -63,7 +66,10 @@ class RecipeManagementTest extends TestCase
             ->assertJsonPath('data.ingredients.1.product.name', 'Zwiebel')
             ->assertJsonPath('data.ingredients.2.raw_text', 'etwas Kümmel')
             ->assertJsonPath('data.steps.1.position', 2)
+            ->assertJsonPath('data.steps.0.section', 'Teig')
+            ->assertJsonPath('data.steps.1.section', null)
             ->assertJsonPath('data.tools.0.name', 'Backofen')
+            ->assertJsonPath('data.tools.1.is_owned', false)
             ->assertJsonPath('data.tags.0.key', 'dinner');
 
         Queue::assertPushed(EnrichProduct::class, fn (EnrichProduct $job) => $job->product->is($onion));
@@ -97,8 +103,9 @@ class RecipeManagementTest extends TestCase
         $this->postJson('/api/v1/recipes', [
             'title' => 'Kaputt',
             'ingredients' => [['quantity' => 2]],
-            'steps' => [['title' => 'Ohne Text']],
-        ])->assertUnprocessable()->assertJsonValidationErrors(['ingredients.0.raw_text', 'steps.0.text']);
+            'steps' => [['section' => 'Ohne Text']],
+            'tool_ids' => [999],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['ingredients.0.raw_text', 'steps.0.text', 'tool_ids.0']);
     }
 
     public function test_it_replaces_the_cover_and_removes_it_with_the_recipe(): void

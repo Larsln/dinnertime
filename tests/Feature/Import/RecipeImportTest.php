@@ -11,6 +11,7 @@ use App\Jobs\EnrichProduct;
 use App\Jobs\ImportRecipe;
 use App\Models\Recipe;
 use App\Models\RecipeImport;
+use App\Models\Tool;
 use App\Models\User;
 use App\Services\Ai\GeminiClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,6 +68,7 @@ class RecipeImportTest extends TestCase
         Queue::fake([EnrichProduct::class]);
         $soySauce = $this->product('Sojasoße');
         $soySauce->aliases()->create(['name' => 'Sojasauce']);
+        Tool::create(['name' => 'Airfryer']);
         $this->fakeVideoTools();
         $this->fakeGemini($this->draft());
 
@@ -81,7 +83,9 @@ class RecipeImportTest extends TestCase
         $this->assertFalse($recipe->meal_tags_locked);
         $this->assertSame(Course::Main, $recipe->course);
         $this->assertEqualsCanonicalizing(['dinner', 'quick'], $recipe->tags->pluck('key')->all());
-        $this->assertSame(['Airfryer'], $recipe->tools->pluck('name')->all());
+        $this->assertSame(['Airfryer', 'Backblech'], $recipe->tools->pluck('name')->all());
+        $this->assertSame(2, Tool::count());
+        $this->assertSame(['Soße', null], $recipe->steps->pluck('section')->all());
 
         [$sauce, $chicken] = $recipe->ingredients;
         $this->assertTrue($sauce->product->is($soySauce));
@@ -290,10 +294,10 @@ class RecipeImportTest extends TestCase
                 ['section' => null, 'name' => 'Hähnchenbrustfilet', 'quantity' => 2, 'unit' => null, 'note' => 'in Streifen', 'is_estimated' => false],
             ],
             'steps' => [
-                ['title' => 'Soße', 'text' => 'Sojasoße und Honig verrühren.'],
-                ['title' => null, 'text' => 'Tenders 12 Minuten im Airfryer garen.'],
+                ['section' => 'Soße', 'text' => 'Sojasoße und Honig verrühren.'],
+                ['section' => null, 'text' => 'Tenders 12 Minuten im Airfryer garen.'],
             ],
-            'tools' => ['Airfryer'],
+            'tools' => ['airfryer', 'Backblech'],
             'meals' => ['dinner'],
             'course' => 'main',
             'tags' => ['quick'],

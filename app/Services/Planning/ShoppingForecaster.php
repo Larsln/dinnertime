@@ -27,7 +27,7 @@ class ShoppingForecaster
     /**
      * Converted ingredient lines per recipe, kept while the recipe is in use.
      *
-     * @var WeakMap<Recipe, list<array{product: ?Product, amount: ?ConvertedAmount, text: ?string}>>
+     * @var WeakMap<Recipe, list<array{product: ?Product, amount: ?ConvertedAmount, text: ?string, quantity: ?float, unitId: ?int}>>
      */
     private WeakMap $recipeLines;
 
@@ -65,19 +65,25 @@ class ShoppingForecaster
         $demands = [];
         $approximate = [];
         $unquantified = [];
+        $unconverted = [];
         $unresolved = [];
 
         foreach ($meals as $meal) {
             $scale = $meal->recipe->servings ? $meal->servings / $meal->recipe->servings : 1;
 
-            foreach ($this->linesOf($meal->recipe) as ['product' => $product, 'amount' => $amount, 'text' => $text]) {
+            foreach ($this->linesOf($meal->recipe) as $line) {
+                ['product' => $product, 'amount' => $amount] = $line;
+
                 if ($product === null) {
-                    $unresolved[$text] = true;
+                    $unresolved[$line['text']] = true;
                 } elseif (! $product->is_pantry_staple) {
                     $products[$product->id] = $product;
 
-                    if ($amount === null) {
+                    if ($amount === null && $line['quantity'] === null) {
                         $unquantified[$product->id] = true;
+                    } elseif ($amount === null) {
+                        $unitKey = $line['unitId'] ?? 0;
+                        $unconverted[$product->id][$unitKey] = ($unconverted[$product->id][$unitKey] ?? 0) + $line['quantity'] * $scale;
                     } else {
                         $demands[$product->id][] = new Demand($meal->date, $meal->recipe, $amount->amount * $scale);
                         $approximate[$product->id] = ($approximate[$product->id] ?? false) || $amount->approximate;
@@ -95,6 +101,7 @@ class ShoppingForecaster
                 $this->lotsOf($lots->get($product->id, collect())),
                 $approximate[$product->id] ?? false,
                 $unquantified[$product->id] ?? false,
+                $this->unconvertedAmounts($unconverted[$product->id] ?? []),
             ), $products)),
             array_keys($unresolved),
         );
@@ -103,7 +110,7 @@ class ShoppingForecaster
     /**
      * Ingredient lines of a recipe that name a product or carry a text.
      *
-     * @return list<array{product: ?Product, amount: ?ConvertedAmount, text: ?string}>
+     * @return list<array{product: ?Product, amount: ?ConvertedAmount, text: ?string, quantity: ?float, unitId: ?int}>
      */
     private function linesOf(Recipe $recipe): array
     {
@@ -121,11 +128,26 @@ class ShoppingForecaster
                     'product' => $ingredient->product,
                     'amount' => $this->converter->convert($ingredient),
                     'text' => $text,
+                    'quantity' => $ingredient->quantity,
+                    'unitId' => $ingredient->unit_id,
                 ];
             }
         }
 
         return $this->recipeLines[$recipe] = $lines;
+    }
+
+    /**
+     * @param  array<int, float>  $quantities  Quantities keyed by unit id, with 0 standing for pieces.
+     * @return list<UnconvertedAmount>
+     */
+    private function unconvertedAmounts(array $quantities): array
+    {
+        return array_map(
+            fn (int $unitId, float $quantity) => new UnconvertedAmount($unitId ?: null, $quantity),
+            array_keys($quantities),
+            $quantities,
+        );
     }
 
     /**

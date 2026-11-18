@@ -4,8 +4,10 @@ namespace Tests\Feature\Planning;
 
 use App\Enums\BaseUnit;
 use App\Enums\ReviewStatus;
+use App\Enums\ValueSource;
 use App\Models\Recipe;
 use App\Models\RecipeIngredient;
+use App\Models\Unit;
 use App\Services\Planning\IngredientConverter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\BuildsCatalog;
@@ -71,6 +73,29 @@ class IngredientConverterTest extends TestCase
 
         $this->assertSame(200.0, $amount->amount);
         $this->assertTrue($amount->approximate);
+    }
+
+    public function test_it_respects_units_marked_as_not_convertible(): void
+    {
+        $apple = $this->product('Apfel');
+        $apple->conversions()->create([
+            'unit_id' => Unit::where('key', 'piece')->value('id'),
+            'amount_in_base' => null,
+            'status' => ReviewStatus::Confirmed,
+            'source' => ValueSource::User,
+        ]);
+        $cream = $this->product('Sahne');
+        $cream->conversions()->create([
+            'unit_id' => Unit::where('key', 'milliliter')->value('id'),
+            'amount_in_base' => null,
+            'status' => ReviewStatus::Confirmed,
+            'source' => ValueSource::User,
+        ]);
+
+        $this->assertNull($this->convertLine($this->recipe('A', [[$apple, 3]])));
+        $this->assertNull($this->convertLine($this->recipe('B', [[$cream, 100, 'milliliter']])));
+        $this->assertNull($this->convertLine($this->recipe('C', [[$cream, 0.1, 'liter']])));
+        $this->assertSame(500.0, $this->convertLine($this->recipe('D', [[$apple, 500, 'gram']]))->amount);
     }
 
     public function test_it_gives_up_without_quantity_or_conversion(): void

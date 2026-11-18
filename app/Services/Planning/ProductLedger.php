@@ -21,6 +21,7 @@ class ProductLedger
     /**
      * @param  list<Demand>  $demands  Ordered by date.
      * @param  list<StockLot>  $lots  Stock on hand at the start.
+     * @param  list<UnconvertedAmount>  $unconverted  Needs that cannot be expressed in the base unit.
      */
     public function forecast(
         Product $product,
@@ -28,6 +29,7 @@ class ProductLedger
         array $lots,
         bool $approximate,
         bool $hasUnquantifiedUse,
+        array $unconverted = [],
     ): ProductForecast {
         $purchased = 0.0;
         $wasted = 0.0;
@@ -66,6 +68,7 @@ class ProductLedger
             remainingLots: $remainingLots,
             approximate: $approximate,
             hasUnquantifiedUse: $hasUnquantifiedUse,
+            unconverted: $unconverted,
         );
     }
 

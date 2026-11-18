@@ -3,7 +3,6 @@
 namespace App\Services\Recipes;
 
 use App\Models\Recipe;
-use App\Models\Tool;
 use App\Services\Catalog\ConversionGaps;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +14,7 @@ use Illuminate\Support\Str;
  */
 class RecipeWriter
 {
-    private const array NESTED = ['ingredients', 'steps', 'tag_ids', 'tools'];
+    private const array NESTED = ['ingredients', 'steps', 'tag_ids', 'tool_ids'];
 
     public function __construct(private readonly ConversionGaps $gaps) {}
 
@@ -62,11 +61,8 @@ class RecipeWriter
                 $recipe->tags()->sync($data['tag_ids']);
             }
 
-            if (array_key_exists('tools', $data)) {
-                $recipe->tools()->sync(array_map(
-                    fn (string $name) => Tool::firstOrCreate(['name' => $name])->id,
-                    $data['tools'],
-                ));
+            if (array_key_exists('tool_ids', $data)) {
+                $recipe->tools()->sync($data['tool_ids']);
             }
         });
 

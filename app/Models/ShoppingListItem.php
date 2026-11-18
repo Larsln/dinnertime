@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property ?list<array{package_id: int, label: string, amount: float, count: int}> $packages
  * @property ?list<array{date: string, recipe_id: int, title: string, amount: float}> $uses
+ * @property ?list<array{unit_id: ?int, quantity: float}> $extra_amounts
  * @property ?CarbonImmutable $checked_at
  */
 #[Fillable([
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'wasted_amount',
     'uses',
     'is_approximate',
+    'extra_amounts',
     'checked_at',
     'checked_by',
 ])]
@@ -50,6 +52,7 @@ class ShoppingListItem extends Model
             'wasted_amount' => 'float',
             'uses' => 'array',
             'is_approximate' => 'boolean',
+            'extra_amounts' => 'array',
             'checked_at' => 'immutable_datetime',
         ];
     }

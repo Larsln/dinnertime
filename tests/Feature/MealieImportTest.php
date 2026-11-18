@@ -97,7 +97,7 @@ class MealieImportTest extends TestCase
         $this->assertNull($free->quantity);
         $this->assertSame('etwas Liebe', $free->raw_text);
 
-        $this->assertSame('Marinade', $recipe->steps->first()->title);
+        $this->assertSame(['Marinade', 'Marinade', 'Anrichten'], $recipe->steps->pluck('section')->all());
         Storage::disk('public')->assertExists($recipe->cover_image_path);
     }
 
@@ -177,6 +177,7 @@ class MealieImportTest extends TestCase
             'recipeInstructions' => [
                 ['title' => 'Marinade', 'text' => 'Sojasoße und Honig verrühren.'],
                 ['title' => '', 'text' => 'Tenders 12 Minuten im Airfryer garen.'],
+                ['title' => 'Anrichten', 'text' => 'Mit Sesam bestreuen.'],
             ],
         ];
     }

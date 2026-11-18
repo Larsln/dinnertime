@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\ShoppingListController;
 use App\Http\Controllers\Api\V1\ShoppingListItemController;
 use App\Http\Controllers\Api\V1\StoreSectionController;
 use App\Http\Controllers\Api\V1\TagController;
+use App\Http\Controllers\Api\V1\ToolController;
 use App\Http\Controllers\Api\V1\UnitController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,9 @@ Route::prefix('v1')->group(function () {
 
         Route::post('imports/{import}/retry', [ImportController::class, 'retry']);
         Route::apiResource('imports', ImportController::class)->only(['index', 'store', 'show']);
+
+        Route::post('tools/{tool}/merge', [ToolController::class, 'merge']);
+        Route::apiResource('tools', ToolController::class)->except('show');
 
         Route::get('review', [ProductController::class, 'review']);
         Route::post('products/{product}/confirm', [ProductController::class, 'confirm']);

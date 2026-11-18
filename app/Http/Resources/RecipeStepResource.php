@@ -21,7 +21,7 @@ class RecipeStepResource extends JsonResource
         return [
             'id' => $this->id,
             'position' => $this->position,
-            'title' => $this->title,
+            'section' => $this->section,
             'text' => $this->text,
         ];
     }

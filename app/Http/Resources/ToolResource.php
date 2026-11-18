@@ -21,6 +21,8 @@ class ToolResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'is_owned' => $this->is_owned,
+            'recipe_count' => $this->whenCounted('recipes'),
         ];
     }
 }

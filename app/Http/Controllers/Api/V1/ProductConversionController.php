@@ -14,13 +14,14 @@ use Illuminate\Http\Response;
 class ProductConversionController extends Controller
 {
     /**
-     * Set how much of the product one unit corresponds to. Values entered
-     * by a user count as confirmed.
+     * Set how much of the product one unit corresponds to, or state with a
+     * missing amount that the unit cannot be converted. Values entered by a
+     * user count as confirmed.
      */
     public function update(Request $request, Product $product, Unit $unit): ProductConversionResource
     {
         $data = $request->validate([
-            'amount_in_base' => ['required', 'numeric', 'gt:0'],
+            'amount_in_base' => ['present', 'nullable', 'numeric', 'gt:0'],
         ]);
 
         $conversion = $product->conversions()->updateOrCreate(['unit_id' => $unit->id], [

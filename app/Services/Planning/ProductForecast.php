@@ -19,6 +19,7 @@ final readonly class ProductForecast
      * @param  list<StockLot>  $remainingLots
      * @param  bool  $approximate  Whether amounts rely on unconfirmed conversions.
      * @param  bool  $hasUnquantifiedUse  Whether a recipe needs the product without a usable amount.
+     * @param  list<UnconvertedAmount>  $unconverted  Needs in recipe units that cannot be converted, bought in addition.
      */
     public function __construct(
         public Product $product,
@@ -31,6 +32,7 @@ final readonly class ProductForecast
         public array $remainingLots,
         public bool $approximate,
         public bool $hasUnquantifiedUse,
+        public array $unconverted = [],
     ) {}
 
     /**
@@ -38,6 +40,8 @@ final readonly class ProductForecast
      */
     public function requiresPurchase(): bool
     {
-        return $this->purchased > 0 || ($this->hasUnquantifiedUse && $this->remainingLots === []);
+        return $this->purchased > 0
+            || $this->unconverted !== []
+            || ($this->hasUnquantifiedUse && $this->remainingLots === []);
     }
 }

@@ -3,20 +3,24 @@ import { computed, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { CalendarPlus, ExternalLink, Pencil, Trash2 } from 'lucide-vue-next';
+import { TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import { CalendarPlus, ExternalLink, Heart, Pencil, Trash2 } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
 import type { Ingredient } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { toIsoDate } from '@/lib/dates';
-import { formatQuantity } from '@/lib/format';
+import { formatNumber, formatQuantity } from '@/lib/format';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
+import RatingControl from '@/components/RatingControl.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import NumberField from '@/components/ui/NumberField.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 /**
- * A recipe with ingredients scaled to the chosen number of servings.
+ * A recipe with ingredients scaled to the chosen number of servings, the
+ * member's rating and favorite mark. Narrow screens switch between
+ * ingredients and method, wide ones show both.
  */
 const props = defineProps<{ id: number }>();
 
@@ -27,6 +31,10 @@ const { showError } = useToasts();
 
 const recipe = useQuery({ queryKey: ['recipe', () => props.id], queryFn: () => recipesApi.get(props.id) });
 
+const TAB_CLASS =
+    'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-stone-600 data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm';
+
+const view = ref<'ingredients' | 'method'>('ingredients');
 const servings = ref<number | null>(null);
 const isPlanning = ref(false);
 const isDeleting = ref(false);
@@ -75,6 +83,31 @@ function remarkOf(ingredient: Ingredient): string {
     return remarks.length > 0 ? `(${remarks.join(', ')})` : '';
 }
 
+/**
+ * Store a changed mark and take over the recipe the server answers with.
+ */
+const mark = useMutation({
+    mutationFn: (change: { rating: number | null } | { favorite: boolean }) =>
+        'rating' in change
+            ? recipesApi.rate(props.id, change.rating)
+            : recipesApi.setFavorite(props.id, change.favorite),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['recipe'] });
+        queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    },
+    onError: showError,
+});
+
+const rating = computed({
+    get: () => recipe.data.value?.rating ?? null,
+    set: (value: number | null) => mark.mutate({ rating: value }),
+});
+
+const isFavorite = computed({
+    get: () => recipe.data.value?.is_favorite ?? false,
+    set: (value: boolean) => mark.mutate({ favorite: value }),
+});
+
 const remove = useMutation({
     mutationFn: () => recipesApi.remove(props.id),
     onSuccess: () => {
@@ -100,8 +133,26 @@ const remove = useMutation({
                     {{ recipe.data.value.description }}
                 </p>
                 <p class="flex flex-wrap gap-2">
+                    <StatusBadge v-if="recipe.data.value.course_name" tone="success">
+                        {{ recipe.data.value.course_name }}
+                    </StatusBadge>
                     <StatusBadge v-for="name in tagNames" :key="name">{{ name }}</StatusBadge>
                 </p>
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-stone-700">
+                        {{ t('recipes.rating') }}
+                        <span class="font-normal text-stone-500">· {{ t('recipes.ratingHint') }}</span>
+                    </p>
+                    <RatingControl v-model="rating" :label="t('recipes.rating')" />
+                    <p v-if="recipe.data.value.average_rating != null" class="text-sm text-stone-500">
+                        {{
+                            t('recipes.averageRating', {
+                                average: formatNumber(recipe.data.value.average_rating, locale),
+                                count: recipe.data.value.rating_count,
+                            })
+                        }}
+                    </p>
+                </div>
                 <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-stone-600">
                     <div v-if="recipe.data.value.prep_minutes" class="flex gap-1">
                         <dt>{{ t('recipes.prep') }}:</dt>
@@ -119,6 +170,10 @@ const remove = useMutation({
                 <div class="flex flex-wrap gap-2">
                     <AppButton variant="primary" @click="isPlanning = true">
                         <CalendarPlus class="size-4" />{{ t('plan.addEntry') }}
+                    </AppButton>
+                    <AppButton :aria-pressed="isFavorite" @click="isFavorite = !isFavorite">
+                        <Heart class="size-4" :class="{ 'fill-rose-500 text-rose-500': isFavorite }" />
+                        {{ t('recipes.favorite') }}
                     </AppButton>
                     <RouterLink v-slot="{ navigate }" :to="{ name: 'recipe-edit', params: { id } }" custom>
                         <AppButton @click="navigate"
@@ -141,8 +196,17 @@ const remove = useMutation({
             </div>
         </header>
 
+        <TabsRoot v-model="view" class="md:hidden">
+            <TabsList class="grid grid-cols-2 gap-1 rounded-xl bg-stone-200/70 p-1">
+                <TabsTrigger value="ingredients" :class="TAB_CLASS">{{
+                    t('recipes.ingredients')
+                }}</TabsTrigger>
+                <TabsTrigger value="method" :class="TAB_CLASS">{{ t('recipes.steps') }}</TabsTrigger>
+            </TabsList>
+        </TabsRoot>
+
         <div class="grid gap-8 md:grid-cols-[18rem_1fr]">
-            <section>
+            <section :class="{ 'hidden md:block': view !== 'ingredients' }">
                 <div class="mb-3 flex items-center justify-between gap-3">
                     <h2 class="text-lg font-semibold">{{ t('recipes.ingredients') }}</h2>
                     <NumberField
@@ -183,7 +247,7 @@ const remove = useMutation({
                 </template>
             </section>
 
-            <section>
+            <section :class="{ 'hidden md:block': view !== 'method' }">
                 <h2 class="mb-3 text-lg font-semibold">{{ t('recipes.steps') }}</h2>
                 <ol class="space-y-4">
                     <li v-for="step in recipe.data.value.steps" :key="step.id">

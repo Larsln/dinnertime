@@ -1,7 +1,9 @@
 export type BaseUnit = 'g' | 'ml' | 'piece';
 export type ReviewStatus = 'suggested' | 'confirmed';
 export type ValueSource = 'ai' | 'user' | 'import';
-export type TagType = 'meal' | 'category' | 'tag';
+export type TagType = 'meal' | 'tag';
+export type CourseKey =
+    'starter' | 'soup' | 'salad' | 'main' | 'side' | 'dessert' | 'baking' | 'snack' | 'drink';
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'dessert' | 'snack';
 export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -40,6 +42,11 @@ export interface StoreSection {
     key: string | null;
     name: string;
     position: number;
+}
+
+export interface Course {
+    key: CourseKey;
+    name: string;
 }
 
 export interface Tag {
@@ -95,12 +102,18 @@ export interface RecipeSummary {
     title: string;
     slug: string;
     description: string | null;
+    course: CourseKey | null;
+    course_name: string | null;
     servings: number | null;
     yield_text: string | null;
     prep_minutes: number | null;
     cook_minutes: number | null;
     cover_url: string | null;
     tags?: Tag[];
+    rating?: number | null;
+    is_favorite?: boolean;
+    average_rating?: number | null;
+    rating_count?: number;
 }
 
 export interface Ingredient {
@@ -144,6 +157,7 @@ export interface IngredientInput {
 export interface RecipeInput {
     title: string;
     description: string | null;
+    course: CourseKey | null;
     servings: number | null;
     yield_text: string | null;
     prep_minutes: number | null;

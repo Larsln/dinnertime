@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { ImageUp, Plus, Trash2 } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
-import type { Product, Recipe, RecipeInput, TagType } from '@/api/types';
+import type { CourseKey, Product, Recipe, RecipeInput, TagType } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
 import ProductPicker from '@/components/ProductPicker.vue';
@@ -42,17 +42,18 @@ interface StepRow {
 
 const props = defineProps<{ id?: number }>();
 
-const TAG_TYPES: TagType[] = ['meal', 'category', 'tag'];
+const TAG_TYPES: TagType[] = ['meal', 'tag'];
 
 const { t } = useI18n();
 const router = useRouter();
 const queryClient = useQueryClient();
 const { showError } = useToasts();
-const { units, tags } = useReferenceData();
+const { units, tags, courses } = useReferenceData();
 
 const form = reactive({
     title: '',
     description: '',
+    course: null as CourseKey | null,
     servings: null as number | null,
     yieldText: '',
     prepMinutes: null as number | null,
@@ -73,6 +74,7 @@ const existing = useQuery({
     enabled: () => props.id !== undefined,
 });
 
+const courseOptions = computed(() => courses.value.map((entry) => ({ value: entry.key, label: entry.name })));
 const unitOptions = computed(() => units.value.map((unit) => ({ value: unit.id, label: unit.code })));
 
 function addIngredient(): void {
@@ -96,6 +98,7 @@ function fill(recipe: Recipe): void {
     Object.assign(form, {
         title: recipe.title,
         description: recipe.description ?? '',
+        course: recipe.course,
         servings: recipe.servings,
         yieldText: recipe.yield_text ?? '',
         prepMinutes: recipe.prep_minutes,
@@ -156,6 +159,7 @@ function toInput(): RecipeInput {
     return {
         title: form.title,
         description: form.description || null,
+        course: form.course,
         servings: form.servings,
         yield_text: form.yieldText || null,
         prep_minutes: form.prepMinutes,
@@ -222,6 +226,13 @@ const save = useMutation({
                 class="sm:col-span-2"
                 :label="t('recipes.description')"
                 :rows="2"
+            />
+            <SelectField
+                v-model="form.course"
+                :options="courseOptions"
+                :label="t('recipes.course')"
+                :placeholder="t('recipes.noCourse')"
+                :empty-label="t('recipes.noCourse')"
             />
             <NumberField v-model="form.servings" :label="t('recipes.servings')" :min="1" :max="100" />
             <TextField v-model="form.yieldText" :label="t('recipes.yield')" />

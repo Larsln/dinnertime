@@ -39,7 +39,7 @@ recipes in.
 
 | Method | Path | Answer |
 |---|---|---|
-| GET | `/realtime` | `{url, token}`; `404` on servers without realtime |
+| GET | `/realtime` | `{"data": {url, token}}`; `404` on servers without realtime |
 
 Clients open `url` as a Server-Sent Events stream and send `token` as bearer
 token in the `Authorization` header. Every event carries

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BroadcastsChanges;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['recipe_id', 'user_id', 'rating', 'is_favorite'])]
 class RecipeMark extends Model
 {
+    use BroadcastsChanges;
+
+    public static function broadcastArea(): string
+    {
+        return 'recipes';
+    }
+
     public const int MIN_RATING = 0;
 
     public const int MAX_RATING = 10;

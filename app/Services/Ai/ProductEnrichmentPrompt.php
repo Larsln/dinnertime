@@ -33,7 +33,7 @@ final readonly class ProductEnrichmentPrompt
             "Product: \"{$this->product->name}\"",
             '',
             'State typical values for this product:',
-            '- icon: the icon from the list that pictures the product best on a shopping list tile; "bowl" stands for rice, pasta and cereals, "bottle" for oils and sauces, "'.ProductIcons::FALLBACK.'" for anything nothing else fits.',
+            '- icon: the key from the following list that pictures exactly this product, or its usual form in a shop. Use null when no key fits; never pick a merely similar product. Keys: '.implode(', ', ProductIcons::keys()).'.',
             '- store_section: the supermarket section where it is found.',
             '- base_unit: "g" for products bought by weight, "ml" for liquids bought by volume, "piece" for products bought by count such as eggs or lemons.',
             '- is_pantry_staple: true only for basics every household has in stock and never writes on a shopping list, such as salt, pepper, cooking oil or the water used for cooking.',
@@ -54,7 +54,7 @@ final readonly class ProductEnrichmentPrompt
     public function schema(): array
     {
         $properties = [
-            'icon' => ['type' => 'STRING', 'enum' => ProductIcons::KEYS],
+            'icon' => ['type' => 'STRING', 'nullable' => true],
             'store_section' => ['type' => 'STRING', 'enum' => StoreSection::whereNotNull('key')->orderBy('position')->pluck('key')->all()],
             'base_unit' => ['type' => 'STRING', 'enum' => array_column(BaseUnit::cases(), 'value')],
             'is_pantry_staple' => ['type' => 'BOOLEAN'],

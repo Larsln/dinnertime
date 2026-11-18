@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseController;
+use App\Http\Controllers\Api\V1\HouseholdSettingsController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ImportSettingsController;
 use App\Http\Controllers\Api\V1\MealPlanController;
@@ -38,6 +39,8 @@ Route::prefix('v1')->group(function () {
 
         Route::get('realtime', RealtimeController::class);
 
+        Route::get('settings/household', [HouseholdSettingsController::class, 'show']);
+        Route::patch('settings/household', [HouseholdSettingsController::class, 'update']);
         Route::get('settings/import', [ImportSettingsController::class, 'show']);
         Route::patch('settings/import', [ImportSettingsController::class, 'update']);
         Route::post('settings/import/cookies', [ImportSettingsController::class, 'storeCookies']);

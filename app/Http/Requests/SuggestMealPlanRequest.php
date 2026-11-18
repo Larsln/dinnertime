@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Course;
 use App\Enums\MealType;
+use App\Services\HouseholdSettings;
 use App\Services\Planning\PlanPreferences;
 use App\Services\Planning\PlanRequest;
 use App\Services\Planning\PlanSlot;
@@ -29,7 +30,7 @@ class SuggestMealPlanRequest extends PeriodRequest
             'slots' => ['required', 'array', 'min:1'],
             'slots.*.date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from', 'before_or_equal:to'],
             'slots.*.meal' => ['required', Rule::enum(MealType::class)],
-            'servings' => ['required', 'integer', 'between:1,50'],
+            'servings' => ['sometimes', 'integer', 'between:1,50'],
             'preferences' => ['sometimes', 'array:'.implode(',', self::PREFERENCES)],
             'preferences.*' => ['boolean'],
             'tag_ids' => ['sometimes', 'array'],
@@ -53,7 +54,7 @@ class SuggestMealPlanRequest extends PeriodRequest
             from: $this->from(),
             to: $this->to(),
             slots: $this->slots($data['slots']),
-            servings: (int) $data['servings'],
+            servings: (int) ($data['servings'] ?? app(HouseholdSettings::class)->defaultServings()),
             preferences: PlanPreferences::fromArray(array_map(boolval(...), $data['preferences'] ?? [])),
             user: $this->user(),
             tagIds: $data['tag_ids'] ?? [],

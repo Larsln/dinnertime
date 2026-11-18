@@ -10,6 +10,7 @@ use App\Http\Requests\SuggestMealPlanRequest;
 use App\Http\Resources\MealPlanEntryResource;
 use App\Http\Resources\SlotAssignmentResource;
 use App\Models\MealPlanEntry;
+use App\Services\HouseholdSettings;
 use App\Services\Planning\MealPlanGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,9 +39,12 @@ class MealPlanController extends Controller
     /**
      * Schedule a recipe.
      */
-    public function store(MealPlanEntryRequest $request): MealPlanEntryResource
+    public function store(MealPlanEntryRequest $request, HouseholdSettings $settings): MealPlanEntryResource
     {
-        $entry = MealPlanEntry::create($request->safe()->except('cooked'));
+        $entry = MealPlanEntry::create([
+            'servings' => $settings->defaultServings(),
+            ...$request->safe()->except('cooked'),
+        ]);
 
         return new MealPlanEntryResource($entry->load('recipe.tags'));
     }

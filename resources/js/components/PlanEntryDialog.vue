@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import { mealPlanApi } from '@/api/planning';
 import type { MealType, RecipeSummary } from '@/api/types';
+import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useToasts } from '@/composables/useToasts';
 import { MEAL_TYPES } from '@/lib/meals';
 import RecipePicker from '@/components/RecipePicker.vue';
@@ -21,16 +22,15 @@ const open = defineModel<boolean>('open', { required: true });
 
 const props = defineProps<{ date: string; recipe?: RecipeSummary | null }>();
 
-const DEFAULT_SERVINGS = 2;
-
 const { t } = useI18n();
 const { showError, showSuccess } = useToasts();
 const queryClient = useQueryClient();
+const { defaultServings } = useHouseholdSettings();
 
 const selectedRecipe = ref<RecipeSummary | null>(null);
 const selectedDate = ref<string | null>(null);
 const meal = ref<MealType | null>('dinner');
-const servings = ref<number | null>(DEFAULT_SERVINGS);
+const servings = ref<number | null>(defaultServings.value);
 
 const mealOptions = computed(() => MEAL_TYPES.map((value) => ({ value, label: t(`meals.${value}`) })));
 
@@ -38,7 +38,7 @@ watch(open, (isOpen) => {
     if (isOpen) {
         selectedRecipe.value = props.recipe ?? null;
         selectedDate.value = props.date;
-        servings.value = props.recipe?.servings ?? DEFAULT_SERVINGS;
+        servings.value = defaultServings.value;
     }
 });
 
@@ -48,7 +48,7 @@ const save = useMutation({
             date: selectedDate.value ?? props.date,
             meal: meal.value ?? 'dinner',
             recipe_id: selectedRecipe.value?.id ?? 0,
-            servings: servings.value ?? DEFAULT_SERVINGS,
+            servings: servings.value ?? defaultServings.value,
         }),
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['meal-plan'] });

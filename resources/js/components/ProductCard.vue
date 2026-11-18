@@ -255,7 +255,12 @@ const remove = useMutation({
             />
         </div>
 
-        <IconPicker v-model="details.icon" class="mt-4" :label="t('products.icon')" />
+        <IconPicker
+            v-model="details.icon"
+            class="mt-4"
+            :label="t('products.icon')"
+            :section-key="product.store_section?.key"
+        />
 
         <div class="mt-5 grid gap-6 lg:grid-cols-2">
             <section>

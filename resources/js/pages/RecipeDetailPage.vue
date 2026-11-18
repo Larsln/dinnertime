@@ -11,6 +11,7 @@ import { useToasts } from '@/composables/useToasts';
 import { toIsoDate } from '@/lib/dates';
 import { formatNumber, formatQuantity } from '@/lib/format';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
+import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import RatingControl from '@/components/RatingControl.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
@@ -34,6 +35,8 @@ const recipe = useQuery({ queryKey: ['recipe', () => props.id], queryFn: () => r
 const TAB_CLASS =
     'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-stone-600 data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm';
 
+const { defaultServings } = useHouseholdSettings();
+
 const view = ref<'ingredients' | 'method'>('ingredients');
 const servings = ref<number | null>(null);
 const isPlanning = ref(false);
@@ -41,9 +44,9 @@ const isDeleting = ref(false);
 const today = toIsoDate(new Date());
 
 watch(
-    () => recipe.data.value,
-    (loaded) => {
-        servings.value = loaded?.servings ?? null;
+    () => [recipe.data.value, defaultServings.value] as const,
+    ([loaded]) => {
+        servings.value = loaded?.servings ? defaultServings.value : null;
     },
     { immediate: true },
 );

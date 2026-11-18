@@ -11,6 +11,7 @@ const messages: typeof de = {
         settings: 'Settings',
     },
     common: {
+        search: 'Search',
         save: 'Save',
         cancel: 'Cancel',
         delete: 'Delete',
@@ -190,7 +191,10 @@ const messages: typeof de = {
         staple: 'Staple',
         recipeCount: 'in {count} ingredient lines',
         name: 'Name',
-        icon: 'Icon',
+        icon: 'Icon on the shopping list',
+        changeIcon: 'Change icon',
+        noIcon: 'No matching icon.',
+        sectionIcon: 'Use the icon of the section',
         section: 'Store section',
         noSection: 'No section',
         baseUnit: 'Bought in',
@@ -228,6 +232,12 @@ const messages: typeof de = {
     settings: {
         account: 'Account',
         language: 'Interface language',
+        household: {
+            title: 'Household',
+            servings: 'Usual number of servings',
+            servingsHint:
+                'Recipes are shown, planned and shopped for this many servings unless you choose otherwise.',
+        },
         import: {
             title: 'Import',
             browser: 'Identify as a browser',

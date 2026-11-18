@@ -9,6 +9,7 @@ export default {
         settings: 'Einstellungen',
     },
     common: {
+        search: 'Suchen',
         save: 'Speichern',
         cancel: 'Abbrechen',
         delete: 'Löschen',
@@ -197,7 +198,10 @@ export default {
         staple: 'Vorrat',
         recipeCount: 'in {count} Zutatenzeilen',
         name: 'Name',
-        icon: 'Symbol',
+        icon: 'Symbol auf der Einkaufsliste',
+        changeIcon: 'Symbol ändern',
+        noIcon: 'Kein passendes Symbol.',
+        sectionIcon: 'Symbol des Bereichs verwenden',
         section: 'Supermarkt-Bereich',
         noSection: 'Ohne Bereich',
         baseUnit: 'Gekauft in',
@@ -235,6 +239,12 @@ export default {
     settings: {
         account: 'Konto',
         language: 'Sprache der Oberfläche',
+        household: {
+            title: 'Haushalt',
+            servings: 'Portionen im Normalfall',
+            servingsHint:
+                'Für so viele Portionen werden Rezepte angezeigt, eingeplant und eingekauft, solange du nichts anderes wählst.',
+        },
         import: {
             title: 'Import',
             browser: 'Als Browser ausgeben',

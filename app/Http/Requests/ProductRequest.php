@@ -28,7 +28,7 @@ class ProductRequest extends FormRequest
                 Rule::unique('products', 'name')->ignore($this->route('product')),
             ],
             'plural_name' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'icon' => ['sometimes', 'nullable', Rule::in(ProductIcons::KEYS)],
+            'icon' => ['sometimes', 'nullable', Rule::in(ProductIcons::keys())],
             'store_section_id' => ['sometimes', 'nullable', 'integer', 'exists:store_sections,id'],
             'base_unit' => ['sometimes', Rule::enum(BaseUnit::class)],
             'is_pantry_staple' => ['sometimes', 'boolean'],

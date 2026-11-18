@@ -16,7 +16,7 @@ import type { ShoppingListItem } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
 import { useToasts } from '@/composables/useToasts';
 import { formatDay, formatNumber } from '@/lib/format';
-import { productIcon } from '@/lib/productIcons';
+import ProductIcon from '@/components/ProductIcon.vue';
 
 /**
  * Tile of the shopping list: a line icon, the product's name and a short
@@ -114,7 +114,11 @@ const remove = useMutation({
                     "
                     @click="toggle.mutate()"
                 >
-                    <component :is="productIcon(item.product?.icon)" class="size-9" stroke-width="1.25" />
+                    <ProductIcon
+                        :icon="item.product?.icon"
+                        :section-key="item.product?.store_section?.key"
+                        class="size-9"
+                    />
                     <span class="line-clamp-1 w-full text-xs leading-tight font-medium">{{ name }}</span>
                     <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none opacity-75">
                         {{ shortAmount }}<template v-if="item.is_approximate"> ≈</template>

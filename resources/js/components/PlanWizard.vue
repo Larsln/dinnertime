@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/vue-query';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { mealPlanApi, type Period } from '@/api/planning';
 import type { CourseKey } from '@/api/types';
+import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useToasts } from '@/composables/useToasts';
 import { formatDay } from '@/lib/format';
 import { presetSlots, type PlanSlot } from '@/lib/planSlots';
@@ -35,14 +36,14 @@ const props = defineProps<{ days: string[]; period: Period; planned: Set<string>
 const emit = defineEmits<{ shiftWeek: [weeks: number]; saved: [createList: boolean] }>();
 
 const STEPS = ['days', 'preferences', 'preview'] as const;
-const DEFAULT_SERVINGS = 2;
 
 const { t, locale } = useI18n();
 const { showError, showSuccess } = useToasts();
+const { defaultServings } = useHouseholdSettings();
 
 const step = ref<(typeof STEPS)[number]>('days');
 const slots = ref<PlanSlot[]>([]);
-const servings = ref<number | null>(DEFAULT_SERVINGS);
+const servings = ref<number | null>(defaultServings.value);
 const preferences = ref(defaultPreferences());
 const courses = ref<CourseKey[]>([]);
 const tagIds = ref<number[]>([]);
@@ -77,7 +78,7 @@ function body(pins: Pick<SuggestBody, 'keep' | 'avoid'>): SuggestBody {
     return {
         ...props.period,
         slots: slots.value,
-        servings: servings.value ?? DEFAULT_SERVINGS,
+        servings: servings.value ?? defaultServings.value,
         preferences: preferences.value,
         tag_ids: tagIds.value,
         courses: courses.value,
@@ -102,7 +103,7 @@ const save = useMutation({
                 date: row.date,
                 meal: row.meal,
                 recipe_id: row.recipe.id,
-                servings: servings.value ?? DEFAULT_SERVINGS,
+                servings: servings.value ?? defaultServings.value,
             })),
         ),
     onSuccess: (entries) => {

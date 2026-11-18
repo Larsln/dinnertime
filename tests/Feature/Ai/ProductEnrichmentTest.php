@@ -85,7 +85,7 @@ class ProductEnrichmentTest extends TestCase
 
         $rice->refresh();
         $this->assertSame(BaseUnit::Gram, $rice->base_unit);
-        $this->assertNull($rice->icon);
+        $this->assertSame('rice', $rice->icon);
         $this->assertFalse($rice->is_pantry_staple);
         $this->assertNull($rice->shelf_life_opened_days);
         $this->assertEquals([500], $rice->packages->pluck('amount_in_base')->all());

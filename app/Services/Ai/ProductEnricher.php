@@ -65,7 +65,7 @@ class ProductEnricher
             ]);
         }
 
-        $product->icon ??= in_array($suggestion['icon'] ?? null, ProductIcons::KEYS, true) ? $suggestion['icon'] : null;
+        $product->icon ??= ProductIcons::has($suggestion['icon'] ?? null) ? $suggestion['icon'] : ProductIcons::named($product->name);
         $product->enriched_at = now()->toImmutable();
         $product->save();
     }

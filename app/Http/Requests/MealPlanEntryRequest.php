@@ -25,7 +25,7 @@ class MealPlanEntryRequest extends FormRequest
             'date' => [$presence, 'date_format:Y-m-d'],
             'meal' => [$presence, Rule::enum(MealType::class)],
             'recipe_id' => [$presence, 'integer', 'exists:recipes,id'],
-            'servings' => [$presence, 'integer', 'between:1,50'],
+            'servings' => ['sometimes', 'integer', 'between:1,50'],
             'cooked' => ['sometimes', 'boolean'],
         ];
     }

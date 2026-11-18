@@ -137,6 +137,18 @@ or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 request to `/imports/{id}/wait` open to learn the outcome.
 `error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
 
+## Household settings
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| GET | `/settings/household` | | HouseholdSettings |
+| PATCH | `/settings/household` | `default_servings: 1–50` | HouseholdSettings |
+
+**HouseholdSettings:** `{default_servings}`: the number of servings a meal is
+planned and shopped for unless another number is chosen. Clients preset it
+when planning and show recipes scaled to it. `2` until the household changes
+it.
+
 ## Import settings
 
 | Method | Path | Body | Answer |
@@ -177,7 +189,7 @@ to signed-in users; its content is never returned.
   store_section: StoreSection|null, aliases: [string],
   conversions: [Conversion], packages: [Package]}`. `status` is `suggested`
   or `confirmed`. `icon` is the key of a line icon for the shopping list
-  tile (a name from the Tabler icon set, see `App\Support\ProductIcons`), or
+  tile (listed in `resources/icons/products/manifest.json`; clients show the generic icon of the store section, `section-<key>`, for products without one or with a key they do not know), or
   `null`. `recipe_count`, `conversions` and `packages` are only present on
   the detail and review endpoints.
 - **Conversion:** `{id, unit: Unit, amount_in_base, status, source}`: one
@@ -196,7 +208,7 @@ or `import`.
 | Method | Path | Body or query | Answer |
 |---|---|---|---|
 | GET | `/meal-plan` | `?from=&to=` | List of Entry |
-| POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` | Entry, `201` |
+| POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` (optional, default from the household settings) | Entry, `201` |
 | PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry |
 | DELETE | `/meal-plan/{id}` | | `204` |
 | POST | `/meal-plan/suggest` | PlanRequest | List of Suggestion plus `meta.candidate_count`; nothing is saved |
@@ -210,7 +222,7 @@ or `import`.
   account.
 - `slots: [{date, meal}]`: the days and meals to fill. Slots that already
   have an entry or for which no recipe matches are left out of the answer.
-- `servings`
+- `servings` (optional, default from the household settings)
 - `preferences` (optional object of booleans): `use_leftovers` (default
   `true`) chooses recipes that use up opened packages and the pantry,
   `quick_on_weekdays` (`false`) only suggests recipes of at most 30 minutes

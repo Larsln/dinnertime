@@ -8,6 +8,19 @@ export interface ImportSettings {
     has_cookies: boolean;
 }
 
+/**
+ * What the household decided once for everyday use.
+ */
+export interface HouseholdSettings {
+    default_servings: number;
+}
+
+export const householdSettingsApi = {
+    get: () => data(api.get<{ data: HouseholdSettings }>('/settings/household')),
+    setDefaultServings: (servings: number) =>
+        data(api.patch<{ data: HouseholdSettings }>('/settings/household', { default_servings: servings })),
+};
+
 export const importSettingsApi = {
     get: () => data(api.get<{ data: ImportSettings }>('/settings/import')),
     setIdentifyAsBrowser: (enabled: boolean) =>

@@ -9,7 +9,7 @@ import type { ShoppingListItem } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { addDays, startOfWeek, toIsoDate } from '@/lib/dates';
 import { formatDay } from '@/lib/format';
-import ShoppingItemRow from '@/components/ShoppingItemRow.vue';
+import ShoppingTile from '@/components/ShoppingTile.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -17,9 +17,11 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
- * The current shopping list grouped by store section.
+ * The current shopping list as tiles grouped by store section. What is
+ * checked off moves to the end.
  */
 const NOT_FOUND = 404;
+const GRID_CLASS = 'grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6';
 
 const { t, locale } = useI18n();
 const queryClient = useQueryClient();
@@ -43,7 +45,7 @@ const isStocking = ref(false);
 const sections = computed(() => {
     const groups = new Map<string, ShoppingListItem[]>();
 
-    for (const item of list.data.value?.items ?? []) {
+    for (const item of (list.data.value?.items ?? []).filter((entry) => entry.checked_at === null)) {
         const title = item.product
             ? (item.product.store_section?.name ?? t('shopping.noSection'))
             : t('shopping.other');
@@ -53,6 +55,10 @@ const sections = computed(() => {
 
     return [...groups.entries()].map(([title, items]) => ({ title, items }));
 });
+
+const checkedItems = computed(() =>
+    (list.data.value?.items ?? []).filter((item) => item.checked_at !== null),
+);
 
 const openCount = computed(
     () => (list.data.value?.items ?? []).filter((item) => item.checked_at === null).length,
@@ -111,19 +117,28 @@ const stock = useMutation({
             </AppButton>
         </PageHeader>
 
-        <section v-for="section in sections" :key="section.title" class="mb-5">
-            <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
-                {{ section.title }}
-            </h2>
-            <ul class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
-                <ShoppingItemRow v-for="item in section.items" :key="item.id" :item="item" />
-            </ul>
-        </section>
-
-        <form class="flex items-end gap-2" @submit.prevent="addManual.mutate()">
+        <form class="mb-6 flex items-end gap-2" @submit.prevent="addManual.mutate()">
             <TextField v-model="manualLabel" class="flex-1" :label="t('shopping.addManual')" required />
             <AppButton type="submit" :disabled="addManual.isPending.value">{{ t('common.add') }}</AppButton>
         </form>
+
+        <section v-for="section in sections" :key="section.title" class="mb-6">
+            <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
+                {{ section.title }}
+            </h2>
+            <ul :class="GRID_CLASS">
+                <ShoppingTile v-for="item in section.items" :key="item.id" :item="item" />
+            </ul>
+        </section>
+
+        <section v-if="checkedItems.length > 0" class="mb-6">
+            <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
+                {{ t('shopping.done', { count: checkedItems.length }) }}
+            </h2>
+            <ul :class="GRID_CLASS">
+                <ShoppingTile v-for="item in checkedItems" :key="item.id" :item="item" />
+            </ul>
+        </section>
 
         <ConfirmDialog
             v-model:open="isStocking"

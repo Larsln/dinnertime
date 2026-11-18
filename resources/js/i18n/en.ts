@@ -61,7 +61,9 @@ const messages: typeof de = {
         title: 'Title',
         description: 'Description',
         servings: 'Servings',
-        yield: 'Yield',
+        yield: 'Makes',
+        yieldField: 'Number of pieces or amount',
+        yieldPlaceholder: 'e.g. 12 cinnamon rolls or 1 tray',
         prep: 'Preparation',
         cook: 'Cooking',
         prepTime: 'Preparation (min)',
@@ -165,6 +167,7 @@ const messages: typeof de = {
         wasted: '{amount} spoils',
         needed: 'Needed {amount}',
         showUses: 'Show uses',
+        done: 'Done ({count})',
     },
     pantry: {
         subtitle: 'Opened leftovers the planner uses up first',

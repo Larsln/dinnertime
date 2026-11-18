@@ -222,7 +222,11 @@ const save = useMutation({
                 :empty-label="t('recipes.noCourse')"
             />
             <NumberField v-model="form.servings" :label="t('recipes.servings')" :min="1" :max="100" />
-            <TextField v-model="form.yieldText" :label="t('recipes.yield')" />
+            <TextField
+                v-model="form.yieldText"
+                :label="t('recipes.yieldField')"
+                :placeholder="t('recipes.yieldPlaceholder')"
+            />
             <NumberField v-model="form.prepMinutes" :label="t('recipes.prepTime')" />
             <NumberField v-model="form.cookMinutes" :label="t('recipes.cookTime')" />
             <TextField v-model="form.sourceUrl" type="url" :label="t('recipes.source')" />

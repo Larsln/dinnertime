@@ -60,6 +60,8 @@ export default {
         description: 'Beschreibung',
         servings: 'Portionen',
         yield: 'Ergibt',
+        yieldField: 'Stückzahl oder Menge',
+        yieldPlaceholder: 'z. B. 12 Zimtschnecken oder 1 Blech',
         prep: 'Vorbereitung',
         cook: 'Garzeit',
         prepTime: 'Vorbereitung (min)',
@@ -172,6 +174,7 @@ export default {
         wasted: 'Verdirbt {amount}',
         needed: 'Bedarf {amount}',
         showUses: 'Verwendung anzeigen',
+        done: 'Erledigt ({count})',
     },
     pantry: {
         subtitle: 'Angebrochene Reste, die der Planer zuerst aufbraucht',

@@ -11,9 +11,9 @@ x-app: &app
 services:
     app:
         <<: *app
-        env_file: .env
         environment:
             SERVER_NAME: ":80"
+            MERCURE_JWT_KEY: ${MERCURE_JWT_KEY:-}
             CADDY_SERVER_EXTRA_DIRECTIVES: |
                 mercure {
                     issuer mealplanner {

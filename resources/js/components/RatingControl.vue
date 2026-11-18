@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { SliderRange, SliderRoot, SliderThumb, SliderTrack } from 'reka-ui';
-import { X } from 'lucide-vue-next';
+import { SliderRoot, SliderThumb, SliderTrack } from 'reka-ui';
+import { Star, X } from 'lucide-vue-next';
 import AppButton from '@/components/ui/AppButton.vue';
 
 /**
- * Slider from 0 (bad) to 10 (good). The rating is stored when the thumb
- * is released and can be withdrawn again.
+ * Rating from 0 (bad) to 10 (good) shown as five stars in half steps.
+ * Dragging or tapping across the stars sets the value, which is stored
+ * when released and can be withdrawn again.
  */
 const model = defineModel<number | null>({ required: true });
 
 defineProps<{ label: string }>();
 
 const MAXIMUM = 10;
-const MIDDLE = 5;
+const STARS = [1, 2, 3, 4, 5];
 
 const { t } = useI18n();
 
@@ -25,7 +26,7 @@ watch(model, (value) => {
 });
 
 const position = computed({
-    get: () => [draft.value ?? MIDDLE],
+    get: () => [draft.value ?? 0],
     set: (values: number[] | undefined) => {
         draft.value = values?.[0] ?? null;
     },
@@ -34,31 +35,43 @@ const position = computed({
 function commit(values: number[]): void {
     model.value = values[0] ?? null;
 }
+
+/**
+ * Share of a star that is filled: none, half or all of it.
+ */
+function fillOf(star: number): string {
+    const points = (draft.value ?? 0) - (star - 1) * 2;
+
+    return points >= 2 ? '100%' : points === 1 ? '50%' : '0%';
+}
 </script>
 
 <template>
     <div class="flex items-center gap-3">
-        <SliderRoot
-            v-model="position"
-            :min="0"
-            :max="MAXIMUM"
-            :step="1"
-            class="relative flex h-6 w-56 max-w-full touch-none items-center"
-            @value-commit="commit"
+        <div
+            class="relative rounded-lg focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-emerald-600"
         >
-            <SliderTrack class="relative h-1.5 grow rounded-full bg-stone-200">
-                <SliderRange
-                    class="absolute h-full rounded-full"
-                    :class="draft === null ? 'bg-stone-300' : 'bg-emerald-600'"
-                />
-            </SliderTrack>
-            <SliderThumb
-                :aria-label="label"
-                class="block size-5 cursor-grab rounded-full border-2 bg-white shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
-                :class="draft === null ? 'border-stone-400' : 'border-emerald-600'"
-            />
-        </SliderRoot>
-        <span class="w-24 text-sm font-medium text-stone-800 tabular-nums">
+            <div class="flex gap-1" aria-hidden="true">
+                <span v-for="star in STARS" :key="star" class="relative size-8">
+                    <Star class="size-8 text-stone-300" />
+                    <span class="absolute inset-0 overflow-hidden" :style="{ width: fillOf(star) }">
+                        <Star class="size-8 fill-amber-400 text-amber-400" />
+                    </span>
+                </span>
+            </div>
+            <SliderRoot
+                v-model="position"
+                :min="0"
+                :max="MAXIMUM"
+                :step="1"
+                class="absolute inset-0 flex cursor-pointer touch-none items-center"
+                @value-commit="commit"
+            >
+                <SliderTrack class="h-full grow" />
+                <SliderThumb :aria-label="label" class="block size-1 opacity-0 focus:outline-none" />
+            </SliderRoot>
+        </div>
+        <span class="text-sm font-medium text-stone-800 tabular-nums">
             {{
                 draft === null
                     ? t('recipes.notRated')

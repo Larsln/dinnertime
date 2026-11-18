@@ -186,7 +186,27 @@ Zugang über `MEALIE_URL` und `MEALIE_TOKEN` in `.env`.
 | 5 | iOS-App mit Share Extension | Teilen aus TikTok legt den Import an |
 | 6 | Produktions-Image, Compose-Vorlage, Installationsanleitung, Veröffentlichung | Ein Fremder kann den Server nach Anleitung starten |
 
-## 8. Offene Punkte
+## 8. Offline, Abgleich und Echtzeit (entschieden, noch nicht gebaut)
+
+- **Wahrheit:** Der Server. Die iOS-App hält eine vollständige lokale Kopie
+  und eine Warteschlange offline gemachter Änderungen. Das Web bleibt online.
+- **Abgleich in Änderungen statt komplett:** Jede Zeile trägt eine fortlaufende
+  Änderungsnummer. Die App fragt „alles seit Nummer N" ab und bekommt nur
+  geänderte Zeilen und Löschungen. Der erste Abgleich läuft seitenweise.
+- **Bilder:** einmal laden, dauerhaft lokal halten. Die Bild-Adresse ändert
+  sich, wenn sich das Bild ändert; der Server liefert dafür verkleinerte
+  Fassungen aus.
+- **Schreiben offline:** alles außer Import, „Woche planen" und dem Erzeugen
+  der Einkaufsliste, auch Rezepte anlegen und bearbeiten. Offline Angelegtes
+  bekommt seine Kennung auf dem Gerät; der Server wendet jede Änderung genau
+  einmal an.
+- **Konflikte:** Die spätere Aktion gewinnt, bei kleinen Feldern pro Feld, bei
+  Rezepten und Produkten als Ganzes. Löschen gewinnt gegen Bearbeiten.
+- **Echtzeit:** Einkaufsliste und Vorrat über Server-Sent Events (Mercure in
+  FrankenPHP, kein zusätzlicher Dienst), in iOS und Web. Der Wochenplan wird
+  beim Öffnen und in Abständen abgeglichen.
+
+## 9. Offene Punkte
 
 - **Name** für App und Repos (bis dahin Arbeitsname `mealplanner`).
 - **Lizenz:** Der Server steht unter AGPL-3.0, die iOS-App unter MIT.

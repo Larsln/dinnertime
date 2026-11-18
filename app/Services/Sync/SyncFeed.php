@@ -39,18 +39,29 @@ class SyncFeed
     private const int LOCK = 7316001;
 
     /**
+     * The kinds of records a client keeps a copy of.
+     */
+    public const array KINDS = [
+        'units', 'store_sections', 'tags', 'tools', 'products', 'recipes',
+        'meal_plan_entries', 'pantry_items', 'shopping_lists',
+    ];
+
+    /**
      * Everything that changed after `$since`, at most `$limit` records
      * of every kind. A client that is told there is more asks again with
      * the returned version.
+     *
+     * @param  list<string>|null  $kinds  Kinds to report; all of them when null.
      */
-    public function changesSince(int $since, int $limit, User $user): SyncChanges
+    public function changesSince(int $since, int $limit, User $user, ?array $kinds = null): SyncChanges
     {
-        return DB::transaction(function () use ($since, $limit, $user) {
+        return DB::transaction(function () use ($since, $limit, $user, $kinds) {
+            $entities = array_intersect_key($this->entities($user), array_flip($kinds ?? self::KINDS));
             $latest = $this->latestVersion();
             $version = $latest;
             $records = [];
 
-            foreach ($this->entities($user) as $name => [$query]) {
+            foreach ($entities as $name => [$query]) {
                 $records[$name] = $query
                     ->where('sync_version', '>', $since)
                     ->where('sync_version', '<=', $latest)
@@ -65,7 +76,7 @@ class SyncFeed
 
             $changed = [];
 
-            foreach ($this->entities($user) as $name => [, $resource]) {
+            foreach ($entities as $name => [, $resource]) {
                 $changed[$name] = $resource::collection($records[$name]->where('sync_version', '<=', $version)->values());
             }
 

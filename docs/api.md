@@ -146,7 +146,7 @@ its changes later. Three things make that safe.
 
 | Method | Path | Query | Answer |
 |---|---|---|---|
-| GET | `/sync` | `since` (default `0`), `limit` (1–500, default 200) | Changes |
+| GET | `/sync` | `since` (default `0`), `limit` (1–500, default 200), `kinds[]` (optional) | Changes |
 
 **Changes:** `{version, has_more, changed, deleted, household, peer_key}`
 
@@ -167,6 +167,9 @@ its changes later. Three things make that safe.
   plan entry) are snapshots from the time the outer record last changed.
   Clients show their own copy of the embedded record where they have one,
   and count recipes per product or tool themselves.
+- With `kinds[]` only the named kinds are reported, for example to load one
+  kind again after a change was turned away. The client must not store the
+  `version` of such an answer as its overall position.
 - `household` is the current HouseholdSettings.
 - `peer_key` is a secret all signed-in devices of the household share.
   Devices that meet without a connection to the server prove with it that

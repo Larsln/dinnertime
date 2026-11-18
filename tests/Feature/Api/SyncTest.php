@@ -40,6 +40,9 @@ class SyncTest extends TestCase
             ->assertJsonCount(0, 'data.changed.recipes')
             ->assertJsonCount(0, 'data.changed.tools');
 
+        $this->getJson('/api/v1/sync?kinds[]=tools')->assertJsonCount(1, 'data.changed.tools')->assertJsonMissingPath('data.changed.recipes');
+        $this->getJson('/api/v1/sync?kinds[]=nothing')->assertUnprocessable();
+
         $tool->update(['name' => 'Ofen']);
         $recipe->delete();
 

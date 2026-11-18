@@ -7,6 +7,7 @@ use App\Services\HouseholdSettings;
 use App\Services\Sync\SyncFeed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SyncController extends Controller
 {
@@ -20,9 +21,11 @@ class SyncController extends Controller
         $data = $request->validate([
             'since' => ['sometimes', 'integer', 'min:0'],
             'limit' => ['sometimes', 'integer', 'between:1,500'],
+            'kinds' => ['sometimes', 'array'],
+            'kinds.*' => [Rule::in(SyncFeed::KINDS)],
         ]);
 
-        $changes = $feed->changesSince((int) ($data['since'] ?? 0), (int) ($data['limit'] ?? self::DEFAULT_LIMIT), $request->user());
+        $changes = $feed->changesSince((int) ($data['since'] ?? 0), (int) ($data['limit'] ?? self::DEFAULT_LIMIT), $request->user(), $data['kinds'] ?? null);
 
         return response()->json(['data' => [
             'version' => $changes->version,

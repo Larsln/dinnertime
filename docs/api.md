@@ -165,12 +165,13 @@ or `import`.
 | POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` | Entry, `201` |
 | PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry |
 | DELETE | `/meal-plan/{id}` | | `204` |
-| POST | `/meal-plan/generate` | `from`, `to`, `meals: [meal]`, `servings` | The Entries that were added, `201` |
+| POST | `/meal-plan/generate` | `from`, `to`, `slots: [{date, meal}]`, `servings` | The Entries that were added, `201` |
 
 **Entry:** `{id, date, meal, servings, cooked_at, recipe: RecipeSummary}`
 
-Generating fills every requested meal of the period that has no entry yet,
-choosing recipes so that opened packages are used up. Periods span at most
+Generating fills the requested slots (a day and a meal each) that have no
+entry yet, choosing recipes so that opened packages are used up. Slots must
+lie within the period; all entries of the period are taken into account. Periods span at most
 31 days.
 
 ## Pantry

@@ -8,15 +8,14 @@ use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\Recipe;
 use Carbon\CarbonImmutable;
-use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Random\Randomizer;
 
 /**
- * Fills the open meals of a period with recipes that use up each other's
- * leftovers.
+ * Fills chosen days and meals of a period with recipes that use up each
+ * other's leftovers.
  *
  * Starts from random plans and keeps swapping single meals while that lowers
  * the cost. With a few dozen recipes this finds a good plan quickly.
@@ -40,21 +39,21 @@ class MealPlanGenerator
     ) {}
 
     /**
-     * Plan every meal of the period that has no entry yet. Existing entries
-     * are kept and taken into account.
+     * Plan the requested days and meals that have no entry yet. All entries
+     * of the period are kept and taken into account.
      *
-     * @param  list<MealType>  $meals
+     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $requested
      * @return Collection<int, MealPlanEntry> The entries that were added.
      */
-    public function generate(CarbonImmutable $from, CarbonImmutable $to, array $meals, int $servings): Collection
+    public function generate(CarbonImmutable $from, CarbonImmutable $to, array $requested, int $servings): Collection
     {
         $existing = MealPlanEntry::query()
             ->with(array_map(fn (string $relation) => "recipe.{$relation}", ShoppingForecaster::RECIPE_RELATIONS))
             ->whereBetween('date', [$from, $to])
             ->get();
 
-        $candidates = $this->candidates($meals);
-        $slots = $this->openSlots($from, $to, $meals, $existing, $candidates);
+        $candidates = $this->candidates(array_unique(array_column($requested, 'meal'), SORT_REGULAR));
+        $slots = $this->openSlots($requested, $existing, $candidates);
 
         $recipes = $this->search(
             $slots,
@@ -99,29 +98,23 @@ class MealPlanGenerator
     }
 
     /**
-     * Days and meals without an entry for which at least one recipe exists.
+     * The requested slots that have no entry yet and at least one recipe.
      *
-     * @param  list<MealType>  $meals
+     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $requested
      * @param  Collection<int, MealPlanEntry>  $existing
      * @param  array<string, list<Recipe>>  $candidates
      * @return list<array{date: CarbonImmutable, meal: MealType}>
      */
-    private function openSlots(CarbonImmutable $from, CarbonImmutable $to, array $meals, Collection $existing, array $candidates): array
+    private function openSlots(array $requested, Collection $existing, array $candidates): array
     {
         $taken = $existing
             ->mapWithKeys(fn (MealPlanEntry $entry) => ["{$entry->date->toDateString()}|{$entry->meal->value}" => true]);
 
-        $slots = [];
-
-        foreach (CarbonPeriod::create($from, $to) as $date) {
-            foreach ($meals as $meal) {
-                if (! $taken->has("{$date->toDateString()}|{$meal->value}") && $candidates[$meal->value] !== []) {
-                    $slots[] = ['date' => CarbonImmutable::instance($date), 'meal' => $meal];
-                }
-            }
-        }
-
-        return $slots;
+        return array_values(array_filter(
+            $requested,
+            fn (array $slot) => ! $taken->has("{$slot['date']->toDateString()}|{$slot['meal']->value}")
+                && $candidates[$slot['meal']->value] !== [],
+        ));
     }
 
     /**

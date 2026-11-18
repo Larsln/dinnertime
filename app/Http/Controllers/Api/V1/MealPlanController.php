@@ -67,14 +67,15 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Fill the open meals of a period with recipes that use up leftovers.
+     * Fill the chosen days and meals of a period with recipes that use up
+     * leftovers. Meals that already have an entry are left as they are.
      */
     public function generate(GenerateMealPlanRequest $request, MealPlanGenerator $generator): JsonResponse
     {
         $entries = $generator->generate(
             $request->from(),
             $request->to(),
-            $request->meals(),
+            $request->slots(),
             $request->integer('servings'),
         );
 

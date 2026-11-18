@@ -6,6 +6,7 @@ use App\Enums\MealType;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\User;
+use Carbon\CarbonPeriod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
@@ -110,17 +111,58 @@ class MealPlanTest extends TestCase
         $this->postJson('/api/v1/meal-plan/generate', [
             'from' => '2026-11-16',
             'to' => '2026-11-16',
-            'meals' => ['breakfast', 'dinner'],
+            'slots' => [
+                ['date' => '2026-11-16', 'meal' => 'breakfast'],
+                ['date' => '2026-11-16', 'meal' => 'dinner'],
+            ],
             'servings' => 2,
         ])->assertJsonCount(1, 'data')->assertJsonPath('data.0.meal', 'dinner');
     }
 
+    public function test_the_generator_fills_only_the_chosen_slots(): void
+    {
+        $this->recipe('Lasagne', []);
+        $this->recipe('Suppe', []);
+        $this->recipe('Porridge', [], 'breakfast');
+
+        $entries = $this->postJson('/api/v1/meal-plan/generate', [
+            'from' => '2026-11-16',
+            'to' => '2026-11-22',
+            'slots' => [
+                ['date' => '2026-11-21', 'meal' => 'dinner'],
+                ['date' => '2026-11-18', 'meal' => 'breakfast'],
+                ['date' => '2026-11-18', 'meal' => 'breakfast'],
+            ],
+            'servings' => 3,
+        ])->assertCreated()->json('data');
+
+        $this->assertSame(
+            [['2026-11-18', 'breakfast', 3], ['2026-11-21', 'dinner', 3]],
+            array_map(fn (array $entry) => [$entry['date'], $entry['meal'], $entry['servings']], $entries),
+        );
+        $this->assertSame('Porridge', $entries[0]['recipe']['title']);
+    }
+
+    public function test_the_generator_rejects_slots_outside_the_period(): void
+    {
+        $this->postJson('/api/v1/meal-plan/generate', [
+            'from' => '2026-11-16',
+            'to' => '2026-11-22',
+            'slots' => [['date' => '2026-11-23', 'meal' => 'dinner'], ['date' => '2026-11-17', 'meal' => 'brunch']],
+            'servings' => 2,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['slots.0.date', 'slots.1.meal']);
+    }
+
     private function generate(string $from, string $to): TestResponse
     {
+        $slots = collect(CarbonPeriod::create($from, $to))
+            ->map(fn ($date) => ['date' => $date->toDateString(), 'meal' => 'dinner'])
+            ->all();
+
         return $this->postJson('/api/v1/meal-plan/generate', [
             'from' => $from,
             'to' => $to,
-            'meals' => ['dinner'],
+            'slots' => $slots,
             'servings' => 2,
         ]);
     }

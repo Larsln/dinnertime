@@ -166,7 +166,6 @@ const messages: typeof de = {
         leftover: '{amount} left',
         wasted: '{amount} spoils',
         needed: 'Needed {amount}',
-        showUses: 'Show uses',
         done: 'Done ({count})',
     },
     pantry: {
@@ -192,6 +191,7 @@ const messages: typeof de = {
         staple: 'Staple',
         recipeCount: 'in {count} ingredient lines',
         name: 'Name',
+        icon: 'Icon',
         section: 'Store section',
         noSection: 'No section',
         baseUnit: 'Bought in',

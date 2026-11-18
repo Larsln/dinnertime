@@ -83,6 +83,7 @@ export interface Product {
     id: number;
     name: string;
     plural_name: string | null;
+    icon: string | null;
     base_unit: BaseUnit;
     is_pantry_staple: boolean;
     shelf_life_opened_days: number | null;
@@ -98,6 +99,7 @@ export interface Product {
 export interface ProductInput {
     name?: string;
     plural_name?: string | null;
+    icon?: string | null;
     store_section_id?: number | null;
     base_unit?: BaseUnit;
     is_pantry_staple?: boolean;

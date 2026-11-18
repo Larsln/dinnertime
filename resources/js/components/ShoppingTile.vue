@@ -2,19 +2,27 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
-import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger, Primitive } from 'reka-ui';
-import { Info, Trash2 } from 'lucide-vue-next';
+import {
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuPortal,
+    ContextMenuRoot,
+    ContextMenuTrigger,
+    Primitive,
+} from 'reka-ui';
+import { Trash2 } from 'lucide-vue-next';
 import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
 import { useToasts } from '@/composables/useToasts';
 import { formatDay, formatNumber } from '@/lib/format';
-import AppButton from '@/components/ui/AppButton.vue';
+import { productIcon } from '@/lib/productIcons';
 
 /**
- * Tile of the shopping list. Tapping it checks the product off or brings
- * it back; the small info button tells which recipes need it and what
- * remains.
+ * Tile of the shopping list: a line icon, the product's name and a short
+ * amount. Tapping it checks the product off or brings it back. A long
+ * press or right click tells what exactly to buy, which recipes need it
+ * and what remains.
  */
 const props = defineProps<{ item: ShoppingListItem }>();
 
@@ -25,20 +33,39 @@ const queryClient = useQueryClient();
 
 const isChecked = computed(() => props.item.checked_at !== null);
 const baseUnit = computed(() => props.item.product?.base_unit ?? 'g');
-const hasDetails = computed(() => props.item.uses.length > 0 || props.item.is_manual);
+const name = computed(() => props.item.product?.name ?? props.item.label ?? '');
 
-const purchase = computed(() => {
-    const extras = props.item.extra_amounts.map(
+const amountText = computed(() =>
+    props.item.purchase_amount !== null ? amount(props.item.purchase_amount, baseUnit.value) : '',
+);
+
+const extras = computed(() =>
+    props.item.extra_amounts.map(
         (extra) => `${formatNumber(extra.quantity, locale.value)} ${extra.unit_code}`,
-    );
+    ),
+);
 
-    if (props.item.packages.length > 0) {
-        return [...props.item.packages.map(describePackage), ...extras].join(' + ');
-    }
+/**
+ * The amount in as few characters as possible, for the tile.
+ */
+const shortAmount = computed(() => {
+    const only = props.item.packages.length === 1 ? props.item.packages[0] : undefined;
+    const packed =
+        only && only.count > 1 ? `${only.count} × ${amount(only.amount, baseUnit.value)}` : amountText.value;
+
+    return [...(packed ? [packed] : []), ...extras.value].join(' + ');
+});
+
+/**
+ * What to buy in full: every package with its size, plus needs in units
+ * that cannot be converted.
+ */
+const purchase = computed(() => {
+    const packages = props.item.packages.map(describePackage);
 
     return [
-        ...(props.item.purchase_amount !== null ? [amount(props.item.purchase_amount, baseUnit.value)] : []),
-        ...extras,
+        ...(packages.length > 0 ? packages : amountText.value ? [amountText.value] : []),
+        ...extras.value,
     ].join(' + ');
 });
 
@@ -72,46 +99,34 @@ const remove = useMutation({
 </script>
 
 <template>
-    <li class="relative">
-        <Primitive
-            as="button"
-            type="button"
-            :aria-pressed="isChecked"
-            class="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl p-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
-            :class="
-                isChecked
-                    ? 'bg-stone-200 text-stone-500 hover:bg-stone-300'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-            "
-            @click="toggle.mutate()"
-        >
-            <span
-                class="line-clamp-2 text-sm leading-tight font-semibold"
-                :class="{ 'line-through': isChecked }"
-            >
-                {{ item.product?.name ?? item.label }}
-            </span>
-            <span v-if="purchase" class="line-clamp-2 text-xs leading-tight opacity-90">
-                {{ purchase }}<template v-if="item.is_approximate"> ≈</template>
-            </span>
-        </Primitive>
-
-        <PopoverRoot v-if="hasDetails">
-            <PopoverTrigger
-                :aria-label="t('shopping.showUses')"
-                class="absolute top-1 right-1 flex size-6 cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-emerald-600"
-                :class="
-                    isChecked ? 'text-stone-500 hover:bg-stone-300' : 'text-white/80 hover:bg-emerald-700'
-                "
-            >
-                <Info class="size-4" />
-            </PopoverTrigger>
-            <PopoverPortal>
-                <PopoverContent
-                    :side-offset="4"
+    <li>
+        <ContextMenuRoot>
+            <ContextMenuTrigger as-child>
+                <Primitive
+                    as="button"
+                    type="button"
+                    :aria-pressed="isChecked"
+                    class="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl p-1.5 text-center transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                    :class="
+                        isChecked
+                            ? 'bg-stone-200 text-stone-400 hover:bg-stone-300'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    "
+                    @click="toggle.mutate()"
+                >
+                    <component :is="productIcon(item.product?.icon)" class="size-9" stroke-width="1.25" />
+                    <span class="line-clamp-1 w-full text-xs leading-tight font-medium">{{ name }}</span>
+                    <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none opacity-75">
+                        {{ shortAmount }}<template v-if="item.is_approximate"> ≈</template>
+                    </span>
+                </Primitive>
+            </ContextMenuTrigger>
+            <ContextMenuPortal>
+                <ContextMenuContent
                     class="z-50 w-64 rounded-xl border border-stone-200 bg-white p-3 text-sm text-stone-700 shadow-lg"
                 >
-                    <p class="font-semibold text-stone-900">{{ item.product?.name ?? item.label }}</p>
+                    <p class="font-semibold text-stone-900">{{ name }}</p>
+                    <p v-if="purchase" class="mt-1">{{ purchase }}</p>
                     <p v-if="item.needed_amount !== null" class="mt-1">
                         {{ t('shopping.needed', { amount: amount(item.needed_amount, baseUnit) }) }}
                     </p>
@@ -130,17 +145,15 @@ const remove = useMutation({
                     <p v-if="item.is_approximate" class="mt-1 text-stone-500">
                         {{ t('shopping.approximate') }}
                     </p>
-                    <AppButton
+                    <ContextMenuItem
                         v-if="item.is_manual"
-                        class="mt-2"
-                        size="sm"
-                        variant="ghost"
-                        @click="remove.mutate()"
+                        class="mt-2 flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-red-700 outline-none data-[highlighted]:bg-red-50"
+                        @select="remove.mutate()"
                     >
                         <Trash2 class="size-4" />{{ t('common.delete') }}
-                    </AppButton>
-                </PopoverContent>
-            </PopoverPortal>
-        </PopoverRoot>
+                    </ContextMenuItem>
+                </ContextMenuContent>
+            </ContextMenuPortal>
+        </ContextMenuRoot>
     </li>
 </template>

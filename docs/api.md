@@ -172,18 +172,20 @@ to signed-in users; its content is never returned.
 | POST | `/products/{id}/aliases` | `name` | Product |
 | DELETE | `/product-aliases/{id}` | | `204` |
 
-- **Product:** `{id, name, plural_name, base_unit, is_pantry_staple,
+- **Product:** `{id, name, plural_name, icon, base_unit, is_pantry_staple,
   shelf_life_opened_days, status, enriched_at, recipe_count,
   store_section: StoreSection|null, aliases: [string],
   conversions: [Conversion], packages: [Package]}`. `status` is `suggested`
-  or `confirmed`. `recipe_count`, `conversions` and `packages` are only
-  present on the detail and review endpoints.
+  or `confirmed`. `icon` is the key of a line icon for the shopping list
+  tile (a name from the Tabler icon set, see `App\Support\ProductIcons`), or
+  `null`. `recipe_count`, `conversions` and `packages` are only present on
+  the detail and review endpoints.
 - **Conversion:** `{id, unit: Unit, amount_in_base, status, source}`: one
   `unit` of the product equals `amount_in_base` of its base unit. An
   `amount_in_base` of `null` states that the unit cannot be converted for
   this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
-- **ProductInput:** `name`, `plural_name`, `store_section_id`, `base_unit`,
+- **ProductInput:** `name`, `plural_name`, `icon`, `store_section_id`, `base_unit`,
   `is_pantry_staple`, `shelf_life_opened_days`
 
 Values entered through the API count as confirmed. `source` is `ai`, `user`

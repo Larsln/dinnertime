@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'name',
     'plural_name',
+    'icon',
     'store_section_id',
     'base_unit',
     'is_pantry_staple',

@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\StoreSection;
 use App\Models\Unit;
 use App\Services\Catalog\ConversionGaps;
+use App\Support\ProductIcons;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -46,6 +47,7 @@ class ProductEnricher
 
     /**
      * Fill in the product details unless a user has confirmed the product.
+     * The icon is only decoration, so a missing one is always filled in.
      *
      * @param  array<string, mixed>  $suggestion
      */
@@ -63,6 +65,7 @@ class ProductEnricher
             ]);
         }
 
+        $product->icon ??= in_array($suggestion['icon'] ?? null, ProductIcons::KEYS, true) ? $suggestion['icon'] : null;
         $product->enriched_at = now()->toImmutable();
         $product->save();
     }

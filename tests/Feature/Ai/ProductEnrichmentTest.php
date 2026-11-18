@@ -31,6 +31,7 @@ class ProductEnrichmentTest extends TestCase
         $cream = $this->product('Sahne', attributes: ['status' => ReviewStatus::Suggested]);
         $this->recipe('Soße', [[$cream, 2, 'tablespoon'], [$cream, 100, 'milliliter'], [$cream, 50, 'gram'], [$cream, 1, 'tub']]);
         $this->fakeSuggestion([
+            'icon' => 'milk',
             'store_section' => 'chilled',
             'base_unit' => 'ml',
             'is_pantry_staple' => false,
@@ -48,6 +49,7 @@ class ProductEnrichmentTest extends TestCase
 
         $cream->refresh();
         $this->assertSame(BaseUnit::Milliliter, $cream->base_unit);
+        $this->assertSame('milk', $cream->icon);
         $this->assertSame('chilled', $cream->storeSection->key);
         $this->assertSame(4, $cream->shelf_life_opened_days);
         $this->assertNotNull($cream->enriched_at);
@@ -70,6 +72,7 @@ class ProductEnrichmentTest extends TestCase
         $this->convert($rice, 'tablespoon', 12);
         $this->recipe('Curry', [[$rice, 1, 'tablespoon'], [$rice, 2]]);
         $this->fakeSuggestion([
+            'icon' => 'not-an-icon',
             'store_section' => 'other',
             'base_unit' => 'piece',
             'is_pantry_staple' => true,
@@ -82,6 +85,7 @@ class ProductEnrichmentTest extends TestCase
 
         $rice->refresh();
         $this->assertSame(BaseUnit::Gram, $rice->base_unit);
+        $this->assertNull($rice->icon);
         $this->assertFalse($rice->is_pantry_staple);
         $this->assertNull($rice->shelf_life_opened_days);
         $this->assertEquals([500], $rice->packages->pluck('amount_in_base')->all());

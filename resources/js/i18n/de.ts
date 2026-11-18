@@ -173,7 +173,6 @@ export default {
         leftover: 'Rest {amount}',
         wasted: 'Verdirbt {amount}',
         needed: 'Bedarf {amount}',
-        showUses: 'Verwendung anzeigen',
         done: 'Erledigt ({count})',
     },
     pantry: {
@@ -199,6 +198,7 @@ export default {
         staple: 'Vorrat',
         recipeCount: 'in {count} Zutatenzeilen',
         name: 'Name',
+        icon: 'Symbol',
         section: 'Supermarkt-Bereich',
         noSection: 'Ohne Bereich',
         baseUnit: 'Gekauft in',

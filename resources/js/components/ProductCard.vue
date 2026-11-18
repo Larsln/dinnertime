@@ -7,6 +7,7 @@ import { productsApi } from '@/api/products';
 import type { BaseUnit, Product } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
+import IconPicker from '@/components/IconPicker.vue';
 import ProductPicker from '@/components/ProductPicker.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
@@ -49,6 +50,7 @@ const { storeSections, units } = useReferenceData();
 
 const details = reactive({
     name: '',
+    icon: null as string | null,
     storeSectionId: null as number | null,
     baseUnit: 'g' as BaseUnit | null,
     isPantryStaple: false,
@@ -67,6 +69,7 @@ watch(
     (product) => {
         Object.assign(details, {
             name: product.name,
+            icon: product.icon,
             storeSectionId: product.store_section?.id ?? null,
             baseUnit: product.base_unit,
             isPantryStaple: product.is_pantry_staple,
@@ -168,6 +171,7 @@ const save = useMutation({
     mutationFn: async (confirm: boolean) => {
         await productsApi.update(props.product.id, {
             name: details.name,
+            icon: details.icon,
             store_section_id: details.storeSectionId,
             base_unit: details.baseUnit ?? 'g',
             is_pantry_staple: details.isPantryStaple,
@@ -250,6 +254,8 @@ const remove = useMutation({
                 :label="t('products.pantryStaple')"
             />
         </div>
+
+        <IconPicker v-model="details.icon" class="mt-4" :label="t('products.icon')" />
 
         <div class="mt-5 grid gap-6 lg:grid-cols-2">
             <section>

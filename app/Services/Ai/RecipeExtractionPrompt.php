@@ -41,6 +41,7 @@ final readonly class RecipeExtractionPrompt
 
         Ingredients:
         - name is the food in its base form and singular, without amounts or preparation.
+        - Keep the exact variety that is used, because varieties are different products: "Penne" or "Spaghetti" instead of "pasta", "Basmatireis" instead of "rice", "Rinderhackfleisch" instead of "minced meat". Only use the general name when the recipe leaves the variety open.
         - Preparation and purpose go into note, e.g. "diced" or "for caramelising".
         - unit is one of the allowed units or null for foods counted in pieces.
         - If an amount is only visible, estimate it realistically and set is_estimated to true.

@@ -82,7 +82,7 @@ setting `MERCURE_JWT_KEY`.
 | DELETE | `/recipes/{id}` | | `204` |
 
 - **RecipeSummary:** `{id, title, slug, description, course, course_name,
-  servings, yield_text, prep_minutes, cook_minutes, cover_url, tags: [Tag],
+  servings, yield_text, prep_minutes, cook_minutes, cover_url, cover_thumb_url, tags: [Tag],
   rating, is_favorite, average_rating, rating_count}`. `rating` (0 bad to 10
   good) and `is_favorite` belong to the signed-in user, `average_rating` is
   the mean over all household members with one decimal. The four fields are
@@ -136,6 +136,62 @@ or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 `saving`. Clients poll `GET /imports/{id}` to show progress, or hold one
 request to `/imports/{id}/wait` open to learn the outcome.
 `error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
+
+## Sync for offline clients
+
+A client that works offline keeps a copy of the household's data and sends
+its changes later. Three things make that safe.
+
+### What changed
+
+| Method | Path | Query | Answer |
+|---|---|---|---|
+| GET | `/sync` | `since` (default `0`), `limit` (1–500, default 200) | Changes |
+
+**Changes:** `{version, has_more, changed, deleted, household}`
+
+- Every change to a record gives it the next number of one counter.
+  `version` is the number up to which this answer is complete; the client
+  stores it and sends it as `since` next time. With `has_more` it asks again
+  at once.
+- `changed` holds the new and changed records by kind, each in the shape of
+  its detail endpoint: `units`, `store_sections`, `tags`, `tools`,
+  `products`, `recipes` (with the marks of the user), `meal_plan_entries`,
+  `pantry_items` and `shopping_lists` (with their items). A recipe counts as
+  changed when its ingredients, steps, tags, tools or marks change, a product
+  when its aliases, conversions or packages change, a shopping list when one
+  of its items changes.
+- `deleted` holds the ids of deleted records by the same kinds. It is empty
+  for `since=0`.
+- Records embedded in others (the product of an ingredient, the recipe of a
+  plan entry) are snapshots from the time the outer record last changed.
+  Clients show their own copy of the embedded record where they have one,
+  and count recipes per product or tool themselves.
+- `household` is the current HouseholdSettings.
+- The address of a cover image never shows another image, so a downloaded
+  image can be kept for good. `cover_thumb_url` is a version 480 pixels wide
+  for lists, `null` when the server could not create one.
+
+### Sending a change only once
+
+Every changing request may carry an `Idempotency-Key` header (at most 100
+characters, unique per change, such as a UUID). A repeat under the same key
+is not run again; it gets the first answer, status and body. Keys are kept
+for 30 days. Answers with a status of 500 and above are not kept, so the
+client repeats those.
+
+### The later action wins
+
+A changing request may state in `X-Client-Time` (ISO 8601) when the user
+acted; without it the time of arrival counts. The record a `PUT`, `PATCH` or
+`DELETE` names is only changed when no later action changed it before;
+otherwise the answer is `409` with `{"message", "code": "stale"}` and the
+client drops its change. A change to a deleted record answers `404` and is
+dropped as well. Ratings and favorite marks belong to one user and are never
+turned away.
+
+Regenerating a shopping list keeps the id of a product's position, so check
+marks made offline still find it.
 
 ## Household settings
 

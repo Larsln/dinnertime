@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Creates or refreshes the shopping list of a period from the meal plan.
  *
- * Manual positions survive a refresh, and products that were already
- * checked off stay checked.
+ * Manual positions survive a refresh. A product keeps its position, so it
+ * stays checked and changes clients made to it offline still find it.
  */
 class ShoppingListSynchronizer
 {
@@ -23,23 +23,23 @@ class ShoppingListSynchronizer
 
         return DB::transaction(function () use ($from, $to, $forecast) {
             $list = ShoppingList::firstOrCreate(['starts_on' => $from, 'ends_on' => $to]);
-            $checked = $list->items()->whereNotNull('checked_at')->whereNotNull('product_id')->get()->keyBy('product_id');
-
-            $list->items()->where('is_manual', false)->delete();
+            $existing = $list->items()->where('is_manual', false)->get();
+            $kept = [];
 
             foreach ($forecast->products as $product) {
                 if ($product->requiresPurchase()) {
-                    $list->items()->create([
-                        ...$this->itemAttributes($product),
-                        'checked_at' => $checked->get($product->product->id)?->checked_at,
-                        'checked_by' => $checked->get($product->product->id)?->checked_by,
-                    ]);
+                    $item = $existing->firstWhere('product_id', $product->product->id) ?? $list->items()->make();
+                    $item->fill($this->itemAttributes($product))->save();
+                    $kept[] = $item->id;
                 }
             }
 
             foreach ($forecast->unresolved as $text) {
-                $list->items()->create(['label' => $text]);
+                $item = $existing->whereNull('product_id')->firstWhere('label', $text) ?? $list->items()->create(['label' => $text]);
+                $kept[] = $item->id;
             }
+
+            $existing->whereNotIn('id', $kept)->each->delete();
 
             return $list;
         });

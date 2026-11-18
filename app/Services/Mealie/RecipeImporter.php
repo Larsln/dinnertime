@@ -9,10 +9,10 @@ use App\Models\Recipe;
 use App\Models\Tag;
 use App\Models\Tool;
 use App\Models\Unit;
+use App\Services\Recipes\CoverStore;
 use App\Support\ReferenceTranslations;
 use App\Support\SourceLink;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Imports recipes from Mealie. Requires the catalog to be imported first.
@@ -26,7 +26,10 @@ class RecipeImporter
      */
     private array $unknownTags = [];
 
-    public function __construct(private readonly MealieClient $mealie) {}
+    public function __construct(
+        private readonly MealieClient $mealie,
+        private readonly CoverStore $covers,
+    ) {}
 
     /**
      * Import all recipes and report how many were written or left untouched.
@@ -277,8 +280,6 @@ class RecipeImporter
             return;
         }
 
-        $path = "covers/{$recipe->id}.webp";
-        Storage::disk('public')->put($path, $image);
-        $recipe->update(['cover_image_path' => $path]);
+        $this->covers->put($recipe, $image, 'webp');
     }
 }

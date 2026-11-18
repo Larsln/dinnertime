@@ -7,10 +7,10 @@ use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
+use App\Services\Recipes\CoverStore;
 use App\Support\SourceLink;
 use Closure;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -29,6 +29,7 @@ class VideoRecipeImporter implements RecipeSourceImporter
         private readonly RecipeDraftWriter $writer,
         private readonly FrameExtractor $frames,
         private readonly CoverPicker $coverPicker,
+        private readonly CoverStore $covers,
     ) {}
 
     public function import(string $url, Closure $report): Recipe
@@ -125,8 +126,6 @@ class VideoRecipeImporter implements RecipeSourceImporter
             return;
         }
 
-        $target = "covers/{$recipe->id}.jpg";
-        Storage::disk('public')->put($target, File::get($candidates[$this->coverPicker->pick($candidates)]));
-        $recipe->update(['cover_image_path' => $target]);
+        $this->covers->put($recipe, File::get($candidates[$this->coverPicker->pick($candidates)]), 'jpg');
     }
 }

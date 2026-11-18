@@ -222,7 +222,8 @@ class RecipeImportTest extends TestCase
 
         $this->assertSame(ImportStatus::Completed, $import->status);
         $this->assertSame(SourcePlatform::Web, $import->recipe->source_platform);
-        $this->assertSame("covers/{$import->recipe->id}.jpg", $import->recipe->cover_image_path);
+        $this->assertMatchesRegularExpression("~^covers/{$import->recipe->id}-[a-z0-9]+\.jpg$~", $import->recipe->cover_image_path);
+        Storage::disk('public')->assertExists($import->recipe->cover_image_path);
         Http::assertSent(fn (Request $request) => str_contains($request->url(), ':generateContent')
             && str_contains($request['contents'][0]['parts'][0]['text'], '"@type":"Recipe"')
             && str_contains($request['contents'][0]['parts'][0]['text'], 'Die beste Lasagne')

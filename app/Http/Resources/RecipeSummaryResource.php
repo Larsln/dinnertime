@@ -30,6 +30,7 @@ class RecipeSummaryResource extends JsonResource
             'prep_minutes' => $this->prep_minutes,
             'cook_minutes' => $this->cook_minutes,
             'cover_url' => $this->cover_image_path ? asset("storage/{$this->cover_image_path}") : null,
+            'cover_thumb_url' => $this->cover_thumb_path ? asset("storage/{$this->cover_thumb_path}") : null,
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'rating' => $this->whenLoaded('marks', fn () => $this->marks->first()?->rating),
             'is_favorite' => $this->whenLoaded('marks', fn () => (bool) $this->marks->first()?->is_favorite),

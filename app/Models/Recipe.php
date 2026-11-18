@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'source_platform',
     'source_video_id',
     'cover_image_path',
+    'cover_thumb_path',
     'meal_tags_locked',
     'mealie_recipe_id',
 ])]

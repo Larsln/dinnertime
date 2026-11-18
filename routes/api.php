@@ -18,9 +18,12 @@ use App\Http\Controllers\Api\V1\ServerController;
 use App\Http\Controllers\Api\V1\ShoppingListController;
 use App\Http\Controllers\Api\V1\ShoppingListItemController;
 use App\Http\Controllers\Api\V1\StoreSectionController;
+use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\ToolController;
 use App\Http\Controllers\Api\V1\UnitController;
+use App\Http\Middleware\HonorActionTime;
+use App\Http\Middleware\ReplayRepeatedRequests;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -28,13 +31,14 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::post('auth/oidc', [AuthController::class, 'oidc'])->middleware('throttle:10,1');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', ReplayRepeatedRequests::class, HonorActionTime::class])->group(function () {
+        Route::get('sync', SyncController::class);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/user', [AuthController::class, 'user']);
 
         Route::post('recipes/{recipe}/cover', [RecipeController::class, 'cover']);
-        Route::put('recipes/{recipe}/rating', [RecipeMarkController::class, 'rate']);
-        Route::put('recipes/{recipe}/favorite', [RecipeMarkController::class, 'favorite']);
+        Route::put('recipes/{recipe}/rating', [RecipeMarkController::class, 'rate'])->withoutMiddleware(HonorActionTime::class);
+        Route::put('recipes/{recipe}/favorite', [RecipeMarkController::class, 'favorite'])->withoutMiddleware(HonorActionTime::class);
         Route::apiResource('recipes', RecipeController::class);
 
         Route::get('realtime', RealtimeController::class);

@@ -7,11 +7,11 @@ use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
+use App\Services\Recipes\CoverStore;
 use Closure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -30,6 +30,7 @@ class WebRecipeImporter implements RecipeSourceImporter
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
         private readonly ImportSettings $settings,
+        private readonly CoverStore $covers,
     ) {}
 
     public function import(string $url, Closure $report): Recipe
@@ -102,9 +103,7 @@ class WebRecipeImporter implements RecipeSourceImporter
         $extension = self::IMAGE_EXTENSIONS[Str::before((string) $image?->header('Content-Type'), ';')] ?? null;
 
         if ($image?->successful() && $extension !== null) {
-            $target = "covers/{$recipe->id}.{$extension}";
-            Storage::disk('public')->put($target, $image->body());
-            $recipe->update(['cover_image_path' => $target]);
+            $this->covers->put($recipe, $image->body(), $extension);
         }
     }
 }

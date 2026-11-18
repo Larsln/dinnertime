@@ -8,13 +8,13 @@ use App\Http\Requests\RecipeRequest;
 use App\Http\Resources\RecipeResource;
 use App\Http\Resources\RecipeSummaryResource;
 use App\Models\Recipe;
+use App\Services\Recipes\CoverStore;
 use App\Services\Recipes\RecipeWriter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class RecipeController extends Controller
@@ -107,18 +107,14 @@ class RecipeController extends Controller
     /**
      * Replace the cover image.
      */
-    public function cover(Request $request, Recipe $recipe): RecipeResource
+    public function cover(Request $request, Recipe $recipe, CoverStore $covers): RecipeResource
     {
         $request->validate([
             'image' => ['required', 'image', 'max:10240'],
         ]);
 
-        $previous = $recipe->cover_image_path;
-        $recipe->update(['cover_image_path' => $request->file('image')->store('covers', 'public')]);
-
-        if ($previous !== null) {
-            Storage::disk('public')->delete($previous);
-        }
+        $image = $request->file('image');
+        $covers->put($recipe, $image->getContent(), $image->extension());
 
         return $this->detail($request, $recipe);
     }
@@ -126,12 +122,9 @@ class RecipeController extends Controller
     /**
      * Delete a recipe together with its cover image.
      */
-    public function destroy(Recipe $recipe): Response
+    public function destroy(Recipe $recipe, CoverStore $covers): Response
     {
-        if ($recipe->cover_image_path !== null) {
-            Storage::disk('public')->delete($recipe->cover_image_path);
-        }
-
+        $covers->delete($recipe);
         $recipe->delete();
 
         return response()->noContent();

@@ -4,12 +4,13 @@ import { useI18n } from 'vue-i18n';
 import { SliderRoot, SliderThumb, SliderTrack } from 'reka-ui';
 import { Star, X } from 'lucide-vue-next';
 import AppButton from '@/components/ui/AppButton.vue';
+import { formatNumber } from '@/lib/format';
 
 /**
- * Rating shown and named as zero to five stars in half steps; stored as
- * points from 0 to 10, one per half star.
- * Dragging or tapping across the stars sets the value, which is stored
- * when released and can be withdrawn again.
+ * Rating as zero to five stars in half steps; stored as points from 0 to
+ * 10, one per half star. Dragging or tapping across the stars sets the
+ * value, which is stored when released and can be withdrawn again. The
+ * slot follows the stars, for the household average.
  */
 const model = defineModel<number | null>({ required: true });
 
@@ -18,7 +19,7 @@ defineProps<{ label: string }>();
 const MAXIMUM = 10;
 const STARS = [1, 2, 3, 4, 5];
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const draft = ref<number | null>(model.value);
 
@@ -32,6 +33,15 @@ const position = computed({
         draft.value = values?.[0] ?? null;
     },
 });
+
+const valueText = computed(() =>
+    draft.value === null
+        ? t('recipes.notRated')
+        : t('recipes.ratingValue', {
+              value: formatNumber(draft.value / 2, locale.value),
+              maximum: MAXIMUM / 2,
+          }),
+);
 
 function commit(values: number[]): void {
     model.value = values[0] ?? null;
@@ -69,19 +79,13 @@ function fillOf(star: number): string {
                 @value-commit="commit"
             >
                 <SliderTrack class="h-full grow" />
-                <SliderThumb :aria-label="label" class="block size-1 opacity-0 focus:outline-none" />
+                <SliderThumb
+                    :aria-label="label"
+                    :aria-valuetext="valueText"
+                    class="block size-1 opacity-0 focus:outline-none"
+                />
             </SliderRoot>
         </div>
-        <span class="text-sm font-medium text-stone-800 tabular-nums">
-            {{
-                draft === null
-                    ? t('recipes.notRated')
-                    : t('recipes.ratingValue', {
-                          value: formatNumber(draft / 2, locale),
-                          maximum: MAXIMUM / 2,
-                      })
-            }}
-        </span>
         <AppButton
             v-if="model !== null"
             size="icon"
@@ -91,5 +95,6 @@ function fillOf(star: number): string {
         >
             <X class="size-4" />
         </AppButton>
+        <slot />
     </div>
 </template>

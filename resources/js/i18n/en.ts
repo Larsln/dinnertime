@@ -50,7 +50,6 @@ const messages: typeof de = {
         favoritesOnly: 'Favorites only',
         favorite: 'Favorite',
         rating: 'Your rating',
-        ratingHint: '0 = bad, 5 = very good',
         ratingValue: '{value} of {maximum}',
         notRated: 'not rated',
         withdrawRating: 'Withdraw rating',

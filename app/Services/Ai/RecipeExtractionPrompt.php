@@ -55,7 +55,7 @@ final readonly class RecipeExtractionPrompt
         - Group the steps of separate components such as base, filling and decoration by giving all steps of a component the same section name. Leave section null when the dish has no separate components.
 
         Tools:
-        - List kitchen tools in singular. Always include the cooking appliance such as oven, pan, pot, deep fryer, airfryer, grill, microwave or kitchen torch, and for oven dishes the dish or tray.
+        - List kitchen tools in singular, spelled as in a dictionary of the output language with its capitalization and special characters, for example "Küchenmaschine" in German. Always include the cooking appliance such as oven, pan, pot, deep fryer, airfryer, grill, microwave or kitchen torch, and for oven dishes the dish or tray.
 
         Classification:
         - course: the one main category of the dish, such as starter, main or dessert.

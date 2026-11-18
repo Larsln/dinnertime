@@ -155,19 +155,23 @@ const remove = useMutation({
                     <StatusBadge v-for="name in tagNames" :key="name">{{ name }}</StatusBadge>
                 </p>
                 <div class="space-y-1">
-                    <p class="text-sm font-medium text-stone-700">
-                        {{ t('recipes.rating') }}
-                        <span class="font-normal text-stone-500">· {{ t('recipes.ratingHint') }}</span>
-                    </p>
-                    <RatingControl v-model="rating" :label="t('recipes.rating')" />
-                    <p v-if="recipe.data.value.average_rating != null" class="text-sm text-stone-500">
-                        {{
-                            t('recipes.averageRating', {
-                                average: formatNumber(recipe.data.value.average_rating / 2, locale, 1),
-                                count: recipe.data.value.rating_count,
-                            })
-                        }}
-                    </p>
+                    <p class="text-sm font-medium text-stone-700">{{ t('recipes.rating') }}</p>
+                    <RatingControl v-model="rating" :label="t('recipes.rating')">
+                        <span
+                            v-if="recipe.data.value.average_rating != null"
+                            class="ml-auto text-sm text-stone-500 tabular-nums"
+                            :title="
+                                t('recipes.averageRating', {
+                                    average: formatNumber(recipe.data.value.average_rating / 2, locale, 1),
+                                    count: recipe.data.value.rating_count,
+                                })
+                            "
+                        >
+                            Ø {{ formatNumber(recipe.data.value.average_rating / 2, locale, 1) }} ({{
+                                recipe.data.value.rating_count
+                            }})
+                        </span>
+                    </RatingControl>
                 </div>
                 <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-stone-600">
                     <div v-if="recipe.data.value.prep_minutes" class="flex gap-1">

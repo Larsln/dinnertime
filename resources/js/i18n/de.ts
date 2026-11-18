@@ -48,7 +48,6 @@ export default {
         favoritesOnly: 'Nur Favoriten',
         favorite: 'Favorit',
         rating: 'Deine Bewertung',
-        ratingHint: '0 = schlecht, 5 = sehr gut',
         ratingValue: '{value} von {maximum}',
         notRated: 'nicht bewertet',
         withdrawRating: 'Bewertung zurücknehmen',

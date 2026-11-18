@@ -165,14 +165,35 @@ or `import`.
 | POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` | Entry, `201` |
 | PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry |
 | DELETE | `/meal-plan/{id}` | | `204` |
-| POST | `/meal-plan/generate` | `from`, `to`, `slots: [{date, meal}]`, `servings` | The Entries that were added, `201` |
+| POST | `/meal-plan/suggest` | PlanRequest | List of Suggestion plus `meta.candidate_count`; nothing is saved |
+| POST | `/meal-plan/batch` | `entries: [{date, meal, recipe_id, servings}]` | The Entries that were added, `201` |
 
 **Entry:** `{id, date, meal, servings, cooked_at, recipe: RecipeSummary}`
 
-Generating fills the requested slots (a day and a meal each) that have no
-entry yet, choosing recipes so that opened packages are used up. Slots must
-lie within the period; all entries of the period are taken into account. Periods span at most
-31 days.
+**PlanRequest:**
+
+- `from`, `to`: the period, at most 31 days. All its entries are taken into
+  account.
+- `slots: [{date, meal}]`: the days and meals to fill. Slots that already
+  have an entry or for which no recipe matches are left out of the answer.
+- `servings`
+- `preferences` (optional object of booleans): `use_leftovers` (default
+  `true`) chooses recipes that use up opened packages and the pantry,
+  `quick_on_weekdays` (`false`) only suggests recipes of at most 30 minutes
+  from Monday to Friday, `prefer_not_recent` (`true`) favors recipes that were
+  not planned for a long time, `prefer_favorites` (`false`) favors the user's
+  favorites and well rated recipes, `variety` (`true`) avoids repeats and the
+  same cuisine on consecutive days.
+- `tag_ids: [int]`, `courses: [key]` (optional): only suggest recipes that
+  carry one of the tags or belong to one of the courses.
+- `keep: [{date, meal, recipe_id}]` (optional): suggestions the user locked.
+  They are returned unchanged.
+- `avoid: [{date, meal, recipe_id}]` (optional): recipes not to suggest for a
+  slot again, used to re-roll a single meal.
+
+**Suggestion:** `{date, meal, recipe: RecipeSummary, kept}`, ordered by day and
+meal. Every call may answer with a different plan. `meta.candidate_count` is
+the number of recipes that were eligible.
 
 ## Pantry
 

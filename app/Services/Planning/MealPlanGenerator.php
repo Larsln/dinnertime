@@ -3,144 +3,117 @@
 namespace App\Services\Planning;
 
 use App\Enums\MealType;
-use App\Enums\TagType;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\Recipe;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Random\Randomizer;
 
 /**
- * Fills chosen days and meals of a period with recipes that use up each
- * other's leftovers.
+ * Suggests recipes for chosen days and meals without saving them.
  *
  * Starts from random plans and keeps swapping single meals while that lowers
- * the cost. With a few dozen recipes this finds a good plan quickly.
+ * the cost, which combines food left over with the household's preferences.
+ * With a few dozen recipes this finds a good plan quickly, and every call
+ * can come up with a different one.
  */
 class MealPlanGenerator
 {
     private const int RESTARTS = 4;
 
-    private const float REPEAT_PENALTY = 2.0;
-
-    private const float RECENT_PENALTY = 1.0;
-
-    private const int RECENT_DAYS = 14;
-
     private const float EPSILON = 1e-6;
 
     public function __construct(
+        private readonly CandidatePool $pool,
         private readonly ShoppingForecaster $forecaster,
-        private readonly PlanCost $planCost,
+        private readonly PlanCost $leftoverCost,
+        private readonly PreferenceCost $preferenceCost,
         private readonly Randomizer $randomizer,
     ) {}
 
     /**
-     * Plan the requested days and meals that have no entry yet. All entries
-     * of the period are kept and taken into account.
-     *
-     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $requested
-     * @return Collection<int, MealPlanEntry> The entries that were added.
+     * Suggest a recipe for every requested slot that has no entry yet.
+     * Entries of the period and recipes the user locked are kept and taken
+     * into account. Slots without any matching recipe are left out.
      */
-    public function generate(CarbonImmutable $from, CarbonImmutable $to, array $requested, int $servings): Collection
+    public function suggest(PlanRequest $request): PlanSuggestion
     {
         $existing = MealPlanEntry::query()
-            ->with(array_map(fn (string $relation) => "recipe.{$relation}", ShoppingForecaster::RECIPE_RELATIONS))
-            ->whereBetween('date', [$from, $to])
+            ->with(array_map(fn (string $relation) => "recipe.{$relation}", [...ShoppingForecaster::RECIPE_RELATIONS, 'tags']))
+            ->whereBetween('date', [$request->from, $request->to])
             ->get();
 
-        $candidates = $this->candidates(array_unique(array_column($requested, 'meal'), SORT_REGULAR));
-        $slots = $this->openSlots($requested, $existing, $candidates);
+        $taken = $existing->mapWithKeys(fn (MealPlanEntry $entry) => ["{$entry->date->toDateString()}|{$entry->meal->value}" => true]);
+        $slots = array_values(array_filter($request->slots, fn (PlanSlot $slot) => ! $taken->has($slot->key())));
 
-        $recipes = $this->search(
+        $candidates = $this->pool->forRequest($request);
+        $kept = $this->keptAssignments($slots, $request);
+        $open = array_values(array_filter(
             $slots,
-            $candidates,
-            $servings,
-            $existing->map(PlannedMeal::fromEntry(...))->all(),
-            PantryItem::all(),
-            $this->recentRecipeIds($from),
+            fn (PlanSlot $slot) => ! isset($kept[$slot->key()]) && ($candidates[$slot->key()] ?? []) !== [],
+        ));
+
+        $fixed = [
+            ...$existing->map(PlannedMeal::fromEntry(...))->all(),
+            ...array_map(fn (SlotAssignment $assignment) => $this->meal($assignment->slot, $assignment->recipe, $request), $kept),
+        ];
+
+        $recipes = $this->search($open, $candidates, $fixed, $request);
+
+        $suggested = array_map(
+            fn (PlanSlot $slot, Recipe $recipe) => new SlotAssignment($slot, $recipe, false),
+            $open,
+            $recipes,
         );
 
-        return DB::transaction(fn () => collect($slots)->map(
-            fn (array $slot, int $index) => MealPlanEntry::create([
-                'date' => $slot['date'],
-                'meal' => $slot['meal'],
-                'recipe_id' => $recipes[$index]->id,
-                'servings' => $servings,
-            ])->setRelation('recipe', $recipes[$index]),
-        ));
+        return new PlanSuggestion(
+            $this->inPlanOrder([...array_values($kept), ...$suggested]),
+            collect($candidates)->flatten()->unique('id')->count(),
+        );
     }
 
     /**
-     * Recipes tagged for each requested meal.
+     * Recipes the user locked for open slots.
      *
-     * @param  list<MealType>  $meals
-     * @return array<string, list<Recipe>> Recipes keyed by meal type value.
+     * @param  list<PlanSlot>  $slots
+     * @return array<string, SlotAssignment> Assignments keyed by slot key.
      */
-    private function candidates(array $meals): array
+    private function keptAssignments(array $slots, PlanRequest $request): array
     {
-        $candidates = [];
+        $recipes = Recipe::query()
+            ->withMarksOf($request->user)
+            ->with([...ShoppingForecaster::RECIPE_RELATIONS, 'tags'])
+            ->findMany(array_values($request->keep))
+            ->keyBy('id');
 
-        foreach ($meals as $meal) {
-            $candidates[$meal->value] = Recipe::query()
-                ->with(ShoppingForecaster::RECIPE_RELATIONS)
-                ->whereHas('tags', fn (Builder $query) => $query
-                    ->where('type', TagType::Meal)
-                    ->where('key', $meal->value))
-                ->get()
-                ->all();
+        $kept = [];
+
+        foreach ($slots as $slot) {
+            $recipe = $recipes->get($request->keep[$slot->key()] ?? null);
+
+            if ($recipe !== null) {
+                $kept[$slot->key()] = new SlotAssignment($slot, $recipe, true);
+            }
         }
 
-        return $candidates;
-    }
-
-    /**
-     * The requested slots that have no entry yet and at least one recipe.
-     *
-     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $requested
-     * @param  Collection<int, MealPlanEntry>  $existing
-     * @param  array<string, list<Recipe>>  $candidates
-     * @return list<array{date: CarbonImmutable, meal: MealType}>
-     */
-    private function openSlots(array $requested, Collection $existing, array $candidates): array
-    {
-        $taken = $existing
-            ->mapWithKeys(fn (MealPlanEntry $entry) => ["{$entry->date->toDateString()}|{$entry->meal->value}" => true]);
-
-        return array_values(array_filter(
-            $requested,
-            fn (array $slot) => ! $taken->has("{$slot['date']->toDateString()}|{$slot['meal']->value}")
-                && $candidates[$slot['meal']->value] !== [],
-        ));
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function recentRecipeIds(CarbonImmutable $from): array
-    {
-        return MealPlanEntry::query()
-            ->whereBetween('date', [$from->subDays(self::RECENT_DAYS), $from->subDay()])
-            ->pluck('recipe_id')
-            ->all();
+        return $kept;
     }
 
     /**
      * Find the cheapest assignment of recipes to the open slots.
      *
-     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $slots
+     * @param  list<PlanSlot>  $slots
      * @param  array<string, list<Recipe>>  $candidates
      * @param  list<PlannedMeal>  $fixed
-     * @param  Collection<int, PantryItem>  $pantry
-     * @param  list<int>  $recentRecipeIds
      * @return list<Recipe> Recipes aligned with the slots.
      */
-    private function search(array $slots, array $candidates, int $servings, array $fixed, Collection $pantry, array $recentRecipeIds): array
+    private function search(array $slots, array $candidates, array $fixed, PlanRequest $request): array
     {
-        $cost = fn (array $recipes) => $this->cost($slots, $recipes, $servings, $fixed, $pantry, $recentRecipeIds);
+        $pantry = PantryItem::all();
+        $daysSincePlanned = $this->daysSincePlanned($request->from);
+        $cost = fn (array $recipes) => $this->cost($slots, $recipes, $fixed, $pantry, $daysSincePlanned, $request);
+
         $best = [];
         $bestCost = INF;
 
@@ -152,7 +125,7 @@ class MealPlanGenerator
                 $improved = false;
 
                 foreach ($slots as $index => $slot) {
-                    foreach ($candidates[$slot['meal']->value] as $candidate) {
+                    foreach ($candidates[$slot->key()] as $candidate) {
                         $trial = array_replace($recipes, [$index => $candidate]);
                         $trialCost = $candidate->is($recipes[$index]) ? INF : $cost($trial);
 
@@ -177,7 +150,7 @@ class MealPlanGenerator
     /**
      * Pick a random recipe per slot, avoiding repeats while unused ones remain.
      *
-     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $slots
+     * @param  list<PlanSlot>  $slots
      * @param  array<string, list<Recipe>>  $candidates
      * @return list<Recipe>
      */
@@ -187,7 +160,7 @@ class MealPlanGenerator
         $recipes = [];
 
         foreach ($slots as $slot) {
-            $shuffled = $this->randomizer->shuffleArray($candidates[$slot['meal']->value]);
+            $shuffled = $this->randomizer->shuffleArray($candidates[$slot->key()]);
             $recipe = array_find($shuffled, fn (Recipe $recipe) => ! isset($used[$recipe->id])) ?? $shuffled[0];
 
             $used[$recipe->id] = true;
@@ -198,29 +171,60 @@ class MealPlanGenerator
     }
 
     /**
-     * Leftover cost of the whole plan plus penalties for cooking a recipe
-     * twice or again shortly after it was last planned.
+     * Cost of the whole plan: food left over, unless the household does not
+     * care, plus how far the plan is from its preferences.
      *
-     * @param  list<array{date: CarbonImmutable, meal: MealType}>  $slots
+     * @param  list<PlanSlot>  $slots
      * @param  list<Recipe>  $recipes
      * @param  list<PlannedMeal>  $fixed
      * @param  Collection<int, PantryItem>  $pantry
-     * @param  list<int>  $recentRecipeIds
+     * @param  array<int, int>  $daysSincePlanned
      */
-    private function cost(array $slots, array $recipes, int $servings, array $fixed, Collection $pantry, array $recentRecipeIds): float
+    private function cost(array $slots, array $recipes, array $fixed, Collection $pantry, array $daysSincePlanned, PlanRequest $request): float
     {
-        $meals = $fixed;
+        $meals = [
+            ...$fixed,
+            ...array_map(fn (PlanSlot $slot, Recipe $recipe) => $this->meal($slot, $recipe, $request), $slots, $recipes),
+        ];
 
-        foreach ($slots as $index => $slot) {
-            $meals[] = new PlannedMeal($slot['date'], $recipes[$index], $servings);
-        }
+        $leftovers = $request->preferences->useLeftovers
+            ? $this->leftoverCost->of($this->forecaster->forecast($meals, $pantry))
+            : 0;
 
-        $recipeIds = array_map(fn (PlannedMeal $meal) => $meal->recipe->id, $meals);
-        $repeats = count($recipeIds) - count(array_unique($recipeIds));
-        $recent = count(array_intersect(array_map(fn (Recipe $recipe) => $recipe->id, $recipes), $recentRecipeIds));
+        return $leftovers + $this->preferenceCost->of($meals, $recipes, $request->preferences, $daysSincePlanned);
+    }
 
-        return $this->planCost->of($this->forecaster->forecast($meals, $pantry))
-            + self::REPEAT_PENALTY * $repeats
-            + self::RECENT_PENALTY * $recent;
+    private function meal(PlanSlot $slot, Recipe $recipe, PlanRequest $request): PlannedMeal
+    {
+        return new PlannedMeal($slot->date, $recipe, $request->servings);
+    }
+
+    /**
+     * Days since each recipe was last planned before the period.
+     *
+     * @return array<int, int> Days keyed by recipe id.
+     */
+    private function daysSincePlanned(CarbonImmutable $from): array
+    {
+        return MealPlanEntry::query()
+            ->whereBetween('date', [$from->subDays(PreferenceCost::MEMORY_DAYS), $from->subDay()])
+            ->orderBy('date')
+            ->get(['recipe_id', 'date'])
+            ->mapWithKeys(fn (MealPlanEntry $entry) => [$entry->recipe_id => (int) $entry->date->diffInDays($from)])
+            ->all();
+    }
+
+    /**
+     * @param  list<SlotAssignment>  $assignments
+     * @return list<SlotAssignment>
+     */
+    private function inPlanOrder(array $assignments): array
+    {
+        $mealOrder = array_flip(array_column(MealType::cases(), 'value'));
+
+        usort($assignments, fn (SlotAssignment $a, SlotAssignment $b) => [$a->slot->date, $mealOrder[$a->slot->meal->value]]
+            <=> [$b->slot->date, $mealOrder[$b->slot->meal->value]]);
+
+        return $assignments;
     }
 }

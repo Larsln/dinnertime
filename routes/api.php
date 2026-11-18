@@ -58,7 +58,8 @@ Route::prefix('v1')->group(function () {
         Route::get('tags', TagController::class);
         Route::get('units', UnitController::class);
 
-        Route::post('meal-plan/generate', [MealPlanController::class, 'generate']);
+        Route::post('meal-plan/suggest', [MealPlanController::class, 'suggest']);
+        Route::post('meal-plan/batch', [MealPlanController::class, 'storeBatch']);
         Route::apiResource('meal-plan', MealPlanController::class)
             ->parameters(['meal-plan' => 'entry'])
             ->except('show');

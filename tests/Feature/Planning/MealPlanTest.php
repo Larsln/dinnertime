@@ -5,6 +5,8 @@ namespace Tests\Feature\Planning;
 use App\Enums\MealType;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
+use App\Models\Recipe;
+use App\Models\Tag;
 use App\Models\User;
 use Carbon\CarbonPeriod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +63,7 @@ class MealPlanTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['date', 'meal', 'recipe_id', 'servings']);
     }
 
-    public function test_the_generator_pairs_recipes_that_share_a_perishable_package(): void
+    public function test_a_suggestion_pairs_recipes_that_share_a_perishable_package(): void
     {
         $cream = $this->product('Sahne', [200], ['shelf_life_opened_days' => 4]);
         $rice = $this->product('Reis', [500]);
@@ -72,15 +74,14 @@ class MealPlanTest extends TestCase
         $this->recipe('Auflauf', [[$this->product('Brokkoli', [500], ['shelf_life_opened_days' => 3]), 300, 'gram']]);
         $this->recipe('Porridge', [], 'breakfast');
 
-        $titles = $this->generate('2026-11-16', '2026-11-17')
-            ->assertCreated()
-            ->assertJsonCount(2, 'data')
-            ->json('data.*.recipe.title');
+        $response = $this->suggest('2026-11-16', '2026-11-17')->assertOk()->assertJsonCount(2, 'data');
 
-        $this->assertEqualsCanonicalizing(['Lasagne', 'Suppe'], $titles);
+        $this->assertEqualsCanonicalizing(['Lasagne', 'Suppe'], $response->json('data.*.recipe.title'));
+        $this->assertSame(5, $response->json('meta.candidate_count'));
+        $this->assertSame(0, MealPlanEntry::count());
     }
 
-    public function test_the_generator_uses_up_the_pantry(): void
+    public function test_a_suggestion_uses_up_the_pantry(): void
     {
         $cream = $this->product('Sahne', [200], ['shelf_life_opened_days' => 4]);
         $this->recipe('Suppe', [[$cream, 80, 'gram']]);
@@ -88,82 +89,153 @@ class MealPlanTest extends TestCase
         $this->recipe('Auflauf', [[$this->product('Brokkoli', [500], ['shelf_life_opened_days' => 3]), 300, 'gram']]);
         PantryItem::create(['product_id' => $cream->id, 'amount' => 80, 'expires_on' => '2026-11-18']);
 
-        $this->generate('2026-11-16', '2026-11-16')->assertJsonPath('data.0.recipe.title', 'Suppe');
+        $this->suggest('2026-11-16', '2026-11-16')->assertJsonPath('data.0.recipe.title', 'Suppe');
+        $this->suggest('2026-11-16', '2026-11-16', ['preferences' => ['use_leftovers' => false]])->assertOk();
     }
 
-    public function test_the_generator_keeps_existing_entries_and_avoids_repeats(): void
+    public function test_a_suggestion_skips_planned_slots_and_avoids_repeats(): void
     {
         $lasagne = $this->recipe('Lasagne', []);
         $this->recipe('Suppe', []);
         $this->recipe('Curry', []);
         MealPlanEntry::create(['date' => '2026-11-16', 'meal' => MealType::Dinner, 'recipe_id' => $lasagne->id, 'servings' => 2]);
 
-        $titles = $this->generate('2026-11-16', '2026-11-18')->assertJsonCount(2, 'data')->json('data.*.recipe.title');
+        $response = $this->suggest('2026-11-16', '2026-11-18')->assertJsonCount(2, 'data');
 
-        $this->assertEqualsCanonicalizing(['Suppe', 'Curry'], $titles);
-        $this->assertSame(3, MealPlanEntry::count());
+        $this->assertEqualsCanonicalizing(['Suppe', 'Curry'], $response->json('data.*.recipe.title'));
+        $this->assertSame(['2026-11-17', '2026-11-18'], $response->json('data.*.date'));
     }
 
-    public function test_the_generator_skips_meals_without_recipes(): void
+    public function test_a_suggestion_covers_only_chosen_slots_that_have_recipes(): void
     {
         $this->recipe('Lasagne', []);
-
-        $this->postJson('/api/v1/meal-plan/generate', [
-            'from' => '2026-11-16',
-            'to' => '2026-11-16',
-            'slots' => [
-                ['date' => '2026-11-16', 'meal' => 'breakfast'],
-                ['date' => '2026-11-16', 'meal' => 'dinner'],
-            ],
-            'servings' => 2,
-        ])->assertJsonCount(1, 'data')->assertJsonPath('data.0.meal', 'dinner');
-    }
-
-    public function test_the_generator_fills_only_the_chosen_slots(): void
-    {
-        $this->recipe('Lasagne', []);
-        $this->recipe('Suppe', []);
         $this->recipe('Porridge', [], 'breakfast');
 
-        $entries = $this->postJson('/api/v1/meal-plan/generate', [
+        $data = $this->postJson('/api/v1/meal-plan/suggest', [
             'from' => '2026-11-16',
             'to' => '2026-11-22',
             'slots' => [
                 ['date' => '2026-11-21', 'meal' => 'dinner'],
                 ['date' => '2026-11-18', 'meal' => 'breakfast'],
                 ['date' => '2026-11-18', 'meal' => 'breakfast'],
+                ['date' => '2026-11-18', 'meal' => 'snack'],
             ],
             'servings' => 3,
-        ])->assertCreated()->json('data');
+        ])->assertOk()->json('data');
 
         $this->assertSame(
-            [['2026-11-18', 'breakfast', 3], ['2026-11-21', 'dinner', 3]],
-            array_map(fn (array $entry) => [$entry['date'], $entry['meal'], $entry['servings']], $entries),
+            [['2026-11-18', 'breakfast', 'Porridge', false], ['2026-11-21', 'dinner', 'Lasagne', false]],
+            array_map(fn (array $row) => [$row['date'], $row['meal'], $row['recipe']['title'], $row['kept']], $data),
         );
-        $this->assertSame('Porridge', $entries[0]['recipe']['title']);
     }
 
-    public function test_the_generator_rejects_slots_outside_the_period(): void
+    public function test_a_suggestion_keeps_locked_recipes_and_avoids_rejected_ones(): void
     {
-        $this->postJson('/api/v1/meal-plan/generate', [
+        $lasagne = $this->recipe('Lasagne', []);
+        $soup = $this->recipe('Suppe', []);
+
+        $data = $this->suggest('2026-11-16', '2026-11-17', [
+            'keep' => [['date' => '2026-11-16', 'meal' => 'dinner', 'recipe_id' => $soup->id]],
+            'avoid' => [['date' => '2026-11-17', 'meal' => 'dinner', 'recipe_id' => $lasagne->id]],
+        ])->json('data');
+
+        $this->assertSame(
+            [['Suppe', true], ['Suppe', false]],
+            array_map(fn (array $row) => [$row['recipe']['title'], $row['kept']], $data),
+        );
+    }
+
+    public function test_weekdays_get_quick_recipes_when_asked(): void
+    {
+        Recipe::whereKey($this->recipe('Braten', [])->id)->update(['prep_minutes' => 30, 'cook_minutes' => 120]);
+        Recipe::whereKey($this->recipe('Pfanne', [])->id)->update(['prep_minutes' => 10, 'cook_minutes' => 15]);
+
+        $titles = $this->suggest('2026-11-20', '2026-11-21', ['preferences' => ['quick_on_weekdays' => true]])
+            ->json('data.*.recipe.title');
+
+        $this->assertSame(['Pfanne', 'Braten'], $titles);
+    }
+
+    public function test_favorites_and_good_ratings_win_when_asked(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+        $this->recipe('Suppe', []);
+        $this->recipe('Curry', [])->marks()->create(['user_id' => $user->id, 'rating' => 2]);
+        $this->recipe('Lasagne', [])->marks()->create(['user_id' => $user->id, 'rating' => 9, 'is_favorite' => true]);
+
+        $this->suggest('2026-11-16', '2026-11-16', ['preferences' => ['prefer_favorites' => true]])
+            ->assertJsonPath('data.0.recipe.title', 'Lasagne');
+    }
+
+    public function test_long_uncooked_recipes_come_first(): void
+    {
+        $recent = $this->recipe('Lasagne', []);
+        $older = $this->recipe('Suppe', []);
+        MealPlanEntry::create(['date' => '2026-11-12', 'meal' => MealType::Dinner, 'recipe_id' => $recent->id, 'servings' => 2]);
+        MealPlanEntry::create(['date' => '2026-10-01', 'meal' => MealType::Dinner, 'recipe_id' => $older->id, 'servings' => 2]);
+
+        $this->suggest('2026-11-16', '2026-11-16')->assertJsonPath('data.0.recipe.title', 'Suppe');
+    }
+
+    public function test_a_suggestion_can_be_limited_to_tags_and_courses(): void
+    {
+        $vegan = Tag::where('type', 'tag')->where('key', 'vegan')->value('id');
+        $this->recipe('Lasagne', []);
+        $this->recipe('Bowl', [])->tags()->attach($vegan);
+        Recipe::whereKey($this->recipe('Tiramisu', [])->id)->update(['course' => 'dessert']);
+
+        $this->suggest('2026-11-16', '2026-11-16', ['tag_ids' => [$vegan]])
+            ->assertJsonPath('data.0.recipe.title', 'Bowl')
+            ->assertJsonPath('meta.candidate_count', 1);
+
+        $this->suggest('2026-11-16', '2026-11-16', ['courses' => ['dessert']])->assertJsonPath('data.0.recipe.title', 'Tiramisu');
+    }
+
+    public function test_it_rejects_invalid_suggestion_requests(): void
+    {
+        $this->postJson('/api/v1/meal-plan/suggest', [
             'from' => '2026-11-16',
             'to' => '2026-11-22',
             'slots' => [['date' => '2026-11-23', 'meal' => 'dinner'], ['date' => '2026-11-17', 'meal' => 'brunch']],
             'servings' => 2,
-        ])->assertUnprocessable()->assertJsonValidationErrors(['slots.0.date', 'slots.1.meal']);
+            'preferences' => ['spicy' => true],
+            'courses' => ['brunch'],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['slots.0.date', 'slots.1.meal', 'preferences', 'courses.0']);
     }
 
-    private function generate(string $from, string $to): TestResponse
+    public function test_accepted_suggestions_are_saved_together(): void
+    {
+        $lasagne = $this->recipe('Lasagne', []);
+        $soup = $this->recipe('Suppe', []);
+
+        $this->postJson('/api/v1/meal-plan/batch', ['entries' => [
+            ['date' => '2026-11-16', 'meal' => 'dinner', 'recipe_id' => $lasagne->id, 'servings' => 2],
+            ['date' => '2026-11-17', 'meal' => 'lunch', 'recipe_id' => $soup->id, 'servings' => 4],
+        ]])->assertCreated()->assertJsonCount(2, 'data')->assertJsonPath('data.1.recipe.title', 'Suppe');
+
+        $this->assertSame(2, MealPlanEntry::count());
+        $this->postJson('/api/v1/meal-plan/batch', ['entries' => [['date' => '2026-11-16', 'meal' => 'dinner']]])->assertUnprocessable();
+    }
+
+    /**
+     * Ask for a dinner suggestion on every day of the period.
+     *
+     * @param  array<string, mixed>  $options
+     * @return TestResponse<JsonResponse>
+     */
+    private function suggest(string $from, string $to, array $options = []): TestResponse
     {
         $slots = collect(CarbonPeriod::create($from, $to))
             ->map(fn ($date) => ['date' => $date->toDateString(), 'meal' => 'dinner'])
             ->all();
 
-        return $this->postJson('/api/v1/meal-plan/generate', [
+        return $this->postJson('/api/v1/meal-plan/suggest', [
             'from' => $from,
             'to' => $to,
             'slots' => $slots,
             'servings' => 2,
+            ...$options,
         ]);
     }
 }

@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\MealType;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\GenerateMealPlanRequest;
 use App\Http\Requests\MealPlanEntryRequest;
 use App\Http\Requests\PeriodRequest;
+use App\Http\Requests\SuggestMealPlanRequest;
 use App\Http\Resources\MealPlanEntryResource;
+use App\Http\Resources\SlotAssignmentResource;
 use App\Models\MealPlanEntry;
 use App\Services\Planning\MealPlanGenerator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class MealPlanController extends Controller
 {
@@ -67,20 +72,36 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Fill the chosen days and meals of a period with recipes that use up
-     * leftovers. Meals that already have an entry are left as they are.
+     * Suggest recipes for chosen days and meals without saving them.
+     * Clients show the suggestion, let the user lock or re-roll single
+     * meals and save what is accepted with the batch endpoint.
      */
-    public function generate(GenerateMealPlanRequest $request, MealPlanGenerator $generator): JsonResponse
+    public function suggest(SuggestMealPlanRequest $request, MealPlanGenerator $generator): AnonymousResourceCollection
     {
-        $entries = $generator->generate(
-            $request->from(),
-            $request->to(),
-            $request->slots(),
-            $request->integer('servings'),
-        );
+        $suggestion = $generator->suggest($request->toPlanRequest());
 
-        return MealPlanEntryResource::collection($entries->each->load('recipe.tags'))
-            ->response()
-            ->setStatusCode(201);
+        return SlotAssignmentResource::collection($suggestion->assignments)
+            ->additional(['meta' => ['candidate_count' => $suggestion->candidateCount]]);
+    }
+
+    /**
+     * Schedule several recipes at once.
+     */
+    public function storeBatch(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'entries' => ['required', 'array', 'min:1'],
+            'entries.*.date' => ['required', 'date_format:Y-m-d'],
+            'entries.*.meal' => ['required', Rule::enum(MealType::class)],
+            'entries.*.recipe_id' => ['required', 'integer', 'exists:recipes,id'],
+            'entries.*.servings' => ['required', 'integer', 'between:1,50'],
+        ]);
+
+        $entries = DB::transaction(fn () => array_map(
+            fn (array $entry) => MealPlanEntry::create($entry)->load('recipe.tags'),
+            $data['entries'],
+        ));
+
+        return MealPlanEntryResource::collection($entries)->response()->setStatusCode(201);
     }
 }

@@ -103,7 +103,7 @@ class RecipeManagementTest extends TestCase
 
         $first = $this->postJson("/api/v1/recipes/{$recipe->id}/cover", ['image' => $this->image('a.png')])
             ->assertOk()
-            ->assertJsonPath('data.cover_url', fn (?string $url) => $url !== null);
+            ->assertJsonPath('data.cover_url', fn (?string $url) => str_contains((string) $url, '/storage/covers/'));
         $firstPath = $recipe->refresh()->cover_image_path;
 
         $this->postJson("/api/v1/recipes/{$recipe->id}/cover", ['image' => $this->image('b.png')])->assertOk();

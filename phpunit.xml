@@ -24,6 +24,12 @@
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_DATABASE" value="mealplanner_test"/>
+        <env name="GEMINI_API_KEY" value=""/>
+        <env name="OIDC_ISSUER" value=""/>
+        <env name="OIDC_CLIENT_ID" value=""/>
+        <env name="MEALIE_URL" value=""/>
+        <env name="MEALIE_TOKEN" value=""/>
+        <env name="YTDLP_COOKIES_FILE" value=""/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

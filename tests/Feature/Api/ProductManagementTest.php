@@ -32,24 +32,45 @@ class ProductManagementTest extends TestCase
         $halloumi = Product::factory()->create(['name' => 'Halloumi']);
         $butter = Product::factory()->create(['name' => 'Butter']);
 
-        $id = $this->postJson("/api/v1/products/{$halloumi->id}/offers", ['store' => ' Lidl ', 'amount_in_base' => 225, 'price' => 2.59])
+        $offer = $this->postJson("/api/v1/products/{$halloumi->id}/offers", ['store' => ' Lidl ', 'amount_in_base' => 225, 'price' => 2.59])
             ->assertCreated()
             ->assertJsonPath('data.store', 'Lidl')
             ->assertJsonPath('data.amount_in_base', 225)
             ->assertJsonPath('data.price', 2.59)
-            ->json('data.id');
-        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl'])->assertCreated()->assertJsonPath('data.price', null);
-        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Rewe', 'price' => 1.99])->assertCreated();
+            ->json('data');
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'lidl'])
+            ->assertCreated()
+            ->assertJsonPath('data.store_id', $offer['store_id'])
+            ->assertJsonPath('data.price', null);
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['price' => 1.99])->assertUnprocessable();
-        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Rewe', 'amount_in_base' => 0])->assertUnprocessable();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store_id' => $offer['store_id'], 'amount_in_base' => 0])->assertUnprocessable();
 
-        $this->getJson('/api/v1/stores')->assertOk()->assertExactJson(['data' => ['Lidl', 'Rewe']]);
-        $this->patchJson("/api/v1/product-offers/{$id}", ['price' => 2.79])->assertOk()->assertJsonPath('data.price', 2.79)->assertJsonPath('data.store', 'Lidl');
+        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['price' => 2.79])->assertOk()->assertJsonPath('data.price', 2.79)->assertJsonPath('data.store', 'Lidl');
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonPath('data.offers.0.price', 2.79);
         $this->getJson('/api/v1/settings/household')->assertJsonPath('data.currency', 'EUR');
 
-        $this->deleteJson("/api/v1/product-offers/{$id}")->assertNoContent();
+        $this->deleteJson("/api/v1/product-offers/{$offer['id']}")->assertNoContent();
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonCount(0, 'data.offers');
+    }
+
+    public function test_it_manages_the_stores(): void
+    {
+        $butter = Product::factory()->create(['name' => 'Butter']);
+        $rewe = $this->postJson('/api/v1/stores', ['name' => 'Rewe'])->assertCreated()->assertJsonPath('data.is_active', true)->json('data.id');
+        $this->postJson('/api/v1/stores', ['name' => 'rewe '])->assertUnprocessable();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store_id' => $rewe, 'price' => 1.99])->assertCreated();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Aldi'])->assertCreated();
+
+        $this->getJson('/api/v1/stores')
+            ->assertJsonPath('data.0.name', 'Aldi')
+            ->assertJsonPath('data.1.name', 'Rewe')
+            ->assertJsonPath('data.1.offer_count', 1);
+        $this->patchJson("/api/v1/stores/{$rewe}", ['is_active' => false])->assertOk()->assertJsonPath('data.is_active', false)->assertJsonPath('data.name', 'Rewe');
+        $this->patchJson("/api/v1/stores/{$rewe}", ['name' => 'REWE City'])->assertOk()->assertJsonPath('data.name', 'REWE City');
+        $this->patchJson("/api/v1/stores/{$rewe}", ['name' => 'aldi'])->assertUnprocessable();
+
+        $this->deleteJson("/api/v1/stores/{$rewe}")->assertNoContent();
+        $this->getJson("/api/v1/products/{$butter->id}")->assertJsonCount(1, 'data.offers')->assertJsonPath('data.offers.0.store', 'Aldi');
     }
 
     public function test_a_product_keeps_a_note(): void

@@ -17,6 +17,7 @@ import { useAmounts } from '@/composables/useAmounts';
 import { useToasts } from '@/composables/useToasts';
 import { formatDay, formatNumber, formatOffer } from '@/lib/format';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
+import { useStores } from '@/composables/useStores';
 import ProductIcon from '@/components/ProductIcon.vue';
 
 /**
@@ -30,10 +31,14 @@ const props = defineProps<{ item: ShoppingListItem }>();
 const { t, locale } = useI18n();
 const { amount } = useAmounts();
 const { currency } = useHouseholdSettings();
+const { storeName, isActive } = useStores();
 const { showError } = useToasts();
 const queryClient = useQueryClient();
 
 const isChecked = computed(() => props.item.checked_at !== null);
+const hasInfo = computed(
+    () => Boolean(props.item.product?.note) || (props.item.product?.offers ?? []).some(isActive),
+);
 const baseUnit = computed(() => props.item.product?.base_unit ?? 'g');
 const name = computed(() => props.item.product?.name ?? props.item.label ?? '');
 
@@ -117,7 +122,7 @@ const remove = useMutation({
                     @click="toggle.mutate()"
                 >
                     <span
-                        v-if="item.product?.note || item.product?.offers?.length"
+                        v-if="hasInfo"
                         class="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-current opacity-80"
                     />
                     <ProductIcon
@@ -156,8 +161,22 @@ const remove = useMutation({
                         {{ t('shopping.approximate') }}
                     </p>
                     <ul v-if="item.product?.offers?.length" class="mt-2 border-t border-stone-100 pt-2">
-                        <li v-for="offer in item.product.offers" :key="offer.id">
-                            {{ formatOffer(offer, baseUnit, locale, currency, t('units.piece')) }}
+                        <li
+                            v-for="offer in item.product.offers"
+                            :key="offer.id"
+                            :class="{ 'text-stone-400': !isActive(offer) }"
+                        >
+                            {{
+                                formatOffer(
+                                    offer,
+                                    storeName(offer),
+                                    baseUnit,
+                                    locale,
+                                    currency,
+                                    t('units.piece'),
+                                )
+                            }}
+                            <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                         </li>
                     </ul>
                     <p

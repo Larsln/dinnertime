@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
+import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import { Plus, Trash2 } from 'lucide-vue-next';
 import { productsApi } from '@/api/products';
 import type { Product } from '@/api/types';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
+import { useStores } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
 import { formatOffer } from '@/lib/format';
 import AppButton from '@/components/ui/AppButton.vue';
@@ -28,7 +29,8 @@ const store = ref('');
 const amount = ref<number | null>(null);
 const price = ref<number | null>(null);
 
-const stores = useQuery({ queryKey: ['stores'], queryFn: productsApi.stores });
+const { stores, storeName, isActive } = useStores();
+const activeStores = computed(() => stores.value.filter((entry) => entry.is_active));
 
 function refresh(): void {
     for (const key of ['products', 'review', 'stores', 'shopping-list']) {
@@ -63,9 +65,19 @@ const remove = useMutation({
         <FieldLabel>{{ t('products.offers') }}</FieldLabel>
         <ul v-if="product.offers?.length" class="mb-2 space-y-1 text-sm text-stone-700">
             <li v-for="offer in product.offers" :key="offer.id" class="flex items-center gap-2">
-                <span class="flex-1">{{
-                    formatOffer(offer, product.base_unit, locale, currency, t('units.piece'))
-                }}</span>
+                <span class="flex-1" :class="{ 'text-stone-400': !isActive(offer) }">
+                    {{
+                        formatOffer(
+                            offer,
+                            storeName(offer),
+                            product.base_unit,
+                            locale,
+                            currency,
+                            t('units.piece'),
+                        )
+                    }}
+                    <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
+                </span>
                 <AppButton
                     size="icon"
                     variant="ghost"
@@ -76,15 +88,15 @@ const remove = useMutation({
                 </AppButton>
             </li>
         </ul>
-        <div v-if="stores.data.value?.length" class="mb-2 flex flex-wrap gap-1">
+        <div v-if="activeStores.length" class="mb-2 flex flex-wrap gap-1">
             <AppButton
-                v-for="name in stores.data.value"
-                :key="name"
+                v-for="entry in activeStores"
+                :key="entry.id"
                 size="sm"
-                :variant="store === name ? 'primary' : 'ghost'"
-                @click="store = name"
+                :variant="store === entry.name ? 'primary' : 'ghost'"
+                @click="store = entry.name"
             >
-                {{ name }}
+                {{ entry.name }}
             </AppButton>
         </div>
         <form class="flex flex-wrap items-end gap-2" @submit.prevent="add.mutate()">

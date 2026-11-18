@@ -230,6 +230,18 @@ const messages: typeof de = {
         deleteTitle: 'Delete product',
         deleteDescription: '“{name}” will be deleted unless a recipe uses it.',
     },
+    stores: {
+        tab: 'Stores',
+        name: 'Name of the store',
+        add: 'Add store',
+        active: 'active',
+        paused: 'paused',
+        offerCount: '{count} products',
+        empty: 'No stores yet',
+        emptyHint: 'Stores also appear when you note where a product is sold.',
+        deleteTitle: 'Delete store',
+        deleteDescription: '“{name}” is deleted together with everything noted there.',
+    },
     tools: {
         searchPlaceholder: 'Search tools',
         create: 'Create “{name}”',

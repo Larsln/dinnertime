@@ -35,8 +35,9 @@ export const productsApi = {
         ),
     removePackage: (packageId: number) => api.delete(`/product-packages/${packageId}`),
 
-    stores: () => data(api.get<{ data: string[] }>('/stores')),
-    addOffer: (id: number, offer: Omit<ProductOffer, 'id'>) =>
-        data(api.post<{ data: ProductOffer }>(`/products/${id}/offers`, offer)),
+    addOffer: (
+        id: number,
+        offer: { store_id?: number; store?: string; amount_in_base: number | null; price: number | null },
+    ) => data(api.post<{ data: ProductOffer }>(`/products/${id}/offers`, offer)),
     removeOffer: (offerId: number) => api.delete(`/product-offers/${offerId}`),
 };

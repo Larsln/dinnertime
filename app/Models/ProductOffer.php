@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?float $amount_in_base
  * @property ?float $price
  */
-#[Fillable(['product_id', 'store', 'amount_in_base', 'price'])]
+#[Fillable(['product_id', 'store_id', 'amount_in_base', 'price'])]
 class ProductOffer extends Model
 {
     /**
@@ -27,6 +27,16 @@ class ProductOffer extends Model
             'amount_in_base' => 'float',
             'price' => 'float',
         ];
+    }
+
+    /**
+     * Store that sells the product.
+     *
+     * @return BelongsTo<Store, $this>
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 
     /**

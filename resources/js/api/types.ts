@@ -79,8 +79,16 @@ export interface ProductPackage {
     source: ValueSource;
 }
 
+export interface Store {
+    id: number;
+    name: string;
+    is_active: boolean;
+    offer_count?: number;
+}
+
 export interface ProductOffer {
     id: number;
+    store_id: number;
     store: string;
     amount_in_base: number | null;
     price: number | null;

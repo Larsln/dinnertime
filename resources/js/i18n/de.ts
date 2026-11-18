@@ -237,6 +237,18 @@ export default {
         deleteTitle: 'Produkt löschen',
         deleteDescription: '„{name}“ wird gelöscht, sofern kein Rezept es verwendet.',
     },
+    stores: {
+        tab: 'Läden',
+        name: 'Name des Ladens',
+        add: 'Laden hinzufügen',
+        active: 'aktiv',
+        paused: 'pausiert',
+        offerCount: '{count} Produkte',
+        empty: 'Noch keine Läden',
+        emptyHint: 'Läden entstehen auch, wenn du bei einem Produkt einträgst, wo es das gibt.',
+        deleteTitle: 'Laden löschen',
+        deleteDescription: '„{name}“ wird mit allem gelöscht, was dort eingetragen ist.',
+    },
     tools: {
         searchPlaceholder: 'Hilfsmittel suchen',
         create: '„{name}“ neu anlegen',

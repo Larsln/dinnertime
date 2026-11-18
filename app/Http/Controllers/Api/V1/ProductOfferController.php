@@ -7,29 +7,16 @@ use App\Http\Requests\ProductOfferRequest;
 use App\Http\Resources\ProductOfferResource;
 use App\Models\Product;
 use App\Models\ProductOffer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class ProductOfferController extends Controller
 {
     /**
-     * List the stores named so far, the most used first.
-     */
-    public function stores(): JsonResponse
-    {
-        return response()->json(['data' => ProductOffer::query()
-            ->groupBy('store')
-            ->orderByRaw('count(*) desc')
-            ->orderBy('store')
-            ->pluck('store')]);
-    }
-
-    /**
      * Note where a product can be bought.
      */
     public function store(ProductOfferRequest $request, Product $product): ProductOfferResource
     {
-        return new ProductOfferResource($product->offers()->create($request->validated()));
+        return new ProductOfferResource($product->offers()->create($request->offer())->load('store'));
     }
 
     /**
@@ -37,9 +24,9 @@ class ProductOfferController extends Controller
      */
     public function update(ProductOfferRequest $request, ProductOffer $offer): ProductOfferResource
     {
-        $offer->update($request->validated());
+        $offer->update($request->offer());
 
-        return new ProductOfferResource($offer);
+        return new ProductOfferResource($offer->load('store'));
     }
 
     /**

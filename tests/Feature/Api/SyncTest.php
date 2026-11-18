@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\ShoppingList;
+use App\Models\Store;
 use App\Models\Tool;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,10 +76,11 @@ class SyncTest extends TestCase
         $this->getJson("/api/v1/sync?since={$since}")->assertJsonCount(0, 'data.changed.shopping_lists.0.items');
 
         $since = $this->getJson('/api/v1/sync')->json('data.version');
-        $product->offers()->create(['store' => 'Lidl', 'price' => 1.99]);
+        $product->offers()->create(['store_id' => Store::named('Lidl')->id, 'price' => 1.99]);
 
         $this->getJson("/api/v1/sync?since={$since}")
             ->assertJsonPath('data.changed.products.0.offers.0.store', 'Lidl')
+            ->assertJsonPath('data.changed.stores.0.name', 'Lidl')
             ->assertJsonPath('data.household.currency', 'EUR');
     }
 

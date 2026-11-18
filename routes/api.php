@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\RecipeMarkController;
 use App\Http\Controllers\Api\V1\ServerController;
 use App\Http\Controllers\Api\V1\ShoppingListController;
 use App\Http\Controllers\Api\V1\ShoppingListItemController;
+use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreSectionController;
 use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\TagController;
@@ -68,7 +69,7 @@ Route::prefix('v1')->group(function () {
         Route::post('products/{product}/packages', [ProductPackageController::class, 'store']);
         Route::patch('product-packages/{package}', [ProductPackageController::class, 'update']);
         Route::delete('product-packages/{package}', [ProductPackageController::class, 'destroy']);
-        Route::get('stores', [ProductOfferController::class, 'stores']);
+        Route::apiResource('stores', StoreController::class)->except('show');
         Route::post('products/{product}/offers', [ProductOfferController::class, 'store']);
         Route::patch('product-offers/{offer}', [ProductOfferController::class, 'update']);
         Route::delete('product-offers/{offer}', [ProductOfferController::class, 'destroy']);

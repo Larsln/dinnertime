@@ -38,13 +38,14 @@ export function formatAmount(amount: number, baseUnit: BaseUnit, locale: string,
  */
 export function formatOffer(
     offer: ProductOffer,
+    storeName: string,
     baseUnit: BaseUnit,
     locale: string,
     currency: string,
     pieceLabel: string,
 ): string {
     return [
-        offer.store,
+        storeName,
         offer.amount_in_base === null
             ? null
             : formatAmount(offer.amount_in_base, baseUnit, locale, pieceLabel),

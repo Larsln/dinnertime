@@ -249,10 +249,13 @@ to signed-in users; its content is never returned.
 | POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
 | PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
 | DELETE | `/product-packages/{id}` | | `204` |
-| POST | `/products/{id}/offers` | `store`, `amount_in_base?`, `price?` | Offer, `201` |
-| PATCH | `/product-offers/{id}` | `store?`, `amount_in_base?`, `price?` | Offer |
+| POST | `/products/{id}/offers` | `store_id` or `store` (a name, created if new), `amount_in_base?`, `price?` | Offer, `201` |
+| PATCH | `/product-offers/{id}` | `store_id?`, `store?`, `amount_in_base?`, `price?` | Offer |
 | DELETE | `/product-offers/{id}` | | `204` |
-| GET | `/stores` | | `[string]`: the store names used so far, most used first |
+| GET | `/stores` | | `[Store]` by name |
+| POST | `/stores` | `name` | Store, `201`; `422` when a store has that name, ignoring case |
+| PATCH | `/stores/{id}` | `name?`, `is_active?` | Store |
+| DELETE | `/stores/{id}` | | `204`; removes the store with its offers |
 | POST | `/products/{id}/aliases` | `name` | Product |
 | DELETE | `/product-aliases/{id}` | | `204` |
 
@@ -269,12 +272,17 @@ to signed-in users; its content is never returned.
   `amount_in_base` of `null` states that the unit cannot be converted for
   this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
-- **Offer:** `{id, store, amount_in_base, price}`: where the product can be
-  bought. `store` is the name of the shop, `amount_in_base` the size of the
-  package it sells in the product's base unit and `price` what that package
+- **Offer:** `{id, store_id, store, amount_in_base, price}`: where the
+  product can be bought. `amount_in_base` is the size of the package the
+  store sells in the product's base unit and `price` what that package
   costs, in the currency of the household settings; both may be `null`.
-  Products carry their `offers` on the detail and review endpoints, inside
-  shopping list items and in the sync feed.
+  `store` repeats the store's name; clients that keep the stores take name
+  and state from there, since renaming or pausing a store does not change
+  its products. Products carry their `offers` on the detail and review
+  endpoints, inside shopping list items and in the sync feed.
+- **Store:** `{id, name, is_active, offer_count}`. A store that is not
+  active, for example while it is rebuilt, is not offered when noting
+  where a product is sold, and its offers are shown as paused.
 - **ProductInput:** `name`, `plural_name`, `icon`, `store_section_id`, `base_unit`,
   `is_pantry_staple`, `shelf_life_opened_days`, `note` (free text for the shopper, at most 500 characters)
 

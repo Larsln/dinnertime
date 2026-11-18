@@ -7,6 +7,7 @@ use App\Http\Resources\PantryItemResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\RecipeResource;
 use App\Http\Resources\ShoppingListResource;
+use App\Http\Resources\StoreResource;
 use App\Http\Resources\StoreSectionResource;
 use App\Http\Resources\TagResource;
 use App\Http\Resources\ToolResource;
@@ -16,6 +17,7 @@ use App\Models\PantryItem;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\ShoppingList;
+use App\Models\Store;
 use App\Models\StoreSection;
 use App\Models\Tag;
 use App\Models\Tool;
@@ -42,7 +44,7 @@ class SyncFeed
      * The kinds of records a client keeps a copy of.
      */
     public const array KINDS = [
-        'units', 'store_sections', 'tags', 'tools', 'products', 'recipes',
+        'units', 'store_sections', 'tags', 'tools', 'stores', 'products', 'recipes',
         'meal_plan_entries', 'pantry_items', 'shopping_lists',
     ];
 
@@ -129,8 +131,9 @@ class SyncFeed
             'store_sections' => [StoreSection::query(), StoreSectionResource::class],
             'tags' => [Tag::query(), TagResource::class],
             'tools' => [Tool::query()->withCount('recipes'), ToolResource::class],
+            'stores' => [Store::query()->withCount('offers'), StoreResource::class],
             'products' => [
-                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers'])->withCount('ingredients'),
+                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers.store'])->withCount('ingredients'),
                 ProductResource::class,
             ],
             'recipes' => [
@@ -139,7 +142,7 @@ class SyncFeed
             ],
             'meal_plan_entries' => [MealPlanEntry::query()->with('recipe.tags'), MealPlanEntryResource::class],
             'pantry_items' => [PantryItem::query()->with('product.storeSection'), PantryItemResource::class],
-            'shopping_lists' => [ShoppingList::query()->with(['items.product.storeSection', 'items.product.offers']), ShoppingListResource::class],
+            'shopping_lists' => [ShoppingList::query()->with(['items.product.storeSection', 'items.product.offers.store']), ShoppingListResource::class],
         ];
     }
 }

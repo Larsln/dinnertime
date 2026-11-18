@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers'];
+    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers.store'];
 
     /**
      * List products, optionally filtered by name or alias.

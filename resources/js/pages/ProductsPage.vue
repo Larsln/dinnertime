@@ -5,11 +5,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Plus } from 'lucide-vue-next';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { productsApi } from '@/api/products';
+import { storesApi } from '@/api/stores';
 import { toolsApi } from '@/api/tools';
+import { STORES_KEY, useStores } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
 import { useDebounced } from '@/composables/useDebounced';
 import ProductCard from '@/components/ProductCard.vue';
 import ProductRow from '@/components/ProductRow.vue';
+import StoreRow from '@/components/StoreRow.vue';
 import ToolRow from '@/components/ToolRow.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -60,6 +63,18 @@ const addProduct = useMutation({
     onError: showError,
 });
 
+const { stores } = useStores();
+const storeName = ref('');
+
+const addStore = useMutation({
+    mutationFn: () => storesApi.create(storeName.value.trim()),
+    onSuccess: () => {
+        storeName.value = '';
+        queryClient.invalidateQueries({ queryKey: STORES_KEY });
+    },
+    onError: showError,
+});
+
 const products = useQuery({
     queryKey: ['products', debouncedSearch],
     queryFn: () => productsApi.list({ search: debouncedSearch.value }),
@@ -77,6 +92,7 @@ const products = useQuery({
             </TabsTrigger>
             <TabsTrigger value="all" :class="TAB_CLASS">{{ t('products.allTab') }}</TabsTrigger>
             <TabsTrigger value="tools" :class="TAB_CLASS">{{ t('products.toolsTab') }}</TabsTrigger>
+            <TabsTrigger value="stores" :class="TAB_CLASS">{{ t('stores.tab') }}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="review" class="space-y-4">
@@ -130,6 +146,21 @@ const products = useQuery({
                 <ToolRow v-for="tool in tools.data.value" :key="tool.id" :tool="tool" />
             </ul>
             <EmptyState v-else-if="!tools.isPending.value" :title="t('tools.empty')" />
+        </TabsContent>
+        <TabsContent value="stores">
+            <form class="mb-4 flex gap-2" @submit.prevent="addStore.mutate()">
+                <TextField v-model="storeName" class="flex-1" :placeholder="t('stores.name')" />
+                <AppButton type="submit" :disabled="storeName.trim() === '' || addStore.isPending.value">
+                    <Plus class="size-4" />{{ t('stores.add') }}
+                </AppButton>
+            </form>
+            <ul
+                v-if="stores.length"
+                class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white"
+            >
+                <StoreRow v-for="store in stores" :key="store.id" :store="store" />
+            </ul>
+            <EmptyState v-else :title="t('stores.empty')" :hint="t('stores.emptyHint')" />
         </TabsContent>
     </TabsRoot>
 </template>

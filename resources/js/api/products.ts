@@ -11,7 +11,7 @@ export const productsApi = {
     confirm: (id: number) => data(api.post<{ data: Product }>(`/products/${id}/confirm`)),
     merge: (id: number, into: number) => data(api.post<{ data: Product }>(`/products/${id}/merge`, { into })),
 
-    setConversion: (id: number, unitId: number, amountInBase: number) =>
+    setConversion: (id: number, unitId: number, amountInBase: number | null) =>
         data(
             api.put<{ data: Conversion }>(`/products/${id}/conversions/${unitId}`, {
                 amount_in_base: amountInBase,

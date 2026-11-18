@@ -1,29 +1,55 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { keepPreviousData, useQuery } from '@tanstack/vue-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
+import { Plus } from 'lucide-vue-next';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { productsApi } from '@/api/products';
+import { toolsApi } from '@/api/tools';
+import { useToasts } from '@/composables/useToasts';
 import { useDebounced } from '@/composables/useDebounced';
 import ProductCard from '@/components/ProductCard.vue';
 import ProductRow from '@/components/ProductRow.vue';
+import ToolRow from '@/components/ToolRow.vue';
+import AppButton from '@/components/ui/AppButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
- * Review list of suggested values and the catalog of all products.
+ * Review list of suggested values, the catalog of all products and the
+ * catalog of tools.
  */
 const TAB_CLASS =
     'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-900 data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm';
 
 const { t } = useI18n();
+const queryClient = useQueryClient();
+const { showError } = useToasts();
 
 const tab = ref('review');
 const search = ref('');
 const debouncedSearch = useDebounced(search);
 
 const review = useQuery({ queryKey: ['review'], queryFn: () => productsApi.review() });
+
+const toolSearch = ref('');
+const debouncedToolSearch = useDebounced(toolSearch);
+
+const tools = useQuery({
+    queryKey: ['tools', debouncedToolSearch],
+    queryFn: () => toolsApi.list(debouncedToolSearch.value),
+    placeholderData: keepPreviousData,
+});
+
+const addTool = useMutation({
+    mutationFn: () => toolsApi.create(toolSearch.value.trim()),
+    onSuccess: () => {
+        toolSearch.value = '';
+        queryClient.invalidateQueries({ queryKey: ['tools'] });
+    },
+    onError: showError,
+});
 
 const products = useQuery({
     queryKey: ['products', debouncedSearch],
@@ -41,6 +67,7 @@ const products = useQuery({
                 {{ t('products.reviewTab', { count: review.data.value?.meta.total ?? 0 }) }}
             </TabsTrigger>
             <TabsTrigger value="all" :class="TAB_CLASS">{{ t('products.allTab') }}</TabsTrigger>
+            <TabsTrigger value="tools" :class="TAB_CLASS">{{ t('products.toolsTab') }}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="review" class="space-y-4">
@@ -66,6 +93,26 @@ const products = useQuery({
                     :product="product"
                 />
             </ul>
+        </TabsContent>
+        <TabsContent value="tools">
+            <form class="mb-4 flex gap-2" @submit.prevent="addTool.mutate()">
+                <TextField
+                    v-model="toolSearch"
+                    class="flex-1"
+                    type="search"
+                    :placeholder="t('tools.searchPlaceholder')"
+                />
+                <AppButton type="submit" :disabled="toolSearch.trim() === '' || addTool.isPending.value">
+                    <Plus class="size-4" />{{ t('tools.add') }}
+                </AppButton>
+            </form>
+            <ul
+                v-if="tools.data.value?.length"
+                class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white"
+            >
+                <ToolRow v-for="tool in tools.data.value" :key="tool.id" :tool="tool" />
+            </ul>
+            <EmptyState v-else-if="!tools.isPending.value" :title="t('tools.empty')" />
         </TabsContent>
     </TabsRoot>
 </template>

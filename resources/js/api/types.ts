@@ -56,10 +56,17 @@ export interface Tag {
     name: string;
 }
 
+export interface Tool {
+    id: number;
+    name: string;
+    is_owned: boolean;
+    recipe_count?: number;
+}
+
 export interface Conversion {
     id: number;
     unit: Unit;
-    amount_in_base: number;
+    amount_in_base: number | null;
     status: ReviewStatus;
     source: ValueSource;
 }
@@ -131,7 +138,7 @@ export interface Ingredient {
 export interface Step {
     id: number;
     position: number;
-    title: string | null;
+    section: string | null;
     text: string;
 }
 
@@ -141,7 +148,7 @@ export interface Recipe extends RecipeSummary {
     meal_tags_locked: boolean;
     ingredients: Ingredient[];
     steps: Step[];
-    tools: { id: number; name: string }[];
+    tools: Tool[];
 }
 
 export interface IngredientInput {
@@ -164,9 +171,9 @@ export interface RecipeInput {
     cook_minutes: number | null;
     source_url: string | null;
     tag_ids: number[];
-    tools: string[];
+    tool_ids: number[];
     ingredients: IngredientInput[];
-    steps: { title: string | null; text: string }[];
+    steps: { section: string | null; text: string }[];
 }
 
 export interface RecipeImport {
@@ -207,6 +214,7 @@ export interface ShoppingListItem {
     wasted_amount: number;
     uses: { date: string; recipe_id: number; title: string; amount: number }[];
     is_approximate: boolean;
+    extra_amounts: { quantity: number; unit_code: string }[];
     checked_at: string | null;
     product?: Product | null;
 }

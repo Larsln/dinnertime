@@ -22,7 +22,8 @@ import TextField from '@/components/ui/TextField.vue';
  * Editor for a product with its packages and unit conversions.
  *
  * Suggested values can be corrected and are confirmed together with one
- * tap. Duplicates can be merged into another product.
+ * tap. A unit can be marked as not convertible, for products whose single
+ * items vary too much. Duplicates can be merged into another product.
  */
 interface PackageRow {
     id: number | null;
@@ -34,6 +35,7 @@ interface ConversionRow {
     unitId: number;
     unitName: string;
     amount: number | null;
+    isConvertible: boolean;
 }
 
 const props = defineProps<{ product: Product }>();
@@ -81,6 +83,7 @@ watch(
             unitId: entry.unit.id,
             unitName: entry.unit.name,
             amount: entry.amount_in_base,
+            isConvertible: entry.amount_in_base !== null,
         }));
     },
     { immediate: true },
@@ -111,7 +114,7 @@ function addConversion(): void {
     const unit = units.value.find((candidate) => candidate.id === newUnitId.value);
 
     if (unit) {
-        conversions.value.push({ unitId: unit.id, unitName: unit.name, amount: null });
+        conversions.value.push({ unitId: unit.id, unitName: unit.name, amount: null, isConvertible: true });
         newUnitId.value = null;
     }
 }
@@ -145,11 +148,12 @@ async function saveConversions(): Promise<void> {
         await productsApi.removeConversion(props.product.id, entry.unit.id);
     }
 
-    for (const row of conversions.value.filter((candidate) => candidate.amount)) {
+    for (const row of conversions.value.filter((candidate) => candidate.amount || !candidate.isConvertible)) {
         const before = original.find((candidate) => candidate.unit.id === row.unitId);
+        const amount = row.isConvertible ? row.amount : null;
 
-        if (before?.amount_in_base !== row.amount) {
-            await productsApi.setConversion(props.product.id, row.unitId, row.amount ?? 0);
+        if (before === undefined || before.amount_in_base !== amount) {
+            await productsApi.setConversion(props.product.id, row.unitId, amount);
         }
     }
 }
@@ -275,7 +279,17 @@ const remove = useMutation({
                     class="mb-2 flex items-center gap-2"
                 >
                     <span class="flex-1 text-sm text-stone-700">1 {{ row.unitName }} =</span>
-                    <NumberField v-model="row.amount" class="w-28" :placeholder="baseUnitLabel" />
+                    <NumberField
+                        v-if="row.isConvertible"
+                        v-model="row.amount"
+                        class="w-28"
+                        :placeholder="baseUnitLabel"
+                    />
+                    <CheckboxField
+                        :model-value="!row.isConvertible"
+                        :label="t('products.notConvertible')"
+                        @update:model-value="(checked) => (row.isConvertible = !checked)"
+                    />
                     <AppButton
                         size="icon"
                         variant="ghost"

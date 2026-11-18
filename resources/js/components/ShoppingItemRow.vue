@@ -7,14 +7,15 @@ import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
 import { useToasts } from '@/composables/useToasts';
-import { formatDay } from '@/lib/format';
+import { formatDay, formatNumber } from '@/lib/format';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 /**
  * One position of the shopping list: what to buy in which packages, what
- * remains of it and which recipes use it.
+ * is needed in units that cannot be converted, what remains and which
+ * recipes use it.
  */
 const props = defineProps<{ item: ShoppingListItem }>();
 
@@ -28,11 +29,18 @@ const isChecked = computed(() => props.item.checked_at !== null);
 const baseUnit = computed(() => props.item.product?.base_unit ?? 'g');
 
 const purchase = computed(() => {
+    const extras = props.item.extra_amounts.map(
+        (extra) => `${formatNumber(extra.quantity, locale.value)} ${extra.unit_code}`,
+    );
+
     if (props.item.packages.length > 0) {
-        return props.item.packages.map(describePackage).join(' + ');
+        return [...props.item.packages.map(describePackage), ...extras].join(' + ');
     }
 
-    return props.item.purchase_amount !== null ? amount(props.item.purchase_amount, baseUnit.value) : '';
+    return [
+        ...(props.item.purchase_amount !== null ? [amount(props.item.purchase_amount, baseUnit.value)] : []),
+        ...extras,
+    ].join(' + ');
 });
 
 /**

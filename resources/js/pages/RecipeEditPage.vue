@@ -3,12 +3,13 @@ import { computed, reactive, ref, watch, type WritableComputedRef } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { ImageUp, Plus, Trash2 } from 'lucide-vue-next';
+import { ImageUp, Plus, Trash2, X } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
-import type { CourseKey, Product, Recipe, RecipeInput, TagType } from '@/api/types';
+import type { CourseKey, Product, Recipe, RecipeInput, TagType, Tool } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
 import ProductPicker from '@/components/ProductPicker.vue';
+import ToolPicker from '@/components/ToolPicker.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
 import ChipGroup from '@/components/ui/ChipGroup.vue';
@@ -36,7 +37,7 @@ interface IngredientRow {
 
 interface StepRow {
     key: number;
-    title: string;
+    section: string;
     text: string;
 }
 
@@ -59,13 +60,22 @@ const form = reactive({
     prepMinutes: null as number | null,
     cookMinutes: null as number | null,
     sourceUrl: '',
-    tools: '',
     tagIds: [] as number[],
 });
 
 const ingredients = ref<IngredientRow[]>([]);
 const steps = ref<StepRow[]>([]);
+const tools = ref<Tool[]>([]);
+const pickedTool = ref<Tool | null>(null);
 const cover = ref<File | null>(null);
+
+watch(pickedTool, (tool) => {
+    if (tool && !tools.value.some((entry) => entry.id === tool.id)) {
+        tools.value.push(tool);
+    }
+
+    pickedTool.value = null;
+});
 let nextKey = 1;
 
 const existing = useQuery({
@@ -91,7 +101,7 @@ function addIngredient(): void {
 }
 
 function addStep(): void {
-    steps.value.push({ key: nextKey++, title: '', text: '' });
+    steps.value.push({ key: nextKey++, section: steps.value.at(-1)?.section ?? '', text: '' });
 }
 
 function fill(recipe: Recipe): void {
@@ -104,7 +114,6 @@ function fill(recipe: Recipe): void {
         prepMinutes: recipe.prep_minutes,
         cookMinutes: recipe.cook_minutes,
         sourceUrl: recipe.source_url ?? '',
-        tools: recipe.tools.map((tool) => tool.name).join(', '),
         tagIds: (recipe.tags ?? []).map((tag) => tag.id),
     });
 
@@ -119,7 +128,12 @@ function fill(recipe: Recipe): void {
         rawText: ingredient.raw_text ?? '',
     }));
 
-    steps.value = recipe.steps.map((step) => ({ key: nextKey++, title: step.title ?? '', text: step.text }));
+    steps.value = recipe.steps.map((step) => ({
+        key: nextKey++,
+        section: step.section ?? '',
+        text: step.text,
+    }));
+    tools.value = [...recipe.tools];
 }
 
 watch(
@@ -166,10 +180,7 @@ function toInput(): RecipeInput {
         cook_minutes: form.cookMinutes,
         source_url: form.sourceUrl || null,
         tag_ids: form.tagIds,
-        tools: form.tools
-            .split(',')
-            .map((tool) => tool.trim())
-            .filter((tool) => tool !== ''),
+        tool_ids: tools.value.map((tool) => tool.id),
         ingredients: ingredients.value
             .filter((row) => row.product !== null || row.rawText.trim() !== '')
             .map((row) => ({
@@ -183,7 +194,7 @@ function toInput(): RecipeInput {
             })),
         steps: steps.value
             .filter((row) => row.text.trim() !== '')
-            .map((row) => ({ title: row.title || null, text: row.text.trim() })),
+            .map((row) => ({ section: row.section.trim() || null, text: row.text.trim() })),
     };
 }
 
@@ -239,11 +250,27 @@ const save = useMutation({
             <NumberField v-model="form.prepMinutes" :label="t('recipes.prepTime')" />
             <NumberField v-model="form.cookMinutes" :label="t('recipes.cookTime')" />
             <TextField v-model="form.sourceUrl" type="url" :label="t('recipes.source')" />
-            <TextField
-                v-model="form.tools"
-                :label="t('recipes.tools')"
-                :placeholder="t('recipes.toolsPlaceholder')"
-            />
+            <div>
+                <ToolPicker v-model="pickedTool" :label="t('recipes.tools')" creatable />
+                <ul class="mt-2 flex flex-wrap gap-2">
+                    <li
+                        v-for="(tool, index) in tools"
+                        :key="tool.id"
+                        class="inline-flex items-center gap-1 rounded-full bg-stone-100 py-0.5 pr-1 pl-3 text-sm"
+                    >
+                        {{ tool.name }}
+                        <AppButton
+                            size="icon"
+                            variant="ghost"
+                            class="size-6"
+                            :aria-label="t('common.delete')"
+                            @click="tools.splice(index, 1)"
+                        >
+                            <X class="size-3.5" />
+                        </AppButton>
+                    </li>
+                </ul>
+            </div>
             <div class="sm:col-span-2">
                 <FileButton accept="image/*" @select="(file) => (cover = file)">
                     <ImageUp class="size-4" />{{ cover?.name ?? t('recipes.chooseCover') }}
@@ -314,7 +341,7 @@ const save = useMutation({
                     {{ index + 1 }}
                 </span>
                 <div class="flex-1 space-y-2">
-                    <TextField v-model="row.title" :placeholder="t('recipes.stepTitle')" />
+                    <TextField v-model="row.section" :placeholder="t('recipes.stepSection')" />
                     <TextArea v-model="row.text" :placeholder="t('recipes.stepText')" />
                 </div>
                 <AppButton

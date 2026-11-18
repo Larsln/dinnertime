@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { CalendarPlus, ExternalLink, Heart, Pencil, Trash2 } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
-import type { Ingredient } from '@/api/types';
+import type { Ingredient, Step } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
 import { toIsoDate } from '@/lib/dates';
 import { formatNumber, formatQuantity } from '@/lib/format';
@@ -64,6 +64,22 @@ const sections = computed(() => {
             last.ingredients.push(ingredient);
         } else {
             groups.push({ title: ingredient.section, ingredients: [ingredient] });
+        }
+    }
+
+    return groups;
+});
+
+const stepGroups = computed(() => {
+    const groups: { title: string | null; steps: Step[] }[] = [];
+
+    for (const step of recipe.data.value?.steps ?? []) {
+        const last = groups.at(-1);
+
+        if (last && last.title === step.section) {
+            last.steps.push(step);
+        } else {
+            groups.push({ title: step.section, steps: [step] });
         }
     }
 
@@ -241,29 +257,31 @@ const remove = useMutation({
                 </div>
                 <template v-if="recipe.data.value.tools.length > 0">
                     <h2 class="mt-6 mb-2 text-lg font-semibold">{{ t('recipes.tools') }}</h2>
-                    <p class="text-sm text-stone-700">
-                        {{ recipe.data.value.tools.map((tool) => tool.name).join(', ') }}
-                    </p>
+                    <ul class="flex flex-wrap gap-2 text-sm">
+                        <li v-for="tool in recipe.data.value.tools" :key="tool.id">
+                            <StatusBadge :tone="tool.is_owned ? 'neutral' : 'warning'">
+                                {{ tool.is_owned ? tool.name : t('tools.missing', { name: tool.name }) }}
+                            </StatusBadge>
+                        </li>
+                    </ul>
                 </template>
             </section>
 
             <section :class="{ 'hidden md:block': view !== 'method' }">
                 <h2 class="mb-3 text-lg font-semibold">{{ t('recipes.steps') }}</h2>
-                <ol class="space-y-4">
-                    <li v-for="step in recipe.data.value.steps" :key="step.id">
-                        <h3 v-if="step.title" class="mb-1 text-sm font-semibold text-stone-700">
-                            {{ step.title }}
-                        </h3>
-                        <div class="flex gap-3">
+                <div v-for="(group, index) in stepGroups" :key="index" class="mb-6">
+                    <h3 v-if="group.title" class="mb-2 font-semibold text-stone-800">{{ group.title }}</h3>
+                    <ol class="space-y-4">
+                        <li v-for="step in group.steps" :key="step.id" class="flex gap-3">
                             <span
                                 class="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800"
                             >
                                 {{ step.position }}
                             </span>
                             <p class="text-stone-800">{{ step.text }}</p>
-                        </div>
-                    </li>
-                </ol>
+                        </li>
+                    </ol>
+                </div>
             </section>
         </div>
 

@@ -12,10 +12,15 @@ use App\Support\SourceLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Sleep;
 
 class ImportController extends Controller
 {
     private const int RECENT = 30;
+
+    private const int WAIT_SECONDS = 240;
+
+    private const int WAIT_INTERVAL_SECONDS = 2;
 
     /**
      * List the most recent imports.
@@ -32,6 +37,23 @@ class ImportController extends Controller
      */
     public function show(RecipeImport $import): RecipeImportResource
     {
+        return new RecipeImportResource($import->load('recipe.tags'));
+    }
+
+    /**
+     * Answer as soon as the import is completed or has failed, or with its
+     * current state after a few minutes. Lets a client learn the outcome
+     * with a single request that may outlive its own process.
+     */
+    public function wait(RecipeImport $import): RecipeImportResource
+    {
+        $deadline = now()->addSeconds(self::WAIT_SECONDS);
+
+        while ($import->isRunning() && now()->lt($deadline)) {
+            Sleep::for(self::WAIT_INTERVAL_SECONDS)->seconds();
+            $import->refresh();
+        }
+
         return new RecipeImportResource($import->load('recipe.tags'));
     }
 

@@ -22,6 +22,7 @@ class RecipeImportResource extends JsonResource
             'id' => $this->id,
             'url' => $this->url,
             'status' => $this->status,
+            'stage' => $this->stage,
             'error' => $this->error,
             'error_message' => $this->error?->message(),
             'created_at' => $this->created_at,

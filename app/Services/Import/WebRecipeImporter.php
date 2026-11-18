@@ -3,9 +3,11 @@
 namespace App\Services\Import;
 
 use App\Enums\ImportError;
+use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
+use Closure;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
@@ -31,7 +33,7 @@ class WebRecipeImporter implements RecipeSourceImporter
         private readonly RecipeDraftWriter $writer,
     ) {}
 
-    public function import(string $url): Recipe
+    public function import(string $url, Closure $report): Recipe
     {
         $existing = Recipe::firstWhere('source_url', $url);
 
@@ -39,7 +41,10 @@ class WebRecipeImporter implements RecipeSourceImporter
             return $existing;
         }
 
+        $report(ImportStage::Downloading);
         $html = $this->fetch($url);
+
+        $report(ImportStage::Analyzing);
         $prompt = new RecipeExtractionPrompt('the following web page', $this->pageContent($html));
 
         $draft = $this->gemini->generate(
@@ -52,6 +57,7 @@ class WebRecipeImporter implements RecipeSourceImporter
             throw new ImportFailedException(ImportError::NoRecipeFound);
         }
 
+        $report(ImportStage::Saving);
         $recipe = $this->writer->write($draft, $url);
         $this->storeCover($recipe, $html);
 

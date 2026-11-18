@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ImportError;
+use App\Enums\ImportStage;
 use App\Enums\ImportStatus;
 use App\Enums\SourcePlatform;
 use App\Models\Recipe;
@@ -44,7 +45,7 @@ class ImportRecipe implements ShouldQueue
         try {
             $recipe = $gemini->isConfigured() ? $this->importWithAi() : $this->storePlaceholder();
 
-            $this->import->update(['status' => ImportStatus::Completed, 'recipe_id' => $recipe->id]);
+            $this->import->update(['status' => ImportStatus::Completed, 'stage' => null, 'recipe_id' => $recipe->id]);
         } catch (ImportFailedException $exception) {
             $this->markFailed($exception->error);
         } catch (GeminiException) {
@@ -67,7 +68,12 @@ class ImportRecipe implements ShouldQueue
     {
         $isWebPage = SourceLink::fromUrl($this->import->url)->platform === SourcePlatform::Web;
 
-        return app($isWebPage ? WebRecipeImporter::class : VideoRecipeImporter::class)->import($this->import->url);
+        return app($isWebPage ? WebRecipeImporter::class : VideoRecipeImporter::class)->import(
+            $this->import->url,
+            function (ImportStage $stage): void {
+                $this->import->update(['stage' => $stage]);
+            },
+        );
     }
 
     private function storePlaceholder(): Recipe
@@ -83,6 +89,6 @@ class ImportRecipe implements ShouldQueue
 
     private function markFailed(ImportError $error): void
     {
-        $this->import->update(['status' => ImportStatus::Failed, 'error' => $error]);
+        $this->import->update(['status' => ImportStatus::Failed, 'stage' => null, 'error' => $error]);
     }
 }

@@ -3,10 +3,12 @@
 namespace App\Services\Import;
 
 use App\Enums\ImportError;
+use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
 use App\Support\SourceLink;
+use Closure;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,8 +31,9 @@ class VideoRecipeImporter implements RecipeSourceImporter
         private readonly CoverPicker $coverPicker,
     ) {}
 
-    public function import(string $url): Recipe
+    public function import(string $url, Closure $report): Recipe
     {
+        $report(ImportStage::Downloading);
         $metadata = $this->downloader->metadata($url);
         $videoId = (string) $metadata['id'];
         $resolvedUrl = $metadata['webpage_url'] ?? $url;
@@ -46,8 +49,11 @@ class VideoRecipeImporter implements RecipeSourceImporter
 
         try {
             $video = $this->downloader->download($url, $directory);
+
+            $report(ImportStage::Analyzing);
             $draft = $this->extract($video, (string) ($metadata['description'] ?? ''));
 
+            $report(ImportStage::Saving);
             $recipe = $this->writer->write($draft, $resolvedUrl, $videoId);
             $this->storeCover($recipe, $video, $draft['cover_seconds'], $directory);
 

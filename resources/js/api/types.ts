@@ -180,6 +180,7 @@ export interface RecipeImport {
     id: number;
     url: string;
     status: ImportStatus;
+    stage: 'downloading' | 'analyzing' | 'saving' | null;
     error: string | null;
     error_message: string | null;
     created_at: string;

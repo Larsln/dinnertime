@@ -106,6 +106,47 @@ class RecipeImportTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->method() === 'DELETE' && str_contains($request->url(), 'files/abc'));
     }
 
+    public function test_a_running_import_reports_its_stage(): void
+    {
+        $stages = [];
+        RecipeImport::updated(function (RecipeImport $import) use (&$stages) {
+            $stages[] = $import->stage?->value;
+        });
+        Queue::fake([EnrichProduct::class]);
+        $this->fakeVideoTools();
+        $this->fakeGemini($this->draft());
+
+        $import = $this->runImport(self::VIDEO_URL);
+
+        $this->assertSame(['downloading', 'analyzing', 'saving'], array_values(array_unique(array_filter($stages))));
+        $this->assertNull($import->stage);
+        $this->getJson("/api/v1/imports/{$import->id}")->assertJsonPath('data.stage', null);
+    }
+
+    public function test_waiting_answers_once_the_import_is_finished(): void
+    {
+        $import = RecipeImport::create(['url' => self::VIDEO_URL, 'status' => ImportStatus::Processing, 'stage' => 'analyzing']);
+        Sleep::whenFakingSleep(function () use ($import) {
+            RecipeImport::whereKey($import->id)->update(['status' => ImportStatus::Failed, 'stage' => null, 'error' => ImportError::NoRecipeFound]);
+        });
+
+        $this->getJson("/api/v1/imports/{$import->id}/wait")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'failed')
+            ->assertJsonPath('data.error', 'no_recipe_found');
+
+        Sleep::assertSleptTimes(1);
+    }
+
+    public function test_waiting_for_a_finished_import_answers_at_once(): void
+    {
+        $import = RecipeImport::create(['url' => self::VIDEO_URL, 'status' => ImportStatus::Completed]);
+
+        $this->getJson("/api/v1/imports/{$import->id}/wait")->assertOk()->assertJsonPath('data.status', 'completed');
+
+        Sleep::assertNeverSlept();
+    }
+
     public function test_a_video_imported_before_is_not_imported_again(): void
     {
         $existing = Recipe::factory()->create([

@@ -113,11 +113,14 @@ the tool endpoints only.
 | POST | `/imports` | `url` | Import; `202` when queued, `200` when the video was imported before |
 | GET | `/imports` | | The 30 most recent Imports |
 | GET | `/imports/{id}` | | Import |
+| GET | `/imports/{id}/wait` | | Import, as soon as it is completed or failed, at the latest after four minutes |
 | POST | `/imports/{id}/retry` | | Import, `202`; `409` unless it failed |
 
-**Import:** `{id, url, status, error, error_message, created_at,
+**Import:** `{id, url, status, stage, error, error_message, created_at,
 recipe: RecipeSummary|null}`. `status` is `pending`, `processing`, `completed`
-or `failed`. Clients poll `GET /imports/{id}` until it is completed or failed.
+or `failed`. While processing, `stage` is `downloading`, `analyzing` or
+`saving`. Clients poll `GET /imports/{id}` to show progress, or hold one
+request to `/imports/{id}/wait` open to learn the outcome.
 `error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
 
 ## Products and review

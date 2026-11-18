@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('recipes', RecipeController::class);
 
         Route::post('imports/{import}/retry', [ImportController::class, 'retry']);
+        Route::get('imports/{import}/wait', [ImportController::class, 'wait']);
         Route::apiResource('imports', ImportController::class)->only(['index', 'store', 'show']);
 
         Route::post('tools/{tool}/merge', [ToolController::class, 'merge']);

@@ -84,9 +84,11 @@ const retry = useMutation({
         </form>
         <ul v-if="recent.length > 0" class="mt-3 divide-y divide-stone-100">
             <li v-for="entry in recent" :key="entry.id" class="flex items-center gap-3 py-2 text-sm">
-                <StatusBadge :tone="TONES[entry.status]">{{
-                    t(`imports.status.${entry.status}`)
-                }}</StatusBadge>
+                <StatusBadge :tone="TONES[entry.status]">
+                    {{
+                        entry.stage ? t(`imports.stage.${entry.stage}`) : t(`imports.status.${entry.status}`)
+                    }}
+                </StatusBadge>
                 <RouterLink
                     v-if="entry.recipe"
                     :to="{ name: 'recipe', params: { id: entry.recipe.id } }"

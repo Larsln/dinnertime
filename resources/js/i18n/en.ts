@@ -92,6 +92,11 @@ const messages: typeof de = {
         placeholder: 'TikTok, Instagram, YouTube or web page',
         submit: 'Import',
         retry: 'Try again',
+        stage: {
+            downloading: 'Loading the video',
+            analyzing: 'Reading the recipe',
+            saving: 'Saving',
+        },
         status: {
             pending: 'Waiting',
             processing: 'Running',

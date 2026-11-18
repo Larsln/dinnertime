@@ -90,6 +90,11 @@ export default {
         placeholder: 'TikTok, Instagram, YouTube oder Webseite',
         submit: 'Importieren',
         retry: 'Erneut versuchen',
+        stage: {
+            downloading: 'Lädt das Video',
+            analyzing: 'Erkennt das Rezept',
+            saving: 'Speichert',
+        },
         status: {
             pending: 'Wartet',
             processing: 'Läuft',

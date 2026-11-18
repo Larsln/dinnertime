@@ -70,12 +70,12 @@ class RecipeImportTest extends TestCase
         $soySauce->aliases()->create(['name' => 'Sojasauce']);
         Tool::create(['name' => 'Airfryer']);
         $this->fakeVideoTools();
-        $this->fakeGemini($this->draft());
+        $this->fakeGemini(['recipes' => [$this->draft()]]);
 
         $import = $this->runImport(self::VIDEO_URL);
 
         $this->assertSame(ImportStatus::Completed, $import->status);
-        $recipe = $import->recipe->load('ingredients.product', 'ingredients.unit', 'steps', 'tags', 'tools');
+        $recipe = $import->recipes->sole()->load('ingredients.product', 'ingredients.unit', 'steps', 'tags', 'tools');
         $this->assertSame('Hot-Honey Chicken Tenders', $recipe->title);
         $this->assertSame(SourcePlatform::Tiktok, $recipe->source_platform);
         $this->assertSame('7668426929069903137', $recipe->source_video_id);
@@ -106,6 +106,49 @@ class RecipeImportTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->method() === 'DELETE' && str_contains($request->url(), 'files/abc'));
     }
 
+    public function test_a_video_with_several_dishes_becomes_one_recipe_per_dish(): void
+    {
+        Queue::fake([EnrichProduct::class]);
+        $this->fakeVideoTools();
+        $this->fakeGemini(['recipes' => [
+            $this->draft(),
+            [...$this->draft(), 'title' => 'Mango-Lassi', 'course' => 'drink', 'cover_seconds' => []],
+        ]]);
+
+        $import = $this->runImport(self::VIDEO_URL, 2);
+
+        $this->assertSame(ImportStatus::Completed, $import->status);
+        $this->assertSame(['Hot-Honey Chicken Tenders', 'Mango-Lassi'], $import->recipes->pluck('title')->all());
+        $this->assertSame(['7668426929069903137'], $import->recipes->pluck('source_video_id')->unique()->all());
+        $this->assertNotNull($import->recipes[0]->cover_image_path);
+        $this->assertNull($import->recipes[1]->cover_image_path);
+        Http::assertSent(fn (Request $request) => str_contains($request->url(), ':generateContent')
+            && str_contains($request['contents'][0]['parts'][1]['text'] ?? '', 'exactly 2 dishes'));
+
+        $this->getJson("/api/v1/imports/{$import->id}")
+            ->assertJsonPath('data.dish_count', 2)
+            ->assertJsonPath('data.recipe.title', 'Hot-Honey Chicken Tenders')
+            ->assertJsonPath('data.recipes.1.title', 'Mango-Lassi');
+
+        $this->postJson('/api/v1/imports', ['url' => self::RESOLVED_URL])
+            ->assertOk()
+            ->assertJsonCount(2, 'data.recipes');
+        $this->assertSame(2, Recipe::count());
+    }
+
+    public function test_the_number_of_dishes_is_stored_with_the_import(): void
+    {
+        Queue::fake();
+
+        $this->postJson('/api/v1/imports', ['url' => self::VIDEO_URL, 'dish_count' => 3])
+            ->assertAccepted()
+            ->assertJsonPath('data.dish_count', 3)
+            ->assertJsonPath('data.recipes', []);
+        $this->postJson('/api/v1/imports', ['url' => self::VIDEO_URL])->assertAccepted()->assertJsonPath('data.dish_count', null);
+        $this->postJson('/api/v1/imports', ['url' => self::VIDEO_URL, 'dish_count' => 0])->assertUnprocessable();
+        $this->postJson('/api/v1/imports', ['url' => self::VIDEO_URL, 'dish_count' => 11])->assertUnprocessable();
+    }
+
     public function test_a_running_import_reports_its_stage(): void
     {
         $stages = [];
@@ -114,7 +157,7 @@ class RecipeImportTest extends TestCase
         });
         Queue::fake([EnrichProduct::class]);
         $this->fakeVideoTools();
-        $this->fakeGemini($this->draft());
+        $this->fakeGemini(['recipes' => [$this->draft()]]);
 
         $import = $this->runImport(self::VIDEO_URL);
 
@@ -162,7 +205,7 @@ class RecipeImportTest extends TestCase
 
         $import = $this->runImport(self::VIDEO_URL);
 
-        $this->assertTrue($import->recipe->is($existing));
+        $this->assertTrue($import->recipes->sole()->is($existing));
         $this->assertSame(1, Recipe::count());
         Http::assertNothingSent();
     }
@@ -170,7 +213,7 @@ class RecipeImportTest extends TestCase
     public function test_it_explains_why_an_import_failed(): void
     {
         $this->fakeVideoTools();
-        $this->fakeGemini([...$this->draft(), 'is_recipe' => false]);
+        $this->fakeGemini(['recipes' => []]);
 
         $import = $this->runImport(self::VIDEO_URL);
 
@@ -215,21 +258,22 @@ class RecipeImportTest extends TestCase
                 .'<script type="application/ld+json">{"@type":"Recipe","name":"Lasagne"}</script><style>p{}</style></head>'
                 .'<body><p>Die beste Lasagne</p></body></html>'),
             'blog.test/cover.jpg' => Http::response('jpeg-bytes', headers: ['Content-Type' => 'image/jpeg']),
-            'gemini.test/*' => Http::response($this->geminiAnswer([...$this->draft(), 'cover_seconds' => []])),
+            'gemini.test/*' => Http::response($this->geminiAnswer(['recipes' => [[...$this->draft(), 'cover_seconds' => []]]])),
         ]);
 
         $import = $this->runImport('https://blog.test/lasagne');
 
         $this->assertSame(ImportStatus::Completed, $import->status);
-        $this->assertSame(SourcePlatform::Web, $import->recipe->source_platform);
-        $this->assertMatchesRegularExpression("~^covers/{$import->recipe->id}-[a-z0-9]+\.jpg$~", $import->recipe->cover_image_path);
-        Storage::disk('public')->assertExists($import->recipe->cover_image_path);
+        $recipe = $import->recipes->sole();
+        $this->assertSame(SourcePlatform::Web, $recipe->source_platform);
+        $this->assertMatchesRegularExpression("~^covers/{$recipe->id}-[a-z0-9]+\.jpg$~", $recipe->cover_image_path);
+        Storage::disk('public')->assertExists($recipe->cover_image_path);
         Http::assertSent(fn (Request $request) => str_contains($request->url(), ':generateContent')
             && str_contains($request['contents'][0]['parts'][0]['text'], '"@type":"Recipe"')
             && str_contains($request['contents'][0]['parts'][0]['text'], 'Die beste Lasagne')
             && ! str_contains($request['contents'][0]['parts'][0]['text'], 'p{}'));
 
-        $this->assertTrue($this->runImport('https://blog.test/lasagne')->recipe->is($import->recipe));
+        $this->assertTrue($this->runImport('https://blog.test/lasagne')->recipes->sole()->is($recipe));
     }
 
     public function test_without_an_ai_key_the_link_is_kept_as_an_empty_recipe(): void
@@ -240,14 +284,14 @@ class RecipeImportTest extends TestCase
         $import = $this->runImport(self::RESOLVED_URL);
 
         $this->assertSame(ImportStatus::Completed, $import->status);
-        $this->assertSame('www.tiktok.com', $import->recipe->title);
-        $this->assertSame('7668426929069903137', $import->recipe->source_video_id);
+        $this->assertSame('www.tiktok.com', $import->recipes->sole()->title);
+        $this->assertSame('7668426929069903137', $import->recipes->sole()->source_video_id);
         Http::assertNothingSent();
     }
 
-    private function runImport(string $url): RecipeImport
+    private function runImport(string $url, ?int $dishCount = null): RecipeImport
     {
-        $import = RecipeImport::create(['url' => $url]);
+        $import = RecipeImport::create(['url' => $url, 'dish_count' => $dishCount]);
 
         ImportRecipe::dispatchSync($import);
 
@@ -288,15 +332,15 @@ class RecipeImportTest extends TestCase
     }
 
     /**
-     * @param  array<string, mixed>  $draft
+     * @param  array<string, mixed>  $answer
      */
-    private function fakeGemini(array $draft): void
+    private function fakeGemini(array $answer): void
     {
         Http::fake([
             'gemini.test/upload/v1beta/files' => Http::response([], headers: ['X-Goog-Upload-URL' => 'https://gemini.test/upload/session']),
             'gemini.test/upload/session' => Http::response(['file' => [...$this->geminiFile(), 'state' => 'PROCESSING']]),
             'gemini.test/v1beta/files/abc' => Http::response($this->geminiFile()),
-            'gemini.test/v1beta/models/gemini-3.8-flash*' => Http::response($this->geminiAnswer($draft)),
+            'gemini.test/v1beta/models/gemini-3.8-flash*' => Http::response($this->geminiAnswer($answer)),
             'gemini.test/v1beta/models/gemini-3.5-flash-lite*' => Http::response($this->geminiAnswer(['index' => 1])),
         ]);
     }
@@ -324,7 +368,6 @@ class RecipeImportTest extends TestCase
     private function draft(): array
     {
         return [
-            'is_recipe' => true,
             'title' => 'Hot-Honey Chicken Tenders',
             'description' => 'Knusprige Tenders mit scharfem Honig.',
             'servings' => 2,

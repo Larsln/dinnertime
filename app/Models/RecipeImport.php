@@ -7,18 +7,20 @@ use App\Enums\ImportStage;
 use App\Enums\ImportStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Request to turn a shared link into a recipe.
+ * Request to turn a shared link into one recipe per dish it shows.
  *
  * @property ImportStatus $status
  * @property ?ImportStage $stage
  * @property ?ImportError $error
  */
-#[Fillable(['url', 'status', 'stage', 'error', 'recipe_id', 'user_id'])]
+#[Fillable(['url', 'dish_count', 'status', 'stage', 'error', 'user_id'])]
 class RecipeImport extends Model
 {
+    public const int MAX_DISHES = 10;
+
     /**
      * Get the attributes that should be cast.
      *
@@ -43,12 +45,29 @@ class RecipeImport extends Model
     }
 
     /**
-     * Recipe the import produced or found to exist already.
+     * Recipes the import produced or found to exist already, one per dish
+     * in the order they appear in the source.
      *
-     * @return BelongsTo<Recipe, $this>
+     * @return BelongsToMany<Recipe, $this>
      */
-    public function recipe(): BelongsTo
+    public function recipes(): BelongsToMany
     {
-        return $this->belongsTo(Recipe::class);
+        return $this->belongsToMany(Recipe::class)->orderByPivot('position');
+    }
+
+    /**
+     * Replace the recipes of the import, keeping the given order.
+     *
+     * @param  iterable<Recipe>  $recipes
+     */
+    public function attachRecipes(iterable $recipes): void
+    {
+        $positions = [];
+
+        foreach ($recipes as $recipe) {
+            $positions[$recipe->id] = ['position' => count($positions)];
+        }
+
+        $this->recipes()->sync($positions);
     }
 }

@@ -9,13 +9,15 @@ use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
 use App\Services\Recipes\CoverStore;
 use Closure;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
- * Imports a recipe from a web page.
+ * Imports the recipes of a web page.
  *
  * Structured recipe data and the visible text are handed to Gemini, which
  * brings them into the same form as recipes imported from videos.
@@ -33,11 +35,11 @@ class WebRecipeImporter implements RecipeSourceImporter
         private readonly CoverStore $covers,
     ) {}
 
-    public function import(string $url, Closure $report): Recipe
+    public function import(string $url, ?int $dishCount, Closure $report): Collection
     {
-        $existing = Recipe::firstWhere('source_url', $url);
+        $existing = Recipe::where('source_url', $url)->orderBy('id')->get();
 
-        if ($existing !== null) {
+        if ($existing->isNotEmpty()) {
             return $existing;
         }
 
@@ -45,23 +47,26 @@ class WebRecipeImporter implements RecipeSourceImporter
         $html = $this->fetch($url);
 
         $report(ImportStage::Analyzing);
-        $prompt = new RecipeExtractionPrompt('the following web page', $this->pageContent($html));
+        $prompt = new RecipeExtractionPrompt('the following web page', $this->pageContent($html), $dishCount);
 
-        $draft = $this->gemini->generate(
+        $answer = $this->gemini->generate(
             config('services.gemini.video_model'),
             [['text' => $prompt->text()]],
             $prompt->schema(),
         );
 
-        if (! $draft['is_recipe']) {
+        if ($answer['recipes'] === []) {
             throw new ImportFailedException(ImportError::NoRecipeFound);
         }
 
         $report(ImportStage::Saving);
-        $recipe = $this->writer->write($draft, $url);
-        $this->storeCover($recipe, $html);
+        $recipes = DB::transaction(fn () => array_map(
+            fn (array $draft) => $this->writer->write($draft, $url),
+            $answer['recipes'],
+        ));
+        $this->storeCover($recipes, $html);
 
-        return $recipe;
+        return new Collection($recipes);
     }
 
     /**
@@ -91,9 +96,12 @@ class WebRecipeImporter implements RecipeSourceImporter
     }
 
     /**
-     * Save the page's preview image as cover, if it names a usable one.
+     * Save the page's preview image as cover of every recipe, if it names
+     * a usable one.
+     *
+     * @param  list<Recipe>  $recipes
      */
-    private function storeCover(Recipe $recipe, string $html): void
+    private function storeCover(array $recipes, string $html): void
     {
         if (! preg_match('~<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']~i', $html, $match)) {
             return;
@@ -102,7 +110,11 @@ class WebRecipeImporter implements RecipeSourceImporter
         $image = rescue(fn () => Http::withUserAgent($this->settings->userAgent())->timeout(30)->get(html_entity_decode($match[1])), report: false);
         $extension = self::IMAGE_EXTENSIONS[Str::before((string) $image?->header('Content-Type'), ';')] ?? null;
 
-        if ($image?->successful() && $extension !== null) {
+        if (! $image?->successful() || $extension === null) {
+            return;
+        }
+
+        foreach ($recipes as $recipe) {
             $this->covers->put($recipe, $image->body(), $extension);
         }
     }

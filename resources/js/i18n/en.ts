@@ -92,6 +92,8 @@ const messages: typeof de = {
     imports: {
         label: 'Import a recipe from a link',
         placeholder: 'TikTok, Instagram, YouTube or web page',
+        dishes: 'Dishes',
+        dishesAutomatic: 'Automatic',
         submit: 'Import',
         retry: 'Try again',
         stage: {

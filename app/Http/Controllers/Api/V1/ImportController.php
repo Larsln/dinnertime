@@ -9,6 +9,7 @@ use App\Jobs\ImportRecipe;
 use App\Models\Recipe;
 use App\Models\RecipeImport;
 use App\Support\SourceLink;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,7 +29,7 @@ class ImportController extends Controller
     public function index(): AnonymousResourceCollection
     {
         return RecipeImportResource::collection(
-            RecipeImport::with('recipe.tags')->latest('id')->limit(self::RECENT)->get(),
+            RecipeImport::with('recipes.tags')->latest('id')->limit(self::RECENT)->get(),
         );
     }
 
@@ -37,7 +38,7 @@ class ImportController extends Controller
      */
     public function show(RecipeImport $import): RecipeImportResource
     {
-        return new RecipeImportResource($import->load('recipe.tags'));
+        return new RecipeImportResource($import->load('recipes.tags'));
     }
 
     /**
@@ -54,17 +55,18 @@ class ImportController extends Controller
             $import->refresh();
         }
 
-        return new RecipeImportResource($import->load('recipe.tags'));
+        return new RecipeImportResource($import->load('recipes.tags'));
     }
 
     /**
      * Queue the import of a shared link. A video that was imported before
-     * is answered with its recipe right away.
+     * is answered with its recipes right away.
      */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'url' => ['required', 'url:http,https', 'max:2048'],
+            'dish_count' => ['nullable', 'integer', 'between:1,'.RecipeImport::MAX_DISHES],
         ]);
 
         $existing = $this->findImported($data['url']);
@@ -72,17 +74,19 @@ class ImportController extends Controller
         $import = RecipeImport::create([
             'url' => $data['url'],
             'user_id' => $request->user()->id,
-            'status' => $existing ? ImportStatus::Completed : ImportStatus::Pending,
-            'recipe_id' => $existing?->id,
+            'dish_count' => $data['dish_count'] ?? null,
+            'status' => $existing->isEmpty() ? ImportStatus::Pending : ImportStatus::Completed,
         ]);
 
-        if ($existing === null) {
+        if ($existing->isEmpty()) {
             ImportRecipe::dispatch($import);
+        } else {
+            $import->attachRecipes($existing);
         }
 
-        return (new RecipeImportResource($import->load('recipe.tags')))
+        return (new RecipeImportResource($import->load('recipes.tags')))
             ->response()
-            ->setStatusCode($existing ? 200 : 202);
+            ->setStatusCode($existing->isEmpty() ? 202 : 200);
     }
 
     /**
@@ -95,19 +99,18 @@ class ImportController extends Controller
         $import->update(['status' => ImportStatus::Pending, 'error' => null]);
         ImportRecipe::dispatch($import);
 
-        return (new RecipeImportResource($import))->response()->setStatusCode(202);
+        return (new RecipeImportResource($import->load('recipes.tags')))->response()->setStatusCode(202);
     }
 
     /**
-     * Find the recipe of a link whose video id is part of the URL.
+     * Find the recipes of a link whose video id is part of the URL.
+     *
+     * @return Collection<int, Recipe>
      */
-    private function findImported(string $url): ?Recipe
+    private function findImported(string $url): Collection
     {
         $source = SourceLink::fromUrl($url);
 
-        return $source->videoId === null ? null : Recipe::query()
-            ->where('source_platform', $source->platform)
-            ->where('source_video_id', $source->videoId)
-            ->first();
+        return $source->videoId === null ? new Collection : Recipe::fromVideo($source->platform, $source->videoId)->get();
     }
 }

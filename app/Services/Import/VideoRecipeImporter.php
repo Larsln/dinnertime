@@ -10,14 +10,18 @@ use App\Services\Ai\RecipeExtractionPrompt;
 use App\Services\Recipes\CoverStore;
 use App\Support\SourceLink;
 use Closure;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 /**
- * Imports a recipe from a TikTok, Instagram or YouTube video.
+ * Imports the recipes of a TikTok, Instagram or YouTube video.
  *
  * The whole video is handed to Gemini together with its caption, so
  * recipes that are only shown or only written in the caption are found too.
+ * Share links differ on every share, so a video imported before is
+ * recognised by its id.
  */
 class VideoRecipeImporter implements RecipeSourceImporter
 {
@@ -32,16 +36,16 @@ class VideoRecipeImporter implements RecipeSourceImporter
         private readonly CoverStore $covers,
     ) {}
 
-    public function import(string $url, Closure $report): Recipe
+    public function import(string $url, ?int $dishCount, Closure $report): Collection
     {
         $report(ImportStage::Downloading);
         $metadata = $this->downloader->metadata($url);
         $videoId = (string) $metadata['id'];
         $resolvedUrl = $metadata['webpage_url'] ?? $url;
 
-        $existing = $this->findExisting($resolvedUrl, $videoId);
+        $existing = Recipe::fromVideo(SourceLink::fromUrl($resolvedUrl)->platform, $videoId)->get();
 
-        if ($existing !== null) {
+        if ($existing->isNotEmpty()) {
             return $existing;
         }
 
@@ -52,43 +56,37 @@ class VideoRecipeImporter implements RecipeSourceImporter
             $video = $this->downloader->download($url, $directory);
 
             $report(ImportStage::Analyzing);
-            $draft = $this->extract($video, (string) ($metadata['description'] ?? ''));
+            $drafts = $this->extract($video, (string) ($metadata['description'] ?? ''), $dishCount);
 
             $report(ImportStage::Saving);
-            $recipe = $this->writer->write($draft, $resolvedUrl, $videoId);
-            $this->storeCover($recipe, $video, $draft['cover_seconds'], $directory);
+            $recipes = DB::transaction(fn () => array_map(
+                fn (array $draft) => $this->writer->write($draft, $resolvedUrl, $videoId),
+                $drafts,
+            ));
 
-            return $recipe;
+            foreach ($recipes as $index => $recipe) {
+                $this->storeCover($recipe, $video, $drafts[$index]['cover_seconds'], $directory);
+            }
+
+            return new Collection($recipes);
         } finally {
             File::deleteDirectory($directory);
         }
     }
 
     /**
-     * Share links differ on every share, so duplicates are found by the
-     * id of the video.
-     */
-    private function findExisting(string $url, string $videoId): ?Recipe
-    {
-        return Recipe::query()
-            ->where('source_platform', SourceLink::fromUrl($url)->platform)
-            ->where('source_video_id', $videoId)
-            ->first();
-    }
-
-    /**
-     * Let Gemini watch the video and return the recipe it contains.
+     * Let Gemini watch the video and return the recipes it contains.
      *
-     * @return array<string, mixed>
+     * @return non-empty-list<array<string, mixed>>
      */
-    private function extract(string $video, string $caption): array
+    private function extract(string $video, string $caption, ?int $dishCount): array
     {
         $file = $this->gemini->uploadFile($video, File::mimeType($video) ?: 'video/mp4');
 
         try {
-            $prompt = new RecipeExtractionPrompt('the attached video and its caption', $caption);
+            $prompt = new RecipeExtractionPrompt('the attached video and its caption', $caption, $dishCount);
 
-            $draft = $this->gemini->generate(
+            $answer = $this->gemini->generate(
                 config('services.gemini.video_model'),
                 [$file->asPart(), ['text' => $prompt->text()]],
                 $prompt->schema(),
@@ -97,11 +95,11 @@ class VideoRecipeImporter implements RecipeSourceImporter
             $this->gemini->deleteFile($file);
         }
 
-        if (! $draft['is_recipe']) {
+        if ($answer['recipes'] === []) {
             throw new ImportFailedException(ImportError::NoRecipeFound);
         }
 
-        return $draft;
+        return $answer['recipes'];
     }
 
     /**
@@ -115,7 +113,7 @@ class VideoRecipeImporter implements RecipeSourceImporter
         $candidates = [];
 
         foreach (array_slice($seconds, 0, self::MAX_COVER_CANDIDATES) as $index => $second) {
-            $path = "{$directory}/cover-{$index}.jpg";
+            $path = "{$directory}/cover-{$recipe->id}-{$index}.jpg";
 
             if ($this->frames->sharpestFrame($video, (float) $second, $path)) {
                 $candidates[] = $path;

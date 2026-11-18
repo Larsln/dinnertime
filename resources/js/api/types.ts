@@ -181,12 +181,14 @@ export interface RecipeInput {
 export interface RecipeImport {
     id: number;
     url: string;
+    dish_count: number | null;
     status: ImportStatus;
     stage: 'downloading' | 'analyzing' | 'saving' | null;
     error: string | null;
     error_message: string | null;
     created_at: string;
     recipe?: RecipeSummary | null;
+    recipes?: RecipeSummary[];
 }
 
 export interface MealPlanEntry {

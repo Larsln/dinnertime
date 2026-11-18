@@ -16,11 +16,12 @@ use App\Services\Import\WebRecipeImporter;
 use App\Services\Recipes\RecipeWriter;
 use App\Support\SourceLink;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
 /**
- * Turns a shared link into a recipe and records the outcome on the import.
+ * Turns a shared link into recipes and records the outcome on the import.
  *
  * Instances without an AI key store an empty recipe that only carries the
  * link, so it can be filled in by hand.
@@ -43,9 +44,10 @@ class ImportRecipe implements ShouldQueue
         $this->import->update(['status' => ImportStatus::Processing, 'error' => null]);
 
         try {
-            $recipe = $gemini->isConfigured() ? $this->importWithAi() : $this->storePlaceholder();
+            $recipes = $gemini->isConfigured() ? $this->importWithAi() : $this->storePlaceholder();
 
-            $this->import->update(['status' => ImportStatus::Completed, 'stage' => null, 'recipe_id' => $recipe->id]);
+            $this->import->attachRecipes($recipes);
+            $this->import->update(['status' => ImportStatus::Completed, 'stage' => null]);
         } catch (ImportFailedException $exception) {
             $this->markFailed($exception->error);
         } catch (GeminiException) {
@@ -64,27 +66,37 @@ class ImportRecipe implements ShouldQueue
         $this->markFailed(ImportError::Unknown);
     }
 
-    private function importWithAi(): Recipe
+    /**
+     * @return Collection<int, Recipe>
+     */
+    private function importWithAi(): Collection
     {
         $isWebPage = SourceLink::fromUrl($this->import->url)->platform === SourcePlatform::Web;
 
         return app($isWebPage ? WebRecipeImporter::class : VideoRecipeImporter::class)->import(
             $this->import->url,
+            $this->import->dish_count,
             function (ImportStage $stage): void {
                 $this->import->update(['stage' => $stage]);
             },
         );
     }
 
-    private function storePlaceholder(): Recipe
+    /**
+     * @return Collection<int, Recipe>
+     */
+    private function storePlaceholder(): Collection
     {
-        return Recipe::firstWhere('source_url', $this->import->url)
-            ?? app(RecipeWriter::class)->create([
+        $existing = Recipe::where('source_url', $this->import->url)->orderBy('id')->get();
+
+        return $existing->isNotEmpty() ? $existing : new Collection([
+            app(RecipeWriter::class)->create([
                 'title' => (string) parse_url($this->import->url, PHP_URL_HOST),
                 'source_url' => $this->import->url,
                 'source_platform' => SourceLink::fromUrl($this->import->url)->platform,
                 'source_video_id' => SourceLink::fromUrl($this->import->url)->videoId,
-            ]);
+            ]),
+        ]);
     }
 
     private function markFailed(ImportError $error): void

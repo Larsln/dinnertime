@@ -21,12 +21,14 @@ class RecipeImportResource extends JsonResource
         return [
             'id' => $this->id,
             'url' => $this->url,
+            'dish_count' => $this->dish_count,
             'status' => $this->status,
             'stage' => $this->stage,
             'error' => $this->error,
             'error_message' => $this->error?->message(),
             'created_at' => $this->created_at,
-            'recipe' => new RecipeSummaryResource($this->whenLoaded('recipe')),
+            'recipe' => $this->whenLoaded('recipes', fn () => RecipeSummaryResource::make($this->recipes->first())),
+            'recipes' => RecipeSummaryResource::collection($this->whenLoaded('recipes')),
         ];
     }
 }

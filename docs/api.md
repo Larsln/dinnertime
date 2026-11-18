@@ -124,14 +124,18 @@ the tool endpoints only.
 
 | Method | Path | Body | Answer |
 |---|---|---|---|
-| POST | `/imports` | `url` | Import; `202` when queued, `200` when the video was imported before |
+| POST | `/imports` | `url`, `dish_count?` | Import; `202` when queued, `200` when the video was imported before |
 | GET | `/imports` | | The 30 most recent Imports |
 | GET | `/imports/{id}` | | Import |
 | GET | `/imports/{id}/wait` | | Import, as soon as it is completed or failed, at the latest after four minutes |
 | POST | `/imports/{id}/retry` | | Import, `202`; `409` unless it failed |
 
-**Import:** `{id, url, status, stage, error, error_message, created_at,
-recipe: RecipeSummary|null}`. `status` is `pending`, `processing`, `completed`
+**Import:** `{id, url, dish_count, status, stage, error, error_message,
+created_at, recipes: RecipeSummary[], recipe: RecipeSummary|null}`. A link
+can show several dishes and then yields one recipe per dish; `recipes` lists
+them in the order they appear and `recipe` is the first of them. `dish_count`
+(1 to 10) tells the AI how many dishes to expect; without it the AI decides.
+`status` is `pending`, `processing`, `completed`
 or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 `saving`. Clients poll `GET /imports/{id}` to show progress, or hold one
 request to `/imports/{id}/wait` open to learn the outcome.

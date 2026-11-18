@@ -28,6 +28,7 @@ export const recipesApi = {
 
 export const importsApi = {
     list: () => data(api.get<{ data: RecipeImport[] }>('/imports')),
-    create: (url: string) => data(api.post<{ data: RecipeImport }>('/imports', { url })),
+    create: (url: string, dishCount: number | null) =>
+        data(api.post<{ data: RecipeImport }>('/imports', { url, dish_count: dishCount })),
     retry: (id: number) => data(api.post<{ data: RecipeImport }>(`/imports/${id}/retry`)),
 };

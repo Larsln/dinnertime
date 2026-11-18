@@ -90,6 +90,8 @@ export default {
     imports: {
         label: 'Rezept aus Link importieren',
         placeholder: 'TikTok, Instagram, YouTube oder Webseite',
+        dishes: 'Gerichte',
+        dishesAutomatic: 'Automatisch',
         submit: 'Importieren',
         retry: 'Erneut versuchen',
         stage: {

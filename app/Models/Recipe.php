@@ -62,6 +62,18 @@ class Recipe extends Model
     }
 
     /**
+     * Recipes imported from the given video, oldest first. A video that
+     * shows several dishes has one recipe per dish.
+     *
+     * @param  Builder<Recipe>  $query
+     */
+    #[Scope]
+    protected function fromVideo(Builder $query, SourcePlatform $platform, string $videoId): void
+    {
+        $query->where('source_platform', $platform)->where('source_video_id', $videoId)->orderBy('id');
+    }
+
+    /**
      * Load what the household thinks of each recipe: the average rating,
      * the number of ratings and the given user's own mark.
      *

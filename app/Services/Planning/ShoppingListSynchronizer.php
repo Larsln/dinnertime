@@ -2,7 +2,6 @@
 
 namespace App\Services\Planning;
 
-use App\Models\ProductPackage;
 use App\Models\ShoppingList;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -77,12 +76,12 @@ class ShoppingListSynchronizer
     private function packageRows(ProductForecast $forecast): array
     {
         return $forecast->product->buyableSizes()
-            ->filter(fn (ProductPackage $package) => isset($forecast->packageCounts[$package->id]))
-            ->sortByDesc('amount_in_base')
-            ->map(fn (ProductPackage $package) => [
+            ->filter(fn (PackageSize $package) => isset($forecast->packageCounts[$package->id]))
+            ->sortByDesc('amount')
+            ->map(fn (PackageSize $package) => [
                 'package_id' => $package->id,
                 'label' => $package->label,
-                'amount' => $package->amount_in_base,
+                'amount' => $package->amount,
                 'count' => $forecast->packageCounts[$package->id],
             ])
             ->values()

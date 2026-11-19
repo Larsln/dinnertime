@@ -133,7 +133,7 @@ class SyncFeed
             'tools' => [Tool::query()->withCount('recipes'), ToolResource::class],
             'stores' => [Store::query()->withCount('offers'), StoreResource::class],
             'products' => [
-                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers.store'])->withCount('ingredients'),
+                Product::query()->with(['storeSection', 'aliases', 'conversions.unit', 'offers.store'])->withCount('ingredients'),
                 ProductResource::class,
             ],
             'recipes' => [

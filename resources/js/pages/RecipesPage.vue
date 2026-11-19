@@ -10,6 +10,7 @@ import { useDebounced } from '@/composables/useDebounced';
 import { useReferenceData } from '@/composables/useReferenceData';
 import ImportPanel from '@/components/ImportPanel.vue';
 import RecipeCard from '@/components/RecipeCard.vue';
+import TodayPanel from '@/components/TodayPanel.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -18,7 +19,8 @@ import SelectField from '@/components/ui/SelectField.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
- * All recipes with search, filters for course, tag and favorites, and the link import.
+ * All recipes with search, filters for course, tag and favorites, and the
+ * link import, below what is up next today.
  */
 const { t } = useI18n();
 const { tags, courses } = useReferenceData();
@@ -54,6 +56,8 @@ const recipes = useQuery({
             <AppButton @click="navigate"><Plus class="size-4" />{{ t('recipes.new') }}</AppButton>
         </RouterLink>
     </PageHeader>
+
+    <TodayPanel />
 
     <ImportPanel />
 

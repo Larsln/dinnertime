@@ -33,7 +33,7 @@ class PlanCost
             return 0;
         }
 
-        $smallestPackage = $forecast->product->buyableSizes()->min('amount_in_base');
+        $smallestPackage = $forecast->product->buyableSizes()->min('amount');
 
         return $surplus / ($smallestPackage ?? max($forecast->purchased, 1));
     }

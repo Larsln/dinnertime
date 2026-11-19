@@ -21,7 +21,7 @@ class ProductOfferResource extends JsonResource
         return [
             'id' => $this->id,
             'store_id' => $this->store_id,
-            'store' => $this->store->name,
+            'store' => $this->store?->name,
             'amount' => $this->amount,
             'unit' => $this->unit,
             'price' => $this->price,

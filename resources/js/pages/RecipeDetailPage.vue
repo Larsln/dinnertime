@@ -24,9 +24,12 @@ import TabItem from '@/components/ui/TabItem.vue';
 /**
  * A recipe with ingredients scaled to the chosen number of servings, the
  * member's rating and favorite mark. Narrow screens switch between
- * ingredients and method, wide ones show both.
+ * ingredients and method, wide ones show both. Opens with the household's
+ * usual number of servings unless the link names another one.
  */
-const props = defineProps<{ id: number }>();
+const props = withDefaults(defineProps<{ id: number; initialServings?: number }>(), {
+    initialServings: undefined,
+});
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -44,9 +47,9 @@ const isDeleting = ref(false);
 const today = toIsoDate(new Date());
 
 watch(
-    () => [recipe.data.value, defaultServings.value] as const,
-    ([loaded]) => {
-        servings.value = loaded?.servings ? defaultServings.value : null;
+    () => [recipe.data.value, props.initialServings ?? defaultServings.value] as const,
+    ([loaded, preset]) => {
+        servings.value = loaded?.servings ? preset : null;
     },
     { immediate: true },
 );

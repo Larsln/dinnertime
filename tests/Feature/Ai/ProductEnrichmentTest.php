@@ -53,7 +53,7 @@ class ProductEnrichmentTest extends TestCase
         $this->assertSame(4, $cream->shelf_life_opened_days);
         $this->assertNotNull($cream->enriched_at);
         $this->assertSame(ReviewStatus::Suggested, $cream->status);
-        $this->assertCount(0, $cream->packages);
+        $this->assertCount(0, $cream->offers);
         $this->assertEquals(
             ['tablespoon' => 15, 'gram' => 0.99, 'tub' => null],
             $cream->conversions->pluck('amount_in_base', 'unit.key')->all(),
@@ -86,7 +86,7 @@ class ProductEnrichmentTest extends TestCase
         $this->assertSame('rice', $rice->icon);
         $this->assertFalse($rice->is_pantry_staple);
         $this->assertNull($rice->shelf_life_opened_days);
-        $this->assertEquals([500], $rice->packages->pluck('amount_in_base')->all());
+        $this->assertEquals([500], $rice->offers->pluck('amount')->all());
         $this->assertEquals(['tablespoon' => 12, 'piece' => 180], $rice->conversions->pluck('amount_in_base', 'unit.key')->all());
     }
 

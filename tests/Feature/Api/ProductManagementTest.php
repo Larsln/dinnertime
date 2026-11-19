@@ -43,7 +43,11 @@ class ProductManagementTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.store_id', $offer['store_id'])
             ->assertJsonPath('data.price', null);
-        $this->postJson("/api/v1/products/{$butter->id}/offers", ['price' => 1.99])->assertUnprocessable();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['amount' => 250])
+            ->assertCreated()
+            ->assertJsonPath('data.store_id', null)
+            ->assertJsonPath('data.store', null)
+            ->assertJsonPath('data.unit', 'g');
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['store_id' => $offer['store_id'], 'amount' => 0])->assertUnprocessable();
 
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl', 'amount' => 1.5, 'unit' => 'kg'])
@@ -73,6 +77,7 @@ class ProductManagementTest extends TestCase
             ->assertJsonPath('data.0.name', 'Aldi')
             ->assertJsonPath('data.1.name', 'Rewe')
             ->assertJsonPath('data.1.offer_count', 1);
+        $this->patchJson("/api/v1/stores/{$rewe}", ['is_preferred' => true])->assertOk()->assertJsonPath('data.is_preferred', true);
         $this->patchJson("/api/v1/stores/{$rewe}", ['is_active' => false])->assertOk()->assertJsonPath('data.is_active', false)->assertJsonPath('data.name', 'Rewe');
         $this->patchJson("/api/v1/stores/{$rewe}", ['name' => 'REWE City'])->assertOk()->assertJsonPath('data.name', 'REWE City');
         $this->patchJson("/api/v1/stores/{$rewe}", ['name' => 'aldi'])->assertUnprocessable();
@@ -134,7 +139,7 @@ class ProductManagementTest extends TestCase
         $this->patchJson("/api/v1/products/{$id}", ['name' => 'Hafermilch', 'base_unit' => 'liter'])->assertUnprocessable();
     }
 
-    public function test_user_values_for_conversions_and_packages_count_as_confirmed(): void
+    public function test_user_values_for_conversions_count_as_confirmed(): void
     {
         $flour = $this->product('Mehl', [1000]);
         $spoon = Unit::firstWhere('key', 'tablespoon');
@@ -154,17 +159,8 @@ class ProductManagementTest extends TestCase
         $this->putJson("/api/v1/products/{$flour->id}/conversions/{$piece->id}", [])->assertUnprocessable();
         $this->deleteJson("/api/v1/products/{$flour->id}/conversions/{$piece->id}")->assertNoContent();
 
-        $packageId = $this->postJson("/api/v1/products/{$flour->id}/packages", ['label' => 'Tüte', 'amount_in_base' => 500])
-            ->assertCreated()
-            ->json('data.id');
-        $this->postJson("/api/v1/products/{$flour->id}/packages", ['label' => 'Tüte', 'amount_in_base' => 1000])->assertUnprocessable();
-        $this->patchJson("/api/v1/product-packages/{$packageId}", ['amount_in_base' => 405])->assertJsonPath('data.amount_in_base', 405);
-        $this->patchJson("/api/v1/product-packages/{$packageId}", ['amount_in_base' => 1000])->assertUnprocessable();
-
-        $this->deleteJson("/api/v1/product-packages/{$packageId}")->assertNoContent();
         $this->deleteJson("/api/v1/products/{$flour->id}/conversions/{$spoon->id}")->assertNoContent();
         $this->assertSame(0, $flour->conversions()->count());
-        $this->assertSame(1, $flour->packages()->count());
     }
 
     public function test_it_manages_aliases(): void

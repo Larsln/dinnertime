@@ -9,11 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Shop the household buys at. A store that is not active, for example
- * while it is rebuilt, is left out when choosing where to buy.
+ * while it is rebuilt, is left out when choosing where to buy. Preferred
+ * stores are where the household usually goes: their package sizes are
+ * bought first.
  *
  * @property bool $is_active
+ * @property bool $is_preferred
  */
-#[Fillable(['name', 'is_active'])]
+#[Fillable(['name', 'is_active', 'is_preferred'])]
 class Store extends Model
 {
     use BroadcastsChanges;
@@ -32,6 +35,7 @@ class Store extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_preferred' => 'boolean',
         ];
     }
 

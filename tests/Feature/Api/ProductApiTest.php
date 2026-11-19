@@ -37,7 +37,7 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.0.aliases', ['Möhre']);
     }
 
-    public function test_it_shows_a_product_with_conversions_and_packages(): void
+    public function test_it_shows_a_product_with_conversions_and_offers(): void
     {
         $flour = Product::factory()->create(['name' => 'Mehl']);
         $flour->conversions()->create([
@@ -46,19 +46,15 @@ class ProductApiTest extends TestCase
             'status' => ReviewStatus::Suggested,
             'source' => ValueSource::Ai,
         ]);
-        $flour->packages()->create([
-            'label' => 'Packung',
-            'amount_in_base' => 1000,
-            'status' => ReviewStatus::Confirmed,
-            'source' => ValueSource::User,
-        ]);
+        $flour->offers()->create(['amount' => 1, 'unit' => 'kg']);
 
         $this->getJson("/api/v1/products/{$flour->id}")
             ->assertOk()
             ->assertJsonPath('data.base_unit', 'g')
             ->assertJsonPath('data.conversions.0.unit.code', 'EL')
             ->assertJsonPath('data.conversions.0.status', 'suggested')
-            ->assertJsonPath('data.packages.0.amount_in_base', 1000);
+            ->assertJsonPath('data.offers.0.amount', 1)
+            ->assertJsonPath('data.offers.0.store', null);
     }
 
     public function test_it_lists_reference_data_in_the_requested_language(): void

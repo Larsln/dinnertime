@@ -190,7 +190,7 @@ its changes later. Three things make that safe.
   `products`, `recipes` (with the marks of the user), `meal_plan_entries`,
   `pantry_items` and `shopping_lists` (with their items). A recipe counts as
   changed when its ingredients, steps, tags, tools or marks change, a product
-  when its aliases, conversions or packages change, a shopping list when one
+  when its aliases, conversions or offers change, a shopping list when one
   of its items changes.
 - `deleted` holds the ids of deleted records by the same kinds. It is empty
   for `since=0`.
@@ -264,24 +264,21 @@ to signed-in users; its content is never returned.
 | Method | Path | Body or query | Answer |
 |---|---|---|---|
 | GET | `/products` | `?search=` (name or alias) | Paginated Product |
-| GET | `/products/{id}` | | Product with conversions and packages |
+| GET | `/products/{id}` | | Product with conversions and offers |
 | POST | `/products` | ProductInput | Product, `201` |
 | PATCH | `/products/{id}` | ProductInput, all fields optional | Product |
 | DELETE | `/products/{id}` | | `204`; `409` if a recipe uses it |
 | GET | `/review` | | Paginated Product awaiting confirmation |
-| POST | `/products/{id}/confirm` | | Product; confirms it with all conversions and packages |
+| POST | `/products/{id}/confirm` | | Product; confirms it with all conversions |
 | POST | `/products/{id}/merge` | `into: <product id>` | The remaining Product |
 | PUT | `/products/{id}/conversions/{unit id}` | `amount_in_base`: number, or `null` for "cannot be converted" | Conversion |
 | DELETE | `/products/{id}/conversions/{unit id}` | | `204` |
-| POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
-| PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
-| DELETE | `/product-packages/{id}` | | `204` |
-| POST | `/products/{id}/offers` | `store_id` or `store` (a name, created if new), `amount?`, `unit?` (the product's base unit when left out), `price?` | Offer, `201` |
+| POST | `/products/{id}/offers` | `store_id` or `store` (a name, created if new), neither for a size sold everywhere, `amount?`, `unit?` (the product's base unit when left out), `price?` | Offer, `201` |
 | PATCH | `/product-offers/{id}` | `store_id?`, `store?`, `amount?`, `unit?`, `price?` | Offer |
 | DELETE | `/product-offers/{id}` | | `204` |
 | GET | `/stores` | | `[Store]` by name |
 | POST | `/stores` | `name` | Store, `201`; `422` when a store has that name, ignoring case |
-| PATCH | `/stores/{id}` | `name?`, `is_active?` | Store |
+| PATCH | `/stores/{id}` | `name?`, `is_active?`, `is_preferred?` | Store |
 | DELETE | `/stores/{id}` | | `204`; removes the store with its offers |
 | POST | `/products/{id}/aliases` | `name` | Product |
 | DELETE | `/product-aliases/{id}` | | `204` |
@@ -289,33 +286,33 @@ to signed-in users; its content is never returned.
 - **Product:** `{id, name, plural_name, icon, base_unit, is_pantry_staple,
   shelf_life_opened_days, note, status, enriched_at, recipe_count,
   store_section: StoreSection|null, aliases: [string],
-  conversions: [Conversion], packages: [Package]}`. `status` is `suggested`
+  conversions: [Conversion], offers: [Offer]}`. `status` is `suggested`
   or `confirmed`. `icon` is the key of a line icon for the shopping list
   tile (listed in `resources/icons/products/manifest.json`; clients show the generic icon of the store section, `section-<key>`, for products without one or with a key they do not know), or
-  `null`. `recipe_count`, `conversions` and `packages` are only present on
+  `null`. `recipe_count`, `conversions` and `offers` are only present on
   the detail and review endpoints.
 - **Conversion:** `{id, unit: Unit, amount_in_base, status, source}`: one
   `unit` of the product equals `amount_in_base` of its base unit. An
   `amount_in_base` of `null` states that the unit cannot be converted for
   this product, as with pieces of fruit that vary in weight.
-- **Package:** `{id, label, amount_in_base, status, source}`
-- **Offer:** `{id, store_id, store, amount, unit, price}`: where the
-  product can be bought. `amount` and `unit` are the size of the package as
-  the shelf label states it, `unit` being `g`, `kg`, `ml`, `l` or `piece`;
-  `price` is what that package costs, in the currency of the household
-  settings. Size and price may be `null`. The shopping list buys in the
-  product's own package sizes and in the sizes active stores sell it in;
-  such a package is listed with the store's name as label and the negated
-  offer id as `package_id`.
-  `store` repeats the store's name; clients that keep the stores take name
-  and state from there, since renaming or pausing a store does not change
-  its products. Products carry their `offers` on the detail and review
-  endpoints, inside shopping list items and in the sync feed.
-- **Store:** `{id, name, is_active, offer_count}`. A store that is not
-  active, for example while it is rebuilt, is not offered when noting
-  where a product is sold, and its offers are shown as paused.
-- **ProductInput:** `name`, `plural_name`, `icon`, `store_section_id`, `base_unit`,
-  `is_pantry_staple`, `shelf_life_opened_days`, `note` (free text for the shopper, at most 500 characters)
+- **Offer:** `{id, store_id, store, amount, unit, price}`: a package the
+  product is sold in. `amount` and `unit` are its size as the shelf label
+  states it, `unit` being `g`, `kg`, `ml`, `l` or `piece`; `price` is what
+  it costs, in the currency of the household settings. Size and price may
+  be `null`. `store_id` names the store that sells it and `store` repeats
+  its name; both are `null` for a size sold everywhere. Clients that keep
+  the stores take name and state from there, since changing a store does
+  not change its products. Offers are the package sizes of a product: the
+  shopping list buys in the sizes sold everywhere and those of preferred
+  stores, and falls back to the other active stores only for products
+  none of these sells. A bought package is listed with the offer id as
+  `package_id` and the store's name as label, empty for sizes sold
+  everywhere.
+- **Store:** `{id, name, is_active, is_preferred, offer_count}`. A store
+  that is not active, for example while it is rebuilt, is not offered when
+  noting where a product is sold, its offers are shown as paused and its
+  sizes are not bought. Preferred stores are where the household usually
+  goes.
 
 Values entered through the API count as confirmed. `source` is `ai`, `user`
 or `import`.

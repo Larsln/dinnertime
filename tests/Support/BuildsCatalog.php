@@ -18,7 +18,8 @@ use App\Models\Unit;
 trait BuildsCatalog
 {
     /**
-     * Create a product measured in grams with the given package sizes.
+     * Create a product measured in grams that is sold everywhere in the
+     * given package sizes.
      *
      * @param  list<int>  $packageSizes
      * @param  array<string, mixed>  $attributes
@@ -28,12 +29,7 @@ trait BuildsCatalog
         $product = Product::factory()->create(['name' => $name, ...$attributes]);
 
         foreach ($packageSizes as $size) {
-            $product->packages()->create([
-                'label' => 'Packung',
-                'amount_in_base' => $size,
-                'status' => ReviewStatus::Confirmed,
-                'source' => ValueSource::User,
-            ]);
+            $product->offers()->create(['amount' => $size, 'unit' => $product->base_unit->value]);
         }
 
         return $product;

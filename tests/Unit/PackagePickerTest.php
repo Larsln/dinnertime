@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Models\ProductPackage;
 use App\Services\Planning\PackagePicker;
+use App\Services\Planning\PackageSize;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +16,7 @@ class PackagePickerTest extends TestCase
     #[DataProvider('needs')]
     public function test_it_picks_the_combination_with_the_least_surplus(float $need, array $sizes, array $expectedCounts, float $expectedAmount): void
     {
-        $packages = collect($sizes)->map(fn (int $size) => (new ProductPackage)->forceFill(['id' => $size, 'amount_in_base' => $size]));
+        $packages = collect($sizes)->map(fn (int $size) => new PackageSize($size, '', $size));
 
         $selection = (new PackagePicker)->pick($need, $packages);
 

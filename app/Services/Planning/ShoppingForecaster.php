@@ -21,7 +21,6 @@ class ShoppingForecaster
     public const array RECIPE_RELATIONS = [
         'ingredients.unit',
         'ingredients.product.conversions.unit',
-        'ingredients.product.packages',
         'ingredients.product.offers.store',
     ];
 

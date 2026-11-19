@@ -41,7 +41,7 @@ class ShoppingListTest extends TestCase
         $this->assertEquals(400, $item['purchase_amount']);
         $this->assertEquals(50, $item['leftover_amount']);
         $this->assertEquals(0, $item['wasted_amount']);
-        $this->assertSame([['package_id' => $cream->packages->first()->id, 'label' => 'Packung', 'amount' => 200, 'count' => 2]], $item['packages']);
+        $this->assertSame([['package_id' => $cream->offers->first()->id, 'label' => '', 'amount' => 200, 'count' => 2]], $item['packages']);
         $this->assertSame(['2026-11-16', '2026-11-19'], array_column($item['uses'], 'date'));
         $this->assertSame(['Lasagne', 'Suppe'], array_column($item['uses'], 'title'));
     }
@@ -187,19 +187,21 @@ class ShoppingListTest extends TestCase
         $this->assertCount(3, $this->createList()->json('data.items'));
     }
 
-    public function test_it_buys_in_the_sizes_active_stores_sell(): void
+    public function test_it_buys_in_the_sizes_of_preferred_stores_first(): void
     {
-        $flour = $this->product('Mehl', [1000]);
+        $flour = $this->product('Mehl');
         $lidl = Store::named('Lidl');
         $rewe = Store::named('Rewe');
-        $flour->offers()->create(['store_id' => $lidl->id, 'amount' => 500, 'unit' => 'g']);
+        $lidl->update(['is_preferred' => true]);
+        $atLidl = $flour->offers()->create(['store_id' => $lidl->id, 'amount' => 500, 'unit' => 'g']);
         $flour->offers()->create(['store_id' => $rewe->id, 'amount' => 0.25, 'unit' => 'kg']);
         $flour->offers()->create(['store_id' => $rewe->id, 'amount' => 2, 'unit' => 'l']);
         $this->plan('2026-11-16', $this->recipe('Pfannkuchen', [[$flour, 400, 'gram']]));
 
-        $item = $this->createList()->json('data.items.0');
-        $this->assertSame([['package_id' => $item['packages'][0]['package_id'], 'label' => 'Lidl', 'amount' => 500, 'count' => 1]], $item['packages']);
-        $this->assertLessThan(0, $item['packages'][0]['package_id']);
+        $this->assertSame(
+            [['package_id' => $atLidl->id, 'label' => 'Lidl', 'amount' => 500, 'count' => 1]],
+            $this->createList()->json('data.items.0.packages'),
+        );
 
         $lidl->update(['is_active' => false]);
 
@@ -207,6 +209,10 @@ class ShoppingListTest extends TestCase
             ->assertJsonCount(1, 'data.items.0.packages')
             ->assertJsonPath('data.items.0.packages.0.label', 'Rewe')
             ->assertJsonPath('data.items.0.packages.0.count', 2);
+
+        $flour->offers()->create(['amount' => 1000, 'unit' => 'g']);
+
+        $this->createList()->assertJsonPath('data.items.0.packages.0.label', '')->assertJsonPath('data.items.0.packages.0.amount', 1000);
     }
 
     public function test_it_moves_leftovers_to_the_pantry_once(): void

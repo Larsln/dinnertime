@@ -22,8 +22,8 @@ class ProductOfferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_id' => [$this->isMethod('POST') ? 'required_without:store' : 'sometimes', 'integer', Rule::exists('stores', 'id')],
-            'store' => ['sometimes', 'string', 'max:100'],
+            'store_id' => ['sometimes', 'nullable', 'integer', Rule::exists('stores', 'id')],
+            'store' => ['sometimes', 'nullable', 'string', 'max:100'],
             'amount' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:999999'],
             'unit' => ['sometimes', 'nullable', Rule::enum(OfferUnit::class)],
             'price' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999'],

@@ -22,6 +22,7 @@ class StoreResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'is_active' => $this->is_active,
+            'is_preferred' => $this->is_preferred,
             'offer_count' => $this->whenCounted('offers'),
         ];
     }

@@ -79,6 +79,7 @@ class StoreController extends Controller
                 },
             ],
             'is_active' => ['sometimes', 'boolean'],
+            'is_preferred' => ['sometimes', 'boolean'],
         ]);
     }
 }

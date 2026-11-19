@@ -7,7 +7,7 @@ import { Primitive } from 'reka-ui';
 withDefaults(
     defineProps<{
         variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-        size?: 'md' | 'sm' | 'icon';
+        size?: 'lg' | 'md' | 'sm' | 'icon';
         type?: 'button' | 'submit';
         disabled?: boolean;
     }>(),
@@ -22,6 +22,7 @@ const VARIANTS = {
 };
 
 const SIZES = {
+    lg: 'h-14 px-6 text-base',
     md: 'h-10 px-4 text-sm',
     sm: 'h-8 px-3 text-sm',
     icon: 'size-9',

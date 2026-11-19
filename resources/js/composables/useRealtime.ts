@@ -20,6 +20,7 @@ const QUERY_KEYS: Record<string, string[]> = {
     recipes: ['recipes', 'recipe'],
     products: ['review', 'products', 'product'],
     tools: ['tools'],
+    dinner: ['dinner-round'],
 };
 
 /**

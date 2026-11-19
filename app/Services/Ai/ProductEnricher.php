@@ -74,12 +74,11 @@ class ProductEnricher
     }
 
     /**
-     * Package sizes and conversions are amounts in the base unit, so
-     * unconfirmed ones lose their meaning when the base unit changes.
+     * Conversions are amounts in the base unit, so unconfirmed ones lose
+     * their meaning when the base unit changes.
      */
     private function dropSuggestionsInOldBaseUnit(Product $product): void
     {
-        $product->packages()->where('status', ReviewStatus::Suggested)->delete();
         $product->conversions()->where('status', ReviewStatus::Suggested)->delete();
     }
 

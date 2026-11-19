@@ -1,6 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from './stores/session';
 
+const MAX_SERVINGS = 100;
+
+/**
+ * Number of servings named in a query parameter, if it is a usable one.
+ */
+function servingsOf(value: unknown): number | undefined {
+    const servings = Number(value);
+
+    return Number.isInteger(servings) && servings >= 1 && servings <= MAX_SERVINGS ? servings : undefined;
+}
+
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -26,7 +37,10 @@ export const router = createRouter({
                     path: 'recipes/:id(\\d+)',
                     name: 'recipe',
                     component: () => import('./pages/RecipeDetailPage.vue'),
-                    props: (route) => ({ id: Number(route.params.id) }),
+                    props: (route) => ({
+                        id: Number(route.params.id),
+                        initialServings: servingsOf(route.query.servings),
+                    }),
                 },
                 {
                     path: 'recipes/:id(\\d+)/edit',
@@ -34,6 +48,7 @@ export const router = createRouter({
                     component: () => import('./pages/RecipeEditPage.vue'),
                     props: (route) => ({ id: Number(route.params.id) }),
                 },
+                { path: 'dinner', name: 'dinner', component: () => import('./pages/DinnerPage.vue') },
                 { path: 'plan', name: 'plan', component: () => import('./pages/PlanPage.vue') },
                 { path: 'shopping', name: 'shopping', component: () => import('./pages/ShoppingPage.vue') },
                 { path: 'pantry', name: 'pantry', component: () => import('./pages/PantryPage.vue') },

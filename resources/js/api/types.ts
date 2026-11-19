@@ -221,6 +221,31 @@ export interface MealPlanEntry {
     recipe: RecipeSummary;
 }
 
+export type DinnerRoundStatus = 'voting' | 'matched' | 'undecided';
+
+export interface DinnerCard {
+    recipe: RecipeSummary;
+    missing_count: number;
+    my_vote: boolean | null;
+    liked_by_others: boolean;
+}
+
+export interface DinnerRound {
+    id: number;
+    date: string;
+    is_solo: boolean;
+    status: DinnerRoundStatus;
+    match: RecipeSummary | null;
+    cards: DinnerCard[];
+    members: { name: string; voted_count: number }[];
+}
+
+export interface DinnerRoundOptions {
+    is_solo: boolean;
+    only_available: boolean;
+    max_minutes: number | null;
+}
+
 export interface PantryItem {
     id: number;
     amount: number;

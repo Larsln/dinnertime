@@ -2,7 +2,6 @@
 
 namespace App\Services\Planning;
 
-use App\Models\ProductPackage;
 use Illuminate\Support\Collection;
 
 /**
@@ -24,7 +23,7 @@ class PackagePicker
      * Pick packages covering the need. Without known package sizes the
      * exact amount is bought.
      *
-     * @param  Collection<int, ProductPackage>  $packages
+     * @param  Collection<int, PackageSize>  $packages
      */
     public function pick(float $need, Collection $packages): PackageSelection
     {
@@ -32,7 +31,7 @@ class PackagePicker
             return new PackageSelection([], max($need, 0));
         }
 
-        $sizes = $packages->sortByDesc('amount_in_base')->values();
+        $sizes = $packages->sortByDesc('amount')->values();
         $best = ['cost' => INF, 'counts' => []];
 
         $this->search($need, $sizes, 0, [], 0, $best);
@@ -43,7 +42,7 @@ class PackagePicker
         foreach ($best['counts'] as $index => $count) {
             if ($count > 0) {
                 $counts[$sizes[$index]->id] = $count;
-                $amount += $count * $sizes[$index]->amount_in_base;
+                $amount += $count * $sizes[$index]->amount;
             }
         }
 
@@ -54,13 +53,13 @@ class PackagePicker
      * Try every count of the package at the given index and recurse into the
      * smaller sizes, keeping the cheapest complete combination.
      *
-     * @param  Collection<int, ProductPackage>  $sizes  Packages ordered from largest to smallest.
+     * @param  Collection<int, PackageSize>  $sizes  Packages ordered from largest to smallest.
      * @param  list<int>  $counts  Counts chosen for the packages before the index.
      * @param  array{cost: float, counts: list<int>}  $best
      */
     private function search(float $need, Collection $sizes, int $index, array $counts, float $covered, array &$best): void
     {
-        $size = $sizes[$index]->amount_in_base;
+        $size = $sizes[$index]->amount;
         $toCover = (int) ceil(max($need - $covered, 0) / $size - self::EPSILON);
 
         if ($index === $sizes->count() - 1) {

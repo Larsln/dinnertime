@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Where a product can be bought: the store, the size of the package it
- * sells as the shelf label states it and what that package costs.
+ * A package a product is sold in: its size as the shelf label states it,
+ * what it costs and the store that sells it. Without a store the size is
+ * sold everywhere.
  *
  * @property ?float $amount
  * @property ?OfferUnit $unit

@@ -12,7 +12,6 @@ use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductConversionController;
 use App\Http\Controllers\Api\V1\ProductOfferController;
-use App\Http\Controllers\Api\V1\ProductPackageController;
 use App\Http\Controllers\Api\V1\RealtimeController;
 use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\RecipeMarkController;
@@ -67,9 +66,6 @@ Route::prefix('v1')->group(function () {
 
         Route::put('products/{product}/conversions/{unit}', [ProductConversionController::class, 'update']);
         Route::delete('products/{product}/conversions/{unit}', [ProductConversionController::class, 'destroy']);
-        Route::post('products/{product}/packages', [ProductPackageController::class, 'store']);
-        Route::patch('product-packages/{package}', [ProductPackageController::class, 'update']);
-        Route::delete('product-packages/{package}', [ProductPackageController::class, 'destroy']);
         Route::apiResource('stores', StoreController::class)->except('show');
         Route::post('products/{product}/offers', [ProductOfferController::class, 'store']);
         Route::patch('product-offers/{offer}', [ProductOfferController::class, 'update']);

@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'conversions.unit', 'packages', 'offers.store'];
+    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'conversions.unit', 'offers.store'];
 
     /**
      * List products, optionally filtered by name or alias.
@@ -43,7 +43,7 @@ class ProductController extends Controller
     }
 
     /**
-     * List products with details, conversions or packages awaiting review.
+     * List products with details or conversions awaiting review.
      */
     public function review(): AnonymousResourceCollection
     {
@@ -66,7 +66,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Create a product by hand and ask the AI for packages and conversions.
+     * Create a product by hand and ask the AI for details and conversions.
      */
     public function store(ProductRequest $request): ProductResource
     {
@@ -88,14 +88,13 @@ class ProductController extends Controller
     }
 
     /**
-     * Confirm a product together with all of its conversions and packages.
+     * Confirm a product together with all of its conversions.
      */
     public function confirm(Product $product): ProductResource
     {
         DB::transaction(function () use ($product) {
             $product->update(['status' => ReviewStatus::Confirmed]);
             $product->conversions()->update(['status' => ReviewStatus::Confirmed]);
-            $product->packages()->update(['status' => ReviewStatus::Confirmed]);
         });
 
         return new ProductResource($product->load(self::DETAIL_RELATIONS));

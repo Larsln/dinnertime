@@ -5,22 +5,23 @@ namespace App\Models;
 use App\Enums\BaseUnit;
 use App\Enums\ReviewStatus;
 use App\Models\Concerns\BroadcastsChanges;
+use App\Services\Planning\PackageSize;
 use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Purchasable product that ingredient lines refer to.
  *
  * A product stays suggested until a household member has confirmed its
- * details. Its conversions and packages are reviewed individually, so a
+ * details. Its conversions are reviewed individually, so a
  * confirmed product can receive new suggestions later.
  *
  * @property BaseUnit $base_unit
@@ -42,8 +43,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Product extends Model
 {
-    private const float SIZE_TOLERANCE = 0.001;
-
     /** @use HasFactory<ProductFactory> */
     use BroadcastsChanges, HasFactory;
 
@@ -68,7 +67,7 @@ class Product extends Model
     }
 
     /**
-     * Products with details, conversions or packages awaiting confirmation.
+     * Products with details or conversions awaiting confirmation.
      *
      * @param  Builder<Product>  $query
      */
@@ -77,8 +76,7 @@ class Product extends Model
     {
         $query->where(fn (Builder $query) => $query
             ->where('status', ReviewStatus::Suggested)
-            ->orWhereRelation('conversions', 'status', ReviewStatus::Suggested)
-            ->orWhereRelation('packages', 'status', ReviewStatus::Suggested));
+            ->orWhereRelation('conversions', 'status', ReviewStatus::Suggested));
     }
 
     /**
@@ -132,42 +130,27 @@ class Product extends Model
     }
 
     /**
-     * Sizes the shopping list may buy: the standard sizes of the product
-     * and the sizes stores the household currently buys at sell it in. A
-     * size seen in a store carries the name of the store and the negated
-     * id of its offer, which tells it apart from the standard sizes.
+     * Sizes the shopping list may buy: those sold everywhere and those of
+     * the stores the household prefers. Only when none of these exists do
+     * the sizes of the other active stores count, so a store for special
+     * things is used for what only it sells.
      *
-     * @return Collection<int, ProductPackage>
+     * @return Collection<int, PackageSize>
      */
     public function buyableSizes(): Collection
     {
         return once(function () {
-            $sizes = $this->packages->values();
+            $offers = $this->offers
+                ->each(fn (ProductOffer $offer) => $offer->setRelation('product', $this))
+                ->filter(fn (ProductOffer $offer) => $offer->amountInBase() !== null && ($offer->store->is_active ?? true));
+            $preferred = $offers->filter(fn (ProductOffer $offer) => $offer->store->is_preferred ?? true);
 
-            foreach ($this->offers as $offer) {
-                $amount = $offer->setRelation('product', $this)->amountInBase();
-                $isKnown = $sizes->contains(fn (ProductPackage $size) => abs($size->amount_in_base - $amount) < self::SIZE_TOLERANCE);
-
-                if ($amount !== null && $offer->store->is_active && ! $isKnown) {
-                    $sizes->push((new ProductPackage)->forceFill([
-                        'id' => -$offer->id,
-                        'label' => $offer->store->name,
-                        'amount_in_base' => $amount,
-                    ]));
-                }
-            }
-
-            return $sizes;
+            return ($preferred->isEmpty() ? $offers : $preferred)
+                ->sortBy(fn (ProductOffer $offer) => $offer->store === null ? 1 : 0)
+                ->unique(fn (ProductOffer $offer) => round((float) $offer->amountInBase(), 3))
+                ->map(fn (ProductOffer $offer) => new PackageSize($offer->id, $offer->store->name ?? '', (float) $offer->amountInBase()))
+                ->values()
+                ->toBase();
         });
-    }
-
-    /**
-     * Standard package sizes the product is sold in everywhere.
-     *
-     * @return HasMany<ProductPackage, $this>
-     */
-    public function packages(): HasMany
-    {
-        return $this->hasMany(ProductPackage::class);
     }
 }

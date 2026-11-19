@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { authApi } from '@/api/auth';
 import type { ServerInfo, Session, User } from '@/api/types';
 
-const TOKEN_KEY = 'mealplanner.token';
+const TOKEN_KEY = 'dinnertime.token';
 const DEVICE_NAME = 'Web';
 
 /**

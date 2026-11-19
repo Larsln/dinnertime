@@ -34,12 +34,12 @@ class ImportSettingsTest extends TestCase
         $this->getJson('/api/v1/settings/import')
             ->assertOk()
             ->assertExactJson(['data' => ['identify_as_browser' => false, 'has_cookies' => false]]);
-        $this->assertStringContainsString('MealplannerBot', $settings->userAgent());
+        $this->assertStringContainsString('DinnertimeBot', $settings->userAgent());
 
         $this->patchJson('/api/v1/settings/import', ['identify_as_browser' => true])
             ->assertJsonPath('data.identify_as_browser', true);
         $this->assertStringContainsString('Safari', $settings->userAgent());
-        $this->assertStringNotContainsString('MealplannerBot', $settings->userAgent());
+        $this->assertStringNotContainsString('DinnertimeBot', $settings->userAgent());
 
         $this->patchJson('/api/v1/settings/import', ['identify_as_browser' => false])
             ->assertJsonPath('data.identify_as_browser', false);

@@ -28,7 +28,7 @@ return [
 
     'mercure' => [
         'key' => env('MERCURE_JWT_KEY'),
-        'issuer' => env('MERCURE_ISSUER', 'mealplanner'),
+        'issuer' => env('MERCURE_ISSUER', 'dinnertime'),
         'publish_url' => env('MERCURE_PUBLISH_URL', 'http://app/.well-known/mercure'),
     ],
 

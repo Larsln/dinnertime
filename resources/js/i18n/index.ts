@@ -2,7 +2,7 @@ import { createI18n } from 'vue-i18n';
 import de from './de';
 import en from './en';
 
-const LOCALE_KEY = 'mealplanner.locale';
+const LOCALE_KEY = 'dinnertime.locale';
 
 export const SUPPORTED_LOCALES = ['de', 'en'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];

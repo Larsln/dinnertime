@@ -16,9 +16,9 @@ class OidcLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const string ISSUER = 'https://idp.test/application/o/mealplanner/';
+    private const string ISSUER = 'https://idp.test/application/o/dinnertime/';
 
-    private const string CLIENT_ID = 'mealplanner-client';
+    private const string CLIENT_ID = 'dinnertime-client';
 
     private OpenSSLAsymmetricKey $key;
 
@@ -32,7 +32,7 @@ class OidcLoginTest extends TestCase
         config(['services.oidc' => ['issuer' => self::ISSUER, 'client_id' => self::CLIENT_ID]]);
         Http::preventStrayRequests();
         Http::fake([
-            'idp.test/application/o/mealplanner/.well-known/openid-configuration' => Http::response([
+            'idp.test/application/o/dinnertime/.well-known/openid-configuration' => Http::response([
                 'issuer' => self::ISSUER,
                 'jwks_uri' => 'https://idp.test/jwks',
             ]),

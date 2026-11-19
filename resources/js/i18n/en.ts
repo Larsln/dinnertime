@@ -1,7 +1,7 @@
 import type de from './de';
 
 const messages: typeof de = {
-    app: { name: 'Mealplanner' },
+    app: { name: 'Dinnertime' },
     nav: {
         recipes: 'Recipes',
         plan: 'Meal plan',

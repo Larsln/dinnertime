@@ -1,5 +1,5 @@
 x-app: &app
-    image: ghcr.io/larsln/mealplanner:latest
+    image: ghcr.io/larsln/dinnertime:latest
     restart: unless-stopped
     env_file: .env
     volumes:
@@ -15,7 +15,7 @@ services:
             MIGRATE_ON_START: "true"
             CADDY_SERVER_EXTRA_DIRECTIVES: |
                 mercure {
-                    issuer mealplanner {
+                    issuer dinnertime {
                         publisher {
                             jwt {env.MERCURE_JWT_KEY} HS256
                         }

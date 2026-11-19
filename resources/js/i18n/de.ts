@@ -1,5 +1,5 @@
 export default {
-    app: { name: 'Mealplanner' },
+    app: { name: 'Dinnertime' },
     nav: {
         recipes: 'Rezepte',
         plan: 'Wochenplan',

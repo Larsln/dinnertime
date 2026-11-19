@@ -1,6 +1,6 @@
 import type { ServerInfo } from '@/api/types';
 
-const STORAGE_KEY = 'mealplanner.oidc';
+const STORAGE_KEY = 'dinnertime.oidc';
 const CALLBACK_PATH = '/oidc/callback';
 
 interface PendingLogin {

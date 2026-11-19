@@ -1,4 +1,4 @@
-# Mealplanner
+# Dinnertime
 
 Self-hosted recipe, meal plan and shopping list system for one household.
 
@@ -53,7 +53,7 @@ that terminates HTTPS. The database and uploaded images live in the volumes
 |---|---|
 | `GEMINI_API_KEY` | Enables recipe import and AI suggestions. Keys are available from Google AI Studio. |
 | `GEMINI_VIDEO_MODEL`, `GEMINI_TEXT_MODEL` | Models for video analysis and for small tasks. |
-| `OIDC_ISSUER`, `OIDC_CLIENT_ID` | Offers sign-in with an OpenID Connect provider next to local accounts. Register a public client with PKCE and the redirect URIs `<APP_URL>/oidc/callback` and `mealplanner://oidc`. |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID` | Offers sign-in with an OpenID Connect provider next to local accounts. Register a public client with PKCE and the redirect URIs `<APP_URL>/oidc/callback` and `dinnertime://oidc`. |
 | `YTDLP_COOKIES_FILE` | Path inside the container to a Netscape cookie file, for platforms that only serve videos to signed-in users. |
 
 ### Updating

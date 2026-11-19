@@ -19,7 +19,7 @@ class ImportSettings
 
     private const string COOKIES_PATH = 'import/cookies.txt';
 
-    private const string IMPORTER_USER_AGENT = 'Mozilla/5.0 (compatible; MealplannerBot/1.0)';
+    private const string IMPORTER_USER_AGENT = 'Mozilla/5.0 (compatible; DinnertimeBot/1.0)';
 
     private const string BROWSER_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
 

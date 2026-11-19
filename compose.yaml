@@ -16,7 +16,7 @@ services:
             MERCURE_JWT_KEY: ${MERCURE_JWT_KEY:-}
             CADDY_SERVER_EXTRA_DIRECTIVES: |
                 mercure {
-                    issuer mealplanner {
+                    issuer dinnertime {
                         publisher {
                             jwt {env.MERCURE_JWT_KEY} HS256
                         }

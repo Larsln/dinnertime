@@ -1,6 +1,6 @@
 # Detailplan: Rezept- und Einkaufssystem
 
-Stand 2026-11-17. Arbeitsname `mealplanner`, bis der endgültige Name feststeht.
+Stand 2026-11-17. Arbeitsname `dinnertime`, bis der endgültige Name feststeht.
 
 ## 0. Leitlinien
 
@@ -24,8 +24,8 @@ Stand 2026-11-17. Arbeitsname `mealplanner`, bis der endgültige Name feststeht.
 
 | Repo | Inhalt | Lokal |
 |---|---|---|
-| `mealplanner` | Laravel-Backend + Vue-Web | `~/mealplanner/backend` |
-| `mealplanner-ios` | SwiftUI-App + Share Extension | `~/mealplanner/ios` |
+| `dinnertime` | Laravel-Backend + Vue-Web | `~/dinnertime/backend` |
+| `dinnertime-ios` | SwiftUI-App + Share Extension | `~/dinnertime/ios` |
 
 Lokal läuft alles in Docker Compose, damit es dem späteren Deployment entspricht
 und auf dem Mac weder PHP noch Node installiert werden müssen:
@@ -208,5 +208,5 @@ Zugang über `MEALIE_URL` und `MEALIE_TOKEN` in `.env`.
 
 ## 9. Offene Punkte
 
-- **Name** für App und Repos (bis dahin Arbeitsname `mealplanner`).
+- **Name** für App und Repos (bis dahin Arbeitsname `dinnertime`).
 - **Lizenz:** Der Server steht unter AGPL-3.0, die iOS-App unter MIT.

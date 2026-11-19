@@ -6,6 +6,14 @@ use Tests\TestCase;
 
 class SecurityHeadersTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The web client page is rendered without built assets in CI.
+        $this->withoutVite();
+    }
+
     public function test_the_web_client_may_only_load_scripts_from_the_server(): void
     {
         config(['services.oidc.issuer' => 'https://auth.example.org:8443/application/o/dinnertime/']);

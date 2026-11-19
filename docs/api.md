@@ -44,7 +44,7 @@ recipes in.
 Clients open `url` as a Server-Sent Events stream and send `token` as bearer
 token in the `Authorization` header. Every event carries
 `{"areas": [...]}` naming what changed: `shopping`, `pantry`, `plan`,
-`recipes`, `products` or `tools`. Clients then reload that data. The token is
+`recipes`, `products`, `tools` or `dinner`. Clients then reload that data. The token is
 valid for twelve hours; on any error clients request a new one and reconnect.
 The stream is served by the Mercure hub built into the web server, enabled by
 setting `MERCURE_JWT_KEY`.
@@ -140,6 +140,33 @@ or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 `saving`. Clients poll `GET /imports/{id}` to show progress, or hold one
 request to `/imports/{id}/wait` open to learn the outcome.
 `error` is `download_failed`, `no_recipe_found`, `ai_failed` or `unknown`.
+
+## Dinner rounds
+
+The household decides together what to cook tonight: every member says yes
+or no to the same recipes, and the first recipe two members like is the
+match.
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| GET | `/dinner-rounds/current` | | DinnerRound of today that is not closed, or `null` |
+| POST | `/dinner-rounds` | `is_solo?`, `only_available?`, `max_minutes?` | DinnerRound, `201`; the running one with `200` if there is one |
+| POST | `/dinner-rounds/{id}/votes` | `recipe_id`, `liked` | DinnerRound; `409` once it has a match |
+| POST | `/dinner-rounds/{id}/plan` | | MealPlanEntry for today's dinner, `201`; closes the round; `409` without a match |
+| DELETE | `/dinner-rounds/{id}` | | `204`; closes the round |
+
+**DinnerRound:** `{id, date, is_solo, status, match: RecipeSummary|null,
+cards: [{recipe: RecipeSummary, missing_count, my_vote: bool|null,
+liked_by_others: bool}], members: [{name, voted_count}]}`. Up to twelve
+cards: dinner recipes that were not planned in the past week, those that
+need the least shopping first; `missing_count` is the number of products
+the pantry does not cover. `only_available` leaves out recipes that need
+shopping, `max_minutes` limits preparation plus cooking time, and with
+`is_solo` a single yes is the match. `status` is `voting`, `matched`, or
+`undecided` once everyone who takes part went through all cards without a
+match; only then `liked_by_others` tells which recipes somebody else liked,
+so they can be voted on again. A vote can be changed until there is a match.
+Changes are announced in the realtime area `dinner`.
 
 ## Sync for offline clients
 

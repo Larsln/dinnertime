@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CourseController;
+use App\Http\Controllers\Api\V1\DinnerRoundController;
 use App\Http\Controllers\Api\V1\HouseholdSettingsController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ImportSettingsController;
@@ -75,6 +76,12 @@ Route::prefix('v1')->group(function () {
         Route::delete('product-offers/{offer}', [ProductOfferController::class, 'destroy']);
         Route::post('products/{product}/aliases', [ProductAliasController::class, 'store']);
         Route::delete('product-aliases/{alias}', [ProductAliasController::class, 'destroy']);
+
+        Route::get('dinner-rounds/current', [DinnerRoundController::class, 'current']);
+        Route::post('dinner-rounds', [DinnerRoundController::class, 'store']);
+        Route::post('dinner-rounds/{dinnerRound}/votes', [DinnerRoundController::class, 'vote']);
+        Route::post('dinner-rounds/{dinnerRound}/plan', [DinnerRoundController::class, 'plan']);
+        Route::delete('dinner-rounds/{dinnerRound}', [DinnerRoundController::class, 'destroy'])->withoutMiddleware(HonorActionTime::class);
 
         Route::get('courses', CourseController::class);
         Route::get('store-sections', StoreSectionController::class);

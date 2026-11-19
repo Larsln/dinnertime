@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Lets Gemini suggest purchase details, package sizes and unit conversions
+ * Lets Gemini suggest purchase details and unit conversions
  * for a product. Suggestions never replace values a user has confirmed.
  */
 class ProductEnricher
@@ -40,7 +40,6 @@ class ProductEnricher
 
         DB::transaction(function () use ($product, $units, $suggestion) {
             $this->applyDetails($product, $suggestion);
-            $this->applyPackages($product, $suggestion['packages'] ?? []);
             $this->applyConversions($product, $units, $suggestion['conversions'] ?? []);
         });
     }
@@ -82,27 +81,6 @@ class ProductEnricher
     {
         $product->packages()->where('status', ReviewStatus::Suggested)->delete();
         $product->conversions()->where('status', ReviewStatus::Suggested)->delete();
-    }
-
-    /**
-     * Suggest package sizes for products that have none yet.
-     *
-     * @param  list<array{label: string, amount: float|int}>  $packages
-     */
-    private function applyPackages(Product $product, array $packages): void
-    {
-        if ($product->packages()->exists()) {
-            return;
-        }
-
-        foreach ($packages as $package) {
-            if ($package['amount'] > 0) {
-                $product->packages()->firstOrCreate(
-                    ['amount_in_base' => round($package['amount'], 3)],
-                    ['label' => $package['label'], 'status' => ReviewStatus::Suggested, 'source' => ValueSource::Ai],
-                );
-            }
-        }
     }
 
     /**

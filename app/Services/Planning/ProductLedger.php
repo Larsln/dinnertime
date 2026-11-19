@@ -45,7 +45,7 @@ class ProductLedger
 
             $expiresOn = $this->expiryWhenOpenedOn($product, $demand->date);
             $need = $open + $this->upcomingNeed($demands, $index, $expiresOn);
-            $selection = $this->picker->pick($need, $product->packages);
+            $selection = $this->picker->pick($need, $product->buyableSizes());
 
             $purchased += $selection->amount;
             $lots[] = new StockLot($selection->amount - $open, $demand->date, $expiresOn);

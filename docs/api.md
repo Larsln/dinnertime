@@ -276,9 +276,10 @@ to signed-in users; its content is never returned.
   product can be bought. `amount` and `unit` are the size of the package as
   the shelf label states it, `unit` being `g`, `kg`, `ml`, `l` or `piece`;
   `price` is what that package costs, in the currency of the household
-  settings. Size and price may be `null`. A size in a unit that measures
-  the product's base unit also becomes a confirmed package size of the
-  product.
+  settings. Size and price may be `null`. The shopping list buys in the
+  product's own package sizes and in the sizes active stores sell it in;
+  such a package is listed with the store's name as label and the negated
+  offer id as `package_id`.
   `store` repeats the store's name; clients that keep the stores take name
   and state from there, since renaming or pausing a store does not change
   its products. Products carry their `offers` on the detail and review

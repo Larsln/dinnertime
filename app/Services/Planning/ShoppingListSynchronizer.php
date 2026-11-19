@@ -76,7 +76,7 @@ class ShoppingListSynchronizer
      */
     private function packageRows(ProductForecast $forecast): array
     {
-        return $forecast->product->packages
+        return $forecast->product->buyableSizes()
             ->filter(fn (ProductPackage $package) => isset($forecast->packageCounts[$package->id]))
             ->sortByDesc('amount_in_base')
             ->map(fn (ProductPackage $package) => [

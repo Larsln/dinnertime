@@ -38,7 +38,6 @@ final readonly class ProductEnrichmentPrompt
             '- base_unit: "g" for products bought by weight, "ml" for liquids bought by volume, "piece" for products bought by count such as eggs or lemons.',
             '- is_pantry_staple: true only for basics every household has in stock and never writes on a shopping list, such as salt, pepper, cooking oil or the water used for cooking.',
             '- shelf_life_opened_days: number of days the product stays good after it was opened or cut, stored correctly. Use null if it keeps for months.',
-            '- packages: up to four common retail package sizes with the amount in the base unit and a one-word label in the household language that names the kind of package without its size, such as "Becher" or "Dose". For products sold by the piece include a package with the amount 1.',
         ];
 
         if ($units !== '') {
@@ -59,14 +58,6 @@ final readonly class ProductEnrichmentPrompt
             'base_unit' => ['type' => 'STRING', 'enum' => array_column(BaseUnit::cases(), 'value')],
             'is_pantry_staple' => ['type' => 'BOOLEAN'],
             'shelf_life_opened_days' => ['type' => 'INTEGER', 'nullable' => true],
-            'packages' => [
-                'type' => 'ARRAY',
-                'items' => [
-                    'type' => 'OBJECT',
-                    'properties' => ['label' => ['type' => 'STRING'], 'amount' => ['type' => 'NUMBER']],
-                    'required' => ['label', 'amount'],
-                ],
-            ],
         ];
 
         if ($this->units->isNotEmpty()) {

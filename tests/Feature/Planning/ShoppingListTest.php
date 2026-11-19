@@ -6,6 +6,7 @@ use App\Enums\MealType;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\Recipe;
+use App\Models\Store;
 use App\Models\StoreSection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -184,6 +185,28 @@ class ShoppingListTest extends TestCase
         $this->postJson($items, ['product_id' => 0])->assertUnprocessable();
 
         $this->assertCount(3, $this->createList()->json('data.items'));
+    }
+
+    public function test_it_buys_in_the_sizes_active_stores_sell(): void
+    {
+        $flour = $this->product('Mehl', [1000]);
+        $lidl = Store::named('Lidl');
+        $rewe = Store::named('Rewe');
+        $flour->offers()->create(['store_id' => $lidl->id, 'amount' => 500, 'unit' => 'g']);
+        $flour->offers()->create(['store_id' => $rewe->id, 'amount' => 0.25, 'unit' => 'kg']);
+        $flour->offers()->create(['store_id' => $rewe->id, 'amount' => 2, 'unit' => 'l']);
+        $this->plan('2026-11-16', $this->recipe('Pfannkuchen', [[$flour, 400, 'gram']]));
+
+        $item = $this->createList()->json('data.items.0');
+        $this->assertSame([['package_id' => $item['packages'][0]['package_id'], 'label' => 'Lidl', 'amount' => 500, 'count' => 1]], $item['packages']);
+        $this->assertLessThan(0, $item['packages'][0]['package_id']);
+
+        $lidl->update(['is_active' => false]);
+
+        $this->createList()
+            ->assertJsonCount(1, 'data.items.0.packages')
+            ->assertJsonPath('data.items.0.packages.0.label', 'Rewe')
+            ->assertJsonPath('data.items.0.packages.0.count', 2);
     }
 
     public function test_it_moves_leftovers_to_the_pantry_once(): void

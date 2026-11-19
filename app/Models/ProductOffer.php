@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BaseUnit;
 use App\Enums\OfferUnit;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,23 @@ class ProductOffer extends Model
             'unit' => OfferUnit::class,
             'price' => 'float',
         ];
+    }
+
+    /**
+     * Size of the package in the base unit of the product, if the unit
+     * of the shelf label measures the same thing.
+     */
+    public function amountInBase(): ?float
+    {
+        if ($this->amount === null) {
+            return null;
+        }
+
+        return match ([$this->product->base_unit, $this->unit]) {
+            [BaseUnit::Gram, OfferUnit::Gram], [BaseUnit::Milliliter, OfferUnit::Milliliter], [BaseUnit::Piece, OfferUnit::Piece] => $this->amount,
+            [BaseUnit::Gram, OfferUnit::Kilogram], [BaseUnit::Milliliter, OfferUnit::Liter] => $this->amount * 1000,
+            default => null,
+        };
     }
 
     /**

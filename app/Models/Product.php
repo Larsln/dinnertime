@@ -10,6 +10,7 @@ use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Product extends Model
 {
+    private const float SIZE_TOLERANCE = 0.001;
+
     /** @use HasFactory<ProductFactory> */
     use BroadcastsChanges, HasFactory;
 
@@ -129,7 +132,37 @@ class Product extends Model
     }
 
     /**
-     * Package sizes the product is typically sold in.
+     * Sizes the shopping list may buy: the standard sizes of the product
+     * and the sizes stores the household currently buys at sell it in. A
+     * size seen in a store carries the name of the store and the negated
+     * id of its offer, which tells it apart from the standard sizes.
+     *
+     * @return Collection<int, ProductPackage>
+     */
+    public function buyableSizes(): Collection
+    {
+        return once(function () {
+            $sizes = $this->packages->values();
+
+            foreach ($this->offers as $offer) {
+                $amount = $offer->setRelation('product', $this)->amountInBase();
+                $isKnown = $sizes->contains(fn (ProductPackage $size) => abs($size->amount_in_base - $amount) < self::SIZE_TOLERANCE);
+
+                if ($amount !== null && $offer->store->is_active && ! $isKnown) {
+                    $sizes->push((new ProductPackage)->forceFill([
+                        'id' => -$offer->id,
+                        'label' => $offer->store->name,
+                        'amount_in_base' => $amount,
+                    ]));
+                }
+            }
+
+            return $sizes;
+        });
+    }
+
+    /**
+     * Standard package sizes the product is sold in everywhere.
      *
      * @return HasMany<ProductPackage, $this>
      */

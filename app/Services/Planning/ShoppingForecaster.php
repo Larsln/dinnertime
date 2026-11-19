@@ -22,6 +22,7 @@ class ShoppingForecaster
         'ingredients.unit',
         'ingredients.product.conversions.unit',
         'ingredients.product.packages',
+        'ingredients.product.offers.store',
     ];
 
     /**

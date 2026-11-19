@@ -57,9 +57,6 @@ class ProductManagementTest extends TestCase
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonPath('data.offers.0.price', 2.79);
         $this->getJson('/api/v1/settings/household')->assertJsonPath('data.currency', 'EUR');
 
-        $this->assertEqualsCanonicalizing([225.0], $halloumi->packages()->pluck('amount_in_base')->all());
-        $this->assertEqualsCanonicalizing([1500.0], $butter->packages()->pluck('amount_in_base')->all());
-
         $this->deleteJson("/api/v1/product-offers/{$offer['id']}")->assertNoContent();
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonCount(0, 'data.offers');
     }

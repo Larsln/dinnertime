@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'package' => 'Packung',
 
     'stale_change' => 'Der Eintrag wurde inzwischen an anderer Stelle geändert.',
     'leftovers_already_stocked' => 'Die Reste dieser Einkaufsliste wurden bereits in den Vorrat übernommen.',

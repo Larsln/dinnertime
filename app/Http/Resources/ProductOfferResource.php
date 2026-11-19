@@ -22,7 +22,8 @@ class ProductOfferResource extends JsonResource
             'id' => $this->id,
             'store_id' => $this->store_id,
             'store' => $this->store->name,
-            'amount_in_base' => $this->amount_in_base,
+            'amount' => $this->amount,
+            'unit' => $this->unit,
             'price' => $this->price,
         ];
     }

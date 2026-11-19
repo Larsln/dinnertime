@@ -7,16 +7,23 @@ use App\Http\Requests\ProductOfferRequest;
 use App\Http\Resources\ProductOfferResource;
 use App\Models\Product;
 use App\Models\ProductOffer;
+use App\Services\Catalog\OfferPackages;
 use Illuminate\Http\Response;
 
 class ProductOfferController extends Controller
 {
+    public function __construct(private readonly OfferPackages $packages) {}
+
     /**
-     * Note where a product can be bought.
+     * Note where a product can be bought. A size seen on the shelf also
+     * becomes a package size of the product.
      */
     public function store(ProductOfferRequest $request, Product $product): ProductOfferResource
     {
-        return new ProductOfferResource($product->offers()->create($request->offer())->load('store'));
+        $offer = $product->offers()->create($request->offer());
+        $this->packages->note($offer);
+
+        return new ProductOfferResource($offer->load('store'));
     }
 
     /**
@@ -25,6 +32,7 @@ class ProductOfferController extends Controller
     public function update(ProductOfferRequest $request, ProductOffer $offer): ProductOfferResource
     {
         $offer->update($request->offer());
+        $this->packages->note($offer);
 
         return new ProductOfferResource($offer->load('store'));
     }

@@ -39,16 +39,15 @@ export function formatAmount(amount: number, baseUnit: BaseUnit, locale: string,
 export function formatOffer(
     offer: ProductOffer,
     storeName: string,
-    baseUnit: BaseUnit,
     locale: string,
     currency: string,
     pieceLabel: string,
 ): string {
+    const unit = offer.unit === 'piece' ? pieceLabel : (offer.unit ?? '');
+
     return [
         storeName,
-        offer.amount_in_base === null
-            ? null
-            : formatAmount(offer.amount_in_base, baseUnit, locale, pieceLabel),
+        offer.amount === null ? null : `${formatNumber(offer.amount, locale)} ${unit}`.trim(),
         offer.price === null
             ? null
             : new Intl.NumberFormat(locale, { style: 'currency', currency }).format(offer.price),

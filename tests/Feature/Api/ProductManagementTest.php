@@ -32,10 +32,11 @@ class ProductManagementTest extends TestCase
         $halloumi = Product::factory()->create(['name' => 'Halloumi']);
         $butter = Product::factory()->create(['name' => 'Butter']);
 
-        $offer = $this->postJson("/api/v1/products/{$halloumi->id}/offers", ['store' => ' Lidl ', 'amount_in_base' => 225, 'price' => 2.59])
+        $offer = $this->postJson("/api/v1/products/{$halloumi->id}/offers", ['store' => ' Lidl ', 'amount' => 225, 'price' => 2.59])
             ->assertCreated()
             ->assertJsonPath('data.store', 'Lidl')
-            ->assertJsonPath('data.amount_in_base', 225)
+            ->assertJsonPath('data.amount', 225)
+            ->assertJsonPath('data.unit', 'g')
             ->assertJsonPath('data.price', 2.59)
             ->json('data');
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'lidl'])
@@ -43,11 +44,21 @@ class ProductManagementTest extends TestCase
             ->assertJsonPath('data.store_id', $offer['store_id'])
             ->assertJsonPath('data.price', null);
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['price' => 1.99])->assertUnprocessable();
-        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store_id' => $offer['store_id'], 'amount_in_base' => 0])->assertUnprocessable();
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store_id' => $offer['store_id'], 'amount' => 0])->assertUnprocessable();
 
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl', 'amount' => 1.5, 'unit' => 'kg'])
+            ->assertCreated()
+            ->assertJsonPath('data.amount', 1.5)
+            ->assertJsonPath('data.unit', 'kg');
+        $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl', 'amount' => 1, 'unit' => 'pound'])->assertUnprocessable();
+        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => 1, 'unit' => 'l'])->assertOk()->assertJsonPath('data.unit', 'l');
+        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => null])->assertOk()->assertJsonPath('data.unit', null);
         $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['price' => 2.79])->assertOk()->assertJsonPath('data.price', 2.79)->assertJsonPath('data.store', 'Lidl');
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonPath('data.offers.0.price', 2.79);
         $this->getJson('/api/v1/settings/household')->assertJsonPath('data.currency', 'EUR');
+
+        $this->assertEqualsCanonicalizing([225.0], $halloumi->packages()->pluck('amount_in_base')->all());
+        $this->assertEqualsCanonicalizing([1500.0], $butter->packages()->pluck('amount_in_base')->all());
 
         $this->deleteJson("/api/v1/product-offers/{$offer['id']}")->assertNoContent();
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonCount(0, 'data.offers');

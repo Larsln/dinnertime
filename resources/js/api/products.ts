@@ -1,5 +1,13 @@
 import { api, data } from './client';
-import type { Conversion, Paginated, Product, ProductInput, ProductOffer, ProductPackage } from './types';
+import type {
+    Conversion,
+    OfferUnit,
+    Paginated,
+    Product,
+    ProductInput,
+    ProductOffer,
+    ProductPackage,
+} from './types';
 
 export const productsApi = {
     list: (filters: { search?: string; page?: number }) => api.get<Paginated<Product>>('/products', filters),
@@ -37,7 +45,13 @@ export const productsApi = {
 
     addOffer: (
         id: number,
-        offer: { store_id?: number; store?: string; amount_in_base: number | null; price: number | null },
+        offer: {
+            store_id?: number;
+            store?: string;
+            amount: number | null;
+            unit: OfferUnit | null;
+            price: number | null;
+        },
     ) => data(api.post<{ data: ProductOffer }>(`/products/${id}/offers`, offer)),
     removeOffer: (offerId: number) => api.delete(`/product-offers/${offerId}`),
 };

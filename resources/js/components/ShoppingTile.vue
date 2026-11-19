@@ -166,16 +166,7 @@ const remove = useMutation({
                             :key="offer.id"
                             :class="{ 'text-stone-400': !isActive(offer) }"
                         >
-                            {{
-                                formatOffer(
-                                    offer,
-                                    storeName(offer),
-                                    baseUnit,
-                                    locale,
-                                    currency,
-                                    t('units.piece'),
-                                )
-                            }}
+                            {{ formatOffer(offer, storeName(offer), locale, currency, t('units.piece')) }}
                             <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                         </li>
                     </ul>

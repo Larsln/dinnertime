@@ -249,8 +249,8 @@ to signed-in users; its content is never returned.
 | POST | `/products/{id}/packages` | `label`, `amount_in_base` | Package, `201` |
 | PATCH | `/product-packages/{id}` | `label`, `amount_in_base` | Package |
 | DELETE | `/product-packages/{id}` | | `204` |
-| POST | `/products/{id}/offers` | `store_id` or `store` (a name, created if new), `amount_in_base?`, `price?` | Offer, `201` |
-| PATCH | `/product-offers/{id}` | `store_id?`, `store?`, `amount_in_base?`, `price?` | Offer |
+| POST | `/products/{id}/offers` | `store_id` or `store` (a name, created if new), `amount?`, `unit?` (the product's base unit when left out), `price?` | Offer, `201` |
+| PATCH | `/product-offers/{id}` | `store_id?`, `store?`, `amount?`, `unit?`, `price?` | Offer |
 | DELETE | `/product-offers/{id}` | | `204` |
 | GET | `/stores` | | `[Store]` by name |
 | POST | `/stores` | `name` | Store, `201`; `422` when a store has that name, ignoring case |
@@ -272,10 +272,13 @@ to signed-in users; its content is never returned.
   `amount_in_base` of `null` states that the unit cannot be converted for
   this product, as with pieces of fruit that vary in weight.
 - **Package:** `{id, label, amount_in_base, status, source}`
-- **Offer:** `{id, store_id, store, amount_in_base, price}`: where the
-  product can be bought. `amount_in_base` is the size of the package the
-  store sells in the product's base unit and `price` what that package
-  costs, in the currency of the household settings; both may be `null`.
+- **Offer:** `{id, store_id, store, amount, unit, price}`: where the
+  product can be bought. `amount` and `unit` are the size of the package as
+  the shelf label states it, `unit` being `g`, `kg`, `ml`, `l` or `piece`;
+  `price` is what that package costs, in the currency of the household
+  settings. Size and price may be `null`. A size in a unit that measures
+  the product's base unit also becomes a confirmed package size of the
+  product.
   `store` repeats the store's name; clients that keep the stores take name
   and state from there, since renaming or pausing a store does not change
   its products. Products carry their `offers` on the detail and review

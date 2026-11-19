@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import { Plus, Trash2 } from 'lucide-vue-next';
 import { productsApi } from '@/api/products';
-import type { Product } from '@/api/types';
+import type { OfferUnit, Product } from '@/api/types';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useStores } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
@@ -12,6 +12,7 @@ import { formatOffer } from '@/lib/format';
 import AppButton from '@/components/ui/AppButton.vue';
 import FieldLabel from '@/components/ui/FieldLabel.vue';
 import NumberField from '@/components/ui/NumberField.vue';
+import SelectField from '@/components/ui/SelectField.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
@@ -27,7 +28,13 @@ const queryClient = useQueryClient();
 
 const store = ref('');
 const amount = ref<number | null>(null);
+const unit = ref<OfferUnit | null>(props.product.base_unit);
 const price = ref<number | null>(null);
+
+const UNITS: OfferUnit[] = ['g', 'kg', 'ml', 'l', 'piece'];
+const unitOptions = computed(() =>
+    UNITS.map((value) => ({ value, label: value === 'piece' ? t('units.piece') : value })),
+);
 
 const { stores, storeName, isActive } = useStores();
 const activeStores = computed(() => stores.value.filter((entry) => entry.is_active));
@@ -42,7 +49,8 @@ const add = useMutation({
     mutationFn: () =>
         productsApi.addOffer(props.product.id, {
             store: store.value.trim(),
-            amount_in_base: amount.value,
+            amount: amount.value,
+            unit: amount.value === null ? null : unit.value,
             price: price.value,
         }),
     onSuccess: () => {
@@ -66,16 +74,7 @@ const remove = useMutation({
         <ul v-if="product.offers?.length" class="mb-2 space-y-1 text-sm text-stone-700">
             <li v-for="offer in product.offers" :key="offer.id" class="flex items-center gap-2">
                 <span class="flex-1" :class="{ 'text-stone-400': !isActive(offer) }">
-                    {{
-                        formatOffer(
-                            offer,
-                            storeName(offer),
-                            product.base_unit,
-                            locale,
-                            currency,
-                            t('units.piece'),
-                        )
-                    }}
+                    {{ formatOffer(offer, storeName(offer), locale, currency, t('units.piece')) }}
                     <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                 </span>
                 <AppButton
@@ -106,7 +105,8 @@ const remove = useMutation({
                 :placeholder="t('products.offerStore')"
                 required
             />
-            <NumberField v-model="amount" class="w-28" :placeholder="t('products.offerSize')" />
+            <NumberField v-model="amount" class="w-28" :step="0.001" :placeholder="t('products.offerSize')" />
+            <SelectField v-model="unit" class="w-24" :options="unitOptions" />
             <NumberField v-model="price" class="w-28" :step="0.01" :placeholder="t('products.offerPrice')" />
             <AppButton type="submit" size="sm" :disabled="store.trim() === '' || add.isPending.value">
                 <Plus class="size-4" />{{ t('common.add') }}

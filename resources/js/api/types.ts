@@ -86,11 +86,14 @@ export interface Store {
     offer_count?: number;
 }
 
+export type OfferUnit = 'g' | 'kg' | 'ml' | 'l' | 'piece';
+
 export interface ProductOffer {
     id: number;
     store_id: number;
     store: string;
-    amount_in_base: number | null;
+    amount: number | null;
+    unit: OfferUnit | null;
     price: number | null;
 }
 

@@ -13,6 +13,10 @@ services:
         <<: *app
         environment:
             MIGRATE_ON_START: "true"
+            CADDY_GLOBAL_OPTIONS: |
+                servers {
+                    trusted_proxies static private_ranges
+                }
             CADDY_SERVER_EXTRA_DIRECTIVES: |
                 mercure {
                     issuer dinnertime {

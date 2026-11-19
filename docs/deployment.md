@@ -124,10 +124,22 @@ Hinweise:
 
 - `traefik.docker.network` ist nötig, weil `app` in zwei Netzen hängt.
 - Die Echtzeit-Verbindung ist ein Server-Sent-Events-Strom auf derselben
-  Domain. Traefik reicht ihn ohne weitere Einstellung durch; eine
-  `compress`-Middleware ist unschädlich, sie lässt `text/event-stream` aus.
-- Dinnertime vertraut den Weiterleitungs-Headern des Proxys, die Links in
-  der App entstehen deshalb mit `https`.
+  Domain. Eine `compress`-Middleware ist unschädlich, sie lässt
+  `text/event-stream` aus.
+- Der Echtzeit-Hub prüft, ob ein Token für genau die Adresse ausgestellt
+  ist, unter der er erreicht wird. Hinter Traefik kennt er das `https` nur
+  aus den Weiterleitungs-Headern, denen er nur mit `trusted_proxies` traut.
+  `compose.production.yaml` setzt das für private Netze über
+  `CADDY_GLOBAL_OPTIONS`. Fehlt es, lehnt der Hub jede Verbindung mit
+  „invalid audience“ ab und Änderungen erscheinen erst nach Neuladen.
+- Dinnertime selbst vertraut den Weiterleitungs-Headern ebenfalls, die Links
+  in der App entstehen deshalb mit `https`.
+- Dinnertime setzt eigene Sicherheits-Header: eine Content Security Policy,
+  die Skripte nur vom eigenen Server und Verbindungen nur zum eigenen Server
+  und zum Authentik-Issuer erlaubt, dazu HSTS, `nosniff` und ein Verbot,
+  die Seite einzubetten. Eine Header-Middleware in Traefik braucht es dafür
+  nicht. Setzt sie trotzdem eine eigene CSP, darf die die von Dinnertime
+  nicht ersetzen, sonst scheitert der Login.
 
 ## 5. Starten und prüfen
 
@@ -244,7 +256,8 @@ Authentik-Installation, gibst du es mit `user:link-oidc` erneut frei.
 | Authentik meldet „Redirect URI Error" | Redirect-URI nicht exakt eingetragen, Schreibweise und Slash prüfen |
 | Nach dem Login „Die Anmeldung beim Identity-Provider konnte nicht bestätigt werden." | kein Signing Key im Provider gewählt (HS256), oder der Issuer in der `.env` weicht vom Issuer im Token ab |
 | Im Browser bleibt die Anmeldung beim Zurückkehren hängen | Token-Anfrage an Authentik vom Browser blockiert; Redirect-URI der Weboberfläche muss im Provider stehen, damit Authentik die Herkunft zulässt |
-| Änderungen erscheinen erst nach Neuladen | `MERCURE_JWT_KEY` leer, oder eine Middleware puffert Antworten |
+| Änderungen erscheinen erst nach Neuladen | `MERCURE_JWT_KEY` leer, `trusted_proxies` fehlt (Hub meldet „invalid audience“), oder eine Middleware puffert Antworten |
+| Login über Authentik bricht im Browser ab, Konsole meldet „Content Security Policy“ | `OIDC_ISSUER` weicht von der Adresse ab, die der Browser aufruft, oder eine CSP aus Traefik ersetzt die von Dinnertime |
 | Login abgelehnt: „Es gibt schon ein Konto namens …" | lokales Konto mit gleichem Namen; mit `user:link-oidc` freigeben (Schritt 7) |
 | Import einer Seite im Heimnetz schlägt fehl | gewollt: Importe laden nur Adressen aus dem öffentlichen Internet |
 | Importe bleiben auf „Wartet" | Container `queue` läuft nicht: `docker compose logs queue` |

@@ -25,10 +25,13 @@ hängen. Die iOS-App und die API arbeiten mit eigenen Tokens; ein
 vorgeschaltetes Login würde sie aussperren. Wer Dinnertime nutzen darf,
 regelst du stattdessen über die Bindung der Anwendung in Authentik (unten).
 
-## 1. Image bereitstellen
+## 1. Image
 
-Das Image `ghcr.io/larsln/dinnertime` baut die CI bei jedem Push auf `main`.
-Solange das Repository noch nicht veröffentlicht ist, baust du es selbst:
+Die CI baut bei jedem Push auf `main` das öffentliche Image
+`ghcr.io/larsln/dinnertime:latest` für `linux/amd64` und `linux/arm64`.
+`compose.production.yaml` nutzt es schon; du musst nichts selbst bauen.
+
+Wer lieber selbst baut, etwa mit eigenen Änderungen:
 
 ```sh
 docker buildx build --target production --platform linux/amd64 \
@@ -36,9 +39,8 @@ docker buildx build --target production --platform linux/amd64 \
 docker save dinnertime:latest | ssh server docker load
 ```
 
-`--platform` muss zur Architektur des Servers passen (`linux/arm64` für
-ARM-Server). Trägst du das Image so ein, ersetze in der Compose-Datei unten
-`ghcr.io/larsln/dinnertime:latest` durch `dinnertime:latest`.
+Dann in der Compose-Datei `ghcr.io/larsln/dinnertime:latest` durch
+`dinnertime:latest` ersetzen.
 
 ## 2. Anwendung in Authentik anlegen
 

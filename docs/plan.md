@@ -36,7 +36,7 @@ und auf dem Mac weder PHP noch Node installiert werden müssen:
 | `queue` | `queue:work` für die Queues `default` und `imports` |
 | `scheduler` | `schedule:work` |
 | `db` | Postgres 17 |
-| `vite` | Node, Vite-Dev-Server für das Vue-Frontend |
+| `vite` | Node, baut das Vue-Frontend bei jeder Änderung neu |
 
 Für den Betrieb gibt es ein Produktions-Image (über GHCR veröffentlicht) und
 eine `compose.production.yaml` als Vorlage für Selbsthoster.

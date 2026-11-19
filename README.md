@@ -79,8 +79,9 @@ docker compose exec app php artisan storage:link
 docker compose exec app php artisan user:create
 ```
 
-The application is served at <http://localhost:8000>, the Vite dev server
-with hot reloading runs in the `vite` container.
+The application is served at <http://localhost:8000> and under the same
+port on the address of the machine, so phones in the same network reach it
+too. The `vite` container rebuilds the frontend whenever a file changes.
 
 ### Checks
 

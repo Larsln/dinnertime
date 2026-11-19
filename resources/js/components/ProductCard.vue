@@ -22,18 +22,12 @@ import TextArea from '@/components/ui/TextArea.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
- * Editor for a product with its packages and unit conversions.
+ * Editor for a product with its package sizes and unit conversions.
  *
  * Suggested values can be corrected and are confirmed together with one
  * tap. A unit can be marked as not convertible, for products whose single
  * items vary too much. Duplicates can be merged into another product.
  */
-interface PackageRow {
-    id: number | null;
-    label: string;
-    amount: number | null;
-}
-
 interface ConversionRow {
     unitId: number;
     unitName: string;
@@ -60,7 +54,6 @@ const details = reactive({
     note: '',
 });
 
-const packages = ref<PackageRow[]>([]);
 const conversions = ref<ConversionRow[]>([]);
 const newUnitId = ref<number | null>(null);
 const isMerging = ref(false);
@@ -79,12 +72,6 @@ watch(
             shelfLife: product.shelf_life_opened_days,
             note: product.note ?? '',
         });
-
-        packages.value = (product.packages ?? []).map((entry) => ({
-            id: entry.id,
-            label: entry.label,
-            amount: entry.amount_in_base,
-        }));
 
         conversions.value = (product.conversions ?? []).map((entry) => ({
             unitId: entry.unit.id,
@@ -113,7 +100,6 @@ const addableUnits = computed(() =>
 const hasSuggestions = computed(
     () =>
         props.product.status === 'suggested' ||
-        (props.product.packages ?? []).some((entry) => entry.status === 'suggested') ||
         (props.product.conversions ?? []).some((entry) => entry.status === 'suggested'),
 );
 
@@ -123,27 +109,6 @@ function addConversion(): void {
     if (unit) {
         conversions.value.push({ unitId: unit.id, unitName: unit.name, amount: null, isConvertible: true });
         newUnitId.value = null;
-    }
-}
-
-async function savePackages(): Promise<void> {
-    const original = props.product.packages ?? [];
-    const kept = new Set(packages.value.map((row) => row.id));
-
-    for (const entry of original.filter((candidate) => !kept.has(candidate.id))) {
-        await productsApi.removePackage(entry.id);
-    }
-
-    for (const row of packages.value.filter(
-        (candidate) => candidate.amount && candidate.label.trim() !== '',
-    )) {
-        const before = original.find((candidate) => candidate.id === row.id);
-
-        if (row.id === null) {
-            await productsApi.addPackage(props.product.id, row.label.trim(), row.amount ?? 0);
-        } else if (before?.label !== row.label || before.amount_in_base !== row.amount) {
-            await productsApi.updatePackage(row.id, row.label.trim(), row.amount ?? 0);
-        }
     }
 }
 
@@ -182,7 +147,6 @@ const save = useMutation({
             shelf_life_opened_days: details.shelfLife,
             note: details.note.trim() || null,
         });
-        await savePackages();
         await saveConversions();
 
         if (confirm) {
@@ -262,8 +226,6 @@ const remove = useMutation({
 
         <TextArea v-model="details.note" class="mt-4" :rows="2" :label="t('products.note')" />
 
-        <ProductOffers class="mt-4" :product="product" />
-
         <IconPicker
             v-model="details.icon"
             class="mt-4"
@@ -272,24 +234,7 @@ const remove = useMutation({
         />
 
         <div class="mt-5 grid gap-6 lg:grid-cols-2">
-            <section>
-                <FieldLabel>{{ t('products.packages', { unit: baseUnitLabel }) }}</FieldLabel>
-                <div v-for="(row, index) in packages" :key="index" class="mb-2 flex gap-2">
-                    <TextField v-model="row.label" class="flex-1" :placeholder="t('products.packageLabel')" />
-                    <NumberField v-model="row.amount" class="w-28" :placeholder="baseUnitLabel" />
-                    <AppButton
-                        size="icon"
-                        variant="ghost"
-                        :aria-label="t('common.delete')"
-                        @click="packages.splice(index, 1)"
-                    >
-                        <Trash2 class="size-4" />
-                    </AppButton>
-                </div>
-                <AppButton size="sm" @click="packages.push({ id: null, label: '', amount: null })">
-                    <Plus class="size-4" />{{ t('products.addPackage') }}
-                </AppButton>
-            </section>
+            <ProductOffers :product="product" />
 
             <section>
                 <FieldLabel>{{ t('products.conversions', { unit: baseUnitLabel }) }}</FieldLabel>

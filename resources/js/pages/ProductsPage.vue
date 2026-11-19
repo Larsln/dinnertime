@@ -153,6 +153,7 @@ const products = useQuery({
                     <Plus class="size-4" />{{ t('stores.add') }}
                 </AppButton>
             </form>
+            <p v-if="stores.length" class="mb-4 text-sm text-ink-muted">{{ t('stores.hint') }}</p>
             <ul v-if="stores.length" class="divide-y divide-line rounded-card border border-line bg-surface">
                 <StoreRow v-for="store in stores" :key="store.id" :store="store" />
             </ul>

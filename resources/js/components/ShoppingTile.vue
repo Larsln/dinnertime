@@ -77,15 +77,16 @@ const purchase = computed(() => {
 });
 
 /**
- * Count, label and size of a package. The size is left out for single
- * pieces, where it only repeats the label.
+ * Count, store and size of a package. The store is left out for sizes
+ * sold everywhere, the size for single pieces of a store, where it adds
+ * nothing to the name.
  */
 function describePackage(entry: ShoppingListItem['packages'][number]): string {
+    const label = entry.label.trim();
     const isSinglePiece = baseUnit.value === 'piece' && entry.amount === 1;
+    const size = label !== '' && isSinglePiece ? '' : amount(entry.amount, baseUnit.value);
 
-    return isSinglePiece
-        ? `${entry.count} × ${entry.label}`
-        : `${entry.count} × ${entry.label} ${amount(entry.amount, baseUnit.value)}`;
+    return [`${entry.count} ×`, label, size].filter((part) => part !== '').join(' ');
 }
 
 function refresh(): void {
@@ -172,7 +173,15 @@ const remove = useMutation({
                             :key="offer.id"
                             :class="{ 'text-ink-muted': !isActive(offer) }"
                         >
-                            {{ formatOffer(offer, storeName(offer), locale, currency, t('units.piece')) }}
+                            {{
+                                formatOffer(
+                                    offer,
+                                    storeName(offer) ?? t('stores.everywhere'),
+                                    locale,
+                                    currency,
+                                    t('units.piece'),
+                                )
+                            }}
                             <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                         </li>
                     </ul>

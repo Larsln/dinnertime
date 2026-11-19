@@ -8,13 +8,14 @@ import type { Store } from '@/api/types';
 import { STORES_KEY } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
 import AppButton from '@/components/ui/AppButton.vue';
-import CheckboxField from '@/components/ui/CheckboxField.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+import SwitchField from '@/components/ui/SwitchField.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
  * Line of the store list: rename the store, state whether the household
- * buys there at the moment, or delete it.
+ * usually goes there and whether it buys there at the moment, or delete
+ * it.
  */
 const props = defineProps<{ store: Store }>();
 
@@ -39,7 +40,7 @@ function refresh(): void {
 }
 
 const update = useMutation({
-    mutationFn: (changes: { name?: string; is_active?: boolean }) =>
+    mutationFn: (changes: { name?: string; is_active?: boolean; is_preferred?: boolean }) =>
         storesApi.update(props.store.id, changes),
     onSuccess: refresh,
     onError: showError,
@@ -66,7 +67,12 @@ const remove = useMutation({
         <span class="text-sm text-ink-muted">{{
             t('stores.offerCount', { count: store.offer_count ?? 0 })
         }}</span>
-        <CheckboxField
+        <SwitchField
+            :model-value="store.is_preferred"
+            :label="t('stores.preferred')"
+            @update:model-value="(preferred) => update.mutate({ is_preferred: preferred })"
+        />
+        <SwitchField
             :model-value="store.is_active"
             :label="t('stores.active')"
             @update:model-value="(active) => update.mutate({ is_active: active })"

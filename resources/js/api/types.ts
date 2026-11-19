@@ -71,18 +71,11 @@ export interface Conversion {
     source: ValueSource;
 }
 
-export interface ProductPackage {
-    id: number;
-    label: string;
-    amount_in_base: number;
-    status: ReviewStatus;
-    source: ValueSource;
-}
-
 export interface Store {
     id: number;
     name: string;
     is_active: boolean;
+    is_preferred: boolean;
     offer_count?: number;
 }
 
@@ -90,8 +83,8 @@ export type OfferUnit = 'g' | 'kg' | 'ml' | 'l' | 'piece';
 
 export interface ProductOffer {
     id: number;
-    store_id: number;
-    store: string;
+    store_id: number | null;
+    store: string | null;
     amount: number | null;
     unit: OfferUnit | null;
     price: number | null;
@@ -112,7 +105,6 @@ export interface Product {
     store_section?: StoreSection | null;
     aliases?: string[];
     conversions?: Conversion[];
-    packages?: ProductPackage[];
     offers?: ProductOffer[];
 }
 

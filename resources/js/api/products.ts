@@ -1,13 +1,17 @@
 import { api, data } from './client';
-import type {
-    Conversion,
-    OfferUnit,
-    Paginated,
-    Product,
-    ProductInput,
-    ProductOffer,
-    ProductPackage,
-} from './types';
+import type { Conversion, OfferUnit, Paginated, Product, ProductInput, ProductOffer } from './types';
+
+/**
+ * An offer as it is sent: the store by id or by name, or a `store_id` of
+ * `null` for a size sold everywhere.
+ */
+export interface OfferInput {
+    store_id?: number | null;
+    store?: string;
+    amount: number | null;
+    unit: OfferUnit | null;
+    price: number | null;
+}
 
 export const productsApi = {
     list: (filters: { search?: string; page?: number }) => api.get<Paginated<Product>>('/products', filters),
@@ -27,31 +31,9 @@ export const productsApi = {
         ),
     removeConversion: (id: number, unitId: number) => api.delete(`/products/${id}/conversions/${unitId}`),
 
-    addPackage: (id: number, label: string, amountInBase: number) =>
-        data(
-            api.post<{ data: ProductPackage }>(`/products/${id}/packages`, {
-                label,
-                amount_in_base: amountInBase,
-            }),
-        ),
-    updatePackage: (packageId: number, label: string, amountInBase: number) =>
-        data(
-            api.patch<{ data: ProductPackage }>(`/product-packages/${packageId}`, {
-                label,
-                amount_in_base: amountInBase,
-            }),
-        ),
-    removePackage: (packageId: number) => api.delete(`/product-packages/${packageId}`),
-
-    addOffer: (
-        id: number,
-        offer: {
-            store_id?: number;
-            store?: string;
-            amount: number | null;
-            unit: OfferUnit | null;
-            price: number | null;
-        },
-    ) => data(api.post<{ data: ProductOffer }>(`/products/${id}/offers`, offer)),
+    addOffer: (id: number, offer: OfferInput) =>
+        data(api.post<{ data: ProductOffer }>(`/products/${id}/offers`, offer)),
+    updateOffer: (offerId: number, offer: OfferInput) =>
+        data(api.patch<{ data: ProductOffer }>(`/product-offers/${offerId}`, offer)),
     removeOffer: (offerId: number) => api.delete(`/product-offers/${offerId}`),
 };

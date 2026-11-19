@@ -26,6 +26,13 @@ class VideoDownloader
 
     private const int TIMEOUT_SECONDS = 180;
 
+    /**
+     * Only the extractors of known sites, which only reach their own
+     * domains. The generic one would fetch any address, including those
+     * inside the home network.
+     */
+    private const string EXTRACTORS = 'all,-generic';
+
     public function __construct(private readonly ImportSettings $settings) {}
 
     /**
@@ -69,6 +76,7 @@ class VideoDownloader
             'yt-dlp',
             '--no-playlist',
             '--no-warnings',
+            '--use-extractors', self::EXTRACTORS,
             ...(filled($this->settings->cookiesFile()) ? ['--cookies', $this->settings->cookiesFile()] : []),
             ...$arguments,
         ];

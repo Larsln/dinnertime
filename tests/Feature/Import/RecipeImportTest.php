@@ -80,6 +80,8 @@ class RecipeImportTest extends TestCase
         $this->assertSame(SourcePlatform::Tiktok, $recipe->source_platform);
         $this->assertSame('7668426929069903137', $recipe->source_video_id);
         $this->assertSame(self::RESOLVED_URL, $recipe->source_url);
+        Process::assertRan(fn (PendingProcess $process) => $process->command[0] === 'yt-dlp'
+            && in_array('all,-generic', $process->command, true));
         $this->assertFalse($recipe->meal_tags_locked);
         $this->assertSame(Course::Main, $recipe->course);
         $this->assertEqualsCanonicalizing(['dinner', 'quick'], $recipe->tags->pluck('key')->all());

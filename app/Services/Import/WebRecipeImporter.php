@@ -10,10 +10,7 @@ use App\Services\Ai\RecipeExtractionPrompt;
 use App\Services\Recipes\CoverStore;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -31,7 +28,7 @@ class WebRecipeImporter implements RecipeSourceImporter
     public function __construct(
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
-        private readonly ImportSettings $settings,
+        private readonly PublicFetcher $fetcher,
         private readonly CoverStore $covers,
     ) {}
 
@@ -74,11 +71,13 @@ class WebRecipeImporter implements RecipeSourceImporter
      */
     private function fetch(string $url): string
     {
-        try {
-            return Http::withUserAgent($this->settings->userAgent())->timeout(30)->get($url)->throw()->body();
-        } catch (RequestException|ConnectionException $exception) {
-            throw new ImportFailedException(ImportError::DownloadFailed, $exception->getMessage());
+        $response = $this->fetcher->get($url);
+
+        if (! $response->successful()) {
+            throw new ImportFailedException(ImportError::DownloadFailed, "HTTP {$response->status()}");
         }
+
+        return $response->body();
     }
 
     /**
@@ -107,7 +106,7 @@ class WebRecipeImporter implements RecipeSourceImporter
             return;
         }
 
-        $image = rescue(fn () => Http::withUserAgent($this->settings->userAgent())->timeout(30)->get(html_entity_decode($match[1])), report: false);
+        $image = rescue(fn () => $this->fetcher->get(html_entity_decode($match[1])), report: false);
         $extension = self::IMAGE_EXTENSIONS[Str::before((string) $image?->header('Content-Type'), ';')] ?? null;
 
         if (! $image?->successful() || $extension === null) {

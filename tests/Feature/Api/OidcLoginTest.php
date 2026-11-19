@@ -66,13 +66,57 @@ class OidcLoginTest extends TestCase
         $this->assertSame('subject-1', User::sole()->oidc_sub);
     }
 
-    public function test_the_first_sign_in_links_a_local_account_with_the_same_username(): void
+    public function test_a_local_account_with_the_same_username_is_not_taken_over(): void
     {
         $local = User::factory()->create(['username' => 'lars']);
 
+        $this->login($this->idToken())->assertUnprocessable()->assertJsonValidationErrors('id_token');
+
+        $this->assertNull($local->refresh()->oidc_sub);
+        $this->assertSame(1, User::count());
+    }
+
+    public function test_a_released_local_account_is_taken_over_once(): void
+    {
+        $local = User::factory()->create(['username' => 'lars']);
+
+        $this->artisan('user:link-oidc', ['username' => 'lars'])->assertSuccessful();
         $this->login($this->idToken())->assertOk()->assertJsonPath('user.id', $local->id);
 
         $this->assertSame('subject-1', $local->refresh()->oidc_sub);
+        $this->assertFalse($local->oidc_link_allowed);
+        $this->login($this->idToken(['sub' => 'subject-2']))->assertUnprocessable();
+    }
+
+    public function test_a_linked_account_can_be_released_for_a_new_subject(): void
+    {
+        $user = User::factory()->create(['username' => 'lars', 'oidc_sub' => 'old-subject']);
+
+        $this->artisan('user:link-oidc', ['username' => 'lars'])->assertSuccessful();
+        $this->login($this->idToken())->assertOk()->assertJsonPath('user.id', $user->id);
+
+        $this->assertSame('subject-1', $user->refresh()->oidc_sub);
+    }
+
+    public function test_revoking_signs_a_user_out_on_every_device(): void
+    {
+        $user = User::factory()->create(['username' => 'lars']);
+        $phone = $user->createToken('phone')->plainTextToken;
+        $user->createToken('tablet');
+        $other = User::factory()->create()->createToken('phone')->plainTextToken;
+
+        $this->artisan('user:revoke', ['username' => 'lars'])->assertSuccessful();
+
+        $this->assertSame(0, $user->tokens()->count());
+        $this->withToken($phone)->getJson('/api/v1/auth/user')->assertUnauthorized();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($other)->getJson('/api/v1/auth/user')->assertOk();
+    }
+
+    public function test_the_user_commands_name_unknown_users(): void
+    {
+        $this->artisan('user:link-oidc', ['username' => 'nobody'])->assertFailed();
+        $this->artisan('user:revoke', ['username' => 'nobody'])->assertFailed();
     }
 
     public function test_it_rejects_tokens_it_cannot_trust(): void

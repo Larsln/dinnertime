@@ -30,8 +30,10 @@ ISO 8601 in UTC. Amounts of a product are always given in its base unit
 `auth_methods` lists `password` and, if a provider is configured, `oidc`.
 `oidc` is `null` or `{issuer, client_id}`. Clients run the authorization code
 flow with PKCE against the issuer themselves and exchange the resulting ID
-token at `/auth/oidc`. `content_locale` is the language the household writes
-recipes in.
+token at `/auth/oidc`. A first sign-in creates the account. If a local account
+uses the same username, the sign-in is refused with `422` on `id_token` unless
+an administrator released that account with `php artisan user:link-oidc`.
+`content_locale` is the language the household writes recipes in.
 
 **User:** `{id, username, name, email}`
 
@@ -135,6 +137,9 @@ created_at, recipes: RecipeSummary[], recipe: RecipeSummary|null}`. A link
 can show several dishes and then yields one recipe per dish; `recipes` lists
 them in the order they appear and `recipe` is the first of them. `dish_count`
 (1 to 10) tells the AI how many dishes to expect; without it the AI decides.
+Links are only fetched from the public internet: a host that resolves to a
+private, local or reserved address fails with `download_failed`, also after a
+redirect. Videos are only read from sites the downloader knows.
 `status` is `pending`, `processing`, `completed`
 or `failed`. While processing, `stage` is `downloading`, `analyzing` or
 `saving`. Clients poll `GET /imports/{id}` to show progress, or hold one

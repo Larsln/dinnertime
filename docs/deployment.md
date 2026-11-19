@@ -194,14 +194,18 @@ docker compose exec -T app tar -C /app/storage/app -xf - < storage.tar
 
 Bewertungen, Favoriten und Abstimmungen hängen am Konto. Damit dein
 Authentik-Login das alte Konto übernimmt statt ein neues anzulegen, benenne
-das alte Konto vor dem ersten Login auf deinen Authentik-Benutzernamen um:
+das alte Konto vor dem ersten Login auf deinen Authentik-Benutzernamen um und
+gib es für die Übernahme frei:
 
 ```sh
 docker compose exec app php artisan tinker --execute="App\Models\User::where('username', 'demo')->update(['username' => 'dein-authentik-name'])"
+docker compose exec app php artisan user:link-oidc dein-authentik-name
 ```
 
-Beim ersten Login verknüpft Dinnertime ein Konto ohne Authentik-Bindung mit
-gleichem Benutzernamen, danach gilt nur noch die Authentik-ID.
+Der nächste Authentik-Login mit diesem Benutzernamen übernimmt das Konto,
+danach gilt nur noch die Authentik-ID. Ohne Freigabe lehnt Dinnertime einen
+Login ab, dessen Name schon ein lokales Konto trägt. So lässt sich kein Konto
+über einen gleichen Namen in Authentik übernehmen.
 
 ## 8. Updates und Sicherung
 
@@ -216,6 +220,22 @@ Sicherung: die Volumes `db-data` (oder besser regelmäßig `pg_dump` wie
 oben) und `storage` mit Titelbildern und Import-Cookies. Die `.env` gehört
 mit dazu.
 
+## 9. Jemandem den Zugang entziehen
+
+Wer aus der Authentik-Gruppe fliegt, kann sich nicht mehr neu anmelden. Geräte,
+die schon angemeldet sind, behalten ihren Zugang aber, bis du sie abmeldest:
+
+```sh
+docker compose exec app php artisan user:revoke benutzername
+```
+
+Das meldet das Konto auf allen Geräten ab. Die Echtzeit-Verbindung eines
+Geräts läuft danach noch höchstens zwölf Stunden weiter, Daten abrufen oder
+ändern kann es sofort nicht mehr.
+
+Hat sich die Authentik-ID eines Kontos geändert, etwa nach einer neuen
+Authentik-Installation, gibst du es mit `user:link-oidc` erneut frei.
+
 ## Fehlersuche
 
 | Beobachtung | Ursache |
@@ -225,4 +245,6 @@ mit dazu.
 | Nach dem Login „Die Anmeldung beim Identity-Provider konnte nicht bestätigt werden." | kein Signing Key im Provider gewählt (HS256), oder der Issuer in der `.env` weicht vom Issuer im Token ab |
 | Im Browser bleibt die Anmeldung beim Zurückkehren hängen | Token-Anfrage an Authentik vom Browser blockiert; Redirect-URI der Weboberfläche muss im Provider stehen, damit Authentik die Herkunft zulässt |
 | Änderungen erscheinen erst nach Neuladen | `MERCURE_JWT_KEY` leer, oder eine Middleware puffert Antworten |
+| Login abgelehnt: „Es gibt schon ein Konto namens …" | lokales Konto mit gleichem Namen; mit `user:link-oidc` freigeben (Schritt 7) |
+| Import einer Seite im Heimnetz schlägt fehl | gewollt: Importe laden nur Adressen aus dem öffentlichen Internet |
 | Importe bleiben auf „Wartet" | Container `queue` läuft nicht: `docker compose logs queue` |

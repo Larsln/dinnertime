@@ -37,8 +37,11 @@ class AuthController extends Controller
     /**
      * Exchange an ID token of the configured OIDC provider for an API token.
      *
-     * The account is found by its subject. On first sign-in it is linked to
-     * a local account with the same username or created.
+     * The account is found by its subject. On first sign-in it takes over the
+     * local account with the same username if an administrator released it
+     * with `user:link-oidc`, and is created otherwise. A username that a
+     * local account already uses is refused, so nobody signs in as someone
+     * else by choosing their name at the provider.
      *
      * @throws ValidationException
      */
@@ -58,12 +61,31 @@ class AuthController extends Controller
         }
 
         $user = User::firstWhere('oidc_sub', $identity->subject)
-            ?? User::whereNull('oidc_sub')->firstWhere('username', $identity->username)
-            ?? new User(['username' => $identity->username]);
+            ?? User::whereNull('oidc_sub')->where('oidc_link_allowed', true)->firstWhere('username', $identity->username)
+            ?? $this->newOidcUser($identity->username);
 
-        $user->fill(['oidc_sub' => $identity->subject, 'name' => $identity->name, 'email' => $identity->email])->save();
+        $user->fill([
+            'oidc_sub' => $identity->subject,
+            'oidc_link_allowed' => false,
+            'name' => $identity->name,
+            'email' => $identity->email,
+        ])->save();
 
         return $this->tokenResponse($user, $data['device_name']);
+    }
+
+    /**
+     * A new account for a provider identity whose username is still free.
+     *
+     * @throws ValidationException
+     */
+    private function newOidcUser(string $username): User
+    {
+        if (User::where('username', $username)->exists()) {
+            throw ValidationException::withMessages(['id_token' => __('auth.username_taken_oidc', ['username' => $username])]);
+        }
+
+        return new User(['username' => $username]);
     }
 
     private function tokenResponse(User $user, string $deviceName): JsonResponse

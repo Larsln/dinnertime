@@ -12,7 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Household member. Signs in with a local password, an OIDC provider or both.
  */
-#[Fillable(['username', 'name', 'email', 'password', 'oidc_sub'])]
+#[Fillable(['username', 'name', 'email', 'password', 'oidc_sub', 'oidc_link_allowed'])]
 #[Hidden(['password'])]
 class User extends Authenticatable
 {
@@ -28,6 +28,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'oidc_link_allowed' => 'boolean',
         ];
     }
 }

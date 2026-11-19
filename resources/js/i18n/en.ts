@@ -166,6 +166,7 @@ const messages: typeof de = {
     },
     upNext: { tomorrow: 'Tomorrow' },
     dinner: {
+        shortcut: 'Rather something else? Decide together',
         title: 'What do we eat tonight?',
         promptHint:
             'Both of you say yes or no to a few recipes. The first one you both like is tonight’s dinner.',

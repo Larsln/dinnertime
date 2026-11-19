@@ -173,6 +173,7 @@ export default {
     },
     upNext: { tomorrow: 'Morgen' },
     dinner: {
+        shortcut: 'Lieber was anderes? Gemeinsam aussuchen',
         title: 'Was essen wir heute?',
         promptHint:
             'Sagt beide Ja oder Nein zu ein paar Rezepten. Das erste, das beiden gefällt, gibt es heute.',

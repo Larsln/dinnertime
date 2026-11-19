@@ -24,6 +24,10 @@ Further reading: [API](docs/api.md) and the German
 
 ## Running your own server
 
+A step-by-step guide for running Dinnertime behind Traefik with Authentik as
+sign-in provider, including moving over from Mealie, is in
+[docs/deployment.md](docs/deployment.md) (German).
+
 You need Docker with the Compose plugin.
 
 1. Copy `compose.production.yaml` and `.env.production.example` to a directory

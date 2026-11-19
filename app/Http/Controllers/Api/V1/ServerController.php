@@ -20,7 +20,10 @@ class ServerController extends Controller
             'name' => config('app.name'),
             'content_locale' => config('app.content_locale'),
             'supported_locales' => config('app.supported_locales'),
-            'auth_methods' => $oidc->isConfigured() ? ['password', 'oidc'] : ['password'],
+            'auth_methods' => array_keys(array_filter([
+                'password' => config('services.password_login'),
+                'oidc' => $oidc->isConfigured(),
+            ])),
             'oidc' => $oidc->isConfigured() ? config('services.oidc') : null,
         ]);
     }

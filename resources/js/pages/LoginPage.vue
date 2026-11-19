@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { startOidcLogin } from '@/lib/oidc';
@@ -21,6 +21,7 @@ const { showError } = useToasts();
 const username = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
+const offersPassword = computed(() => session.server?.auth_methods.includes('password') ?? true);
 
 onMounted(() => session.loadServer().catch(showError));
 
@@ -56,18 +57,25 @@ async function signInWithProvider(): Promise<void> {
                     {{ session.server?.name ?? t('app.name') }}
                 </h1>
             </div>
-            <TextField v-model="username" :label="t('auth.username')" autocomplete="username" required />
-            <TextField
-                v-model="password"
-                type="password"
-                :label="t('auth.password')"
-                autocomplete="current-password"
-                required
-            />
-            <AppButton type="submit" variant="primary" class="w-full" :disabled="isSubmitting">{{
-                t('auth.signIn')
-            }}</AppButton>
-            <AppButton v-if="session.server?.oidc" class="w-full" @click="signInWithProvider">
+            <template v-if="offersPassword">
+                <TextField v-model="username" :label="t('auth.username')" autocomplete="username" required />
+                <TextField
+                    v-model="password"
+                    type="password"
+                    :label="t('auth.password')"
+                    autocomplete="current-password"
+                    required
+                />
+                <AppButton type="submit" variant="primary" class="w-full" :disabled="isSubmitting">{{
+                    t('auth.signIn')
+                }}</AppButton>
+            </template>
+            <AppButton
+                v-if="session.server?.oidc"
+                :variant="offersPassword ? 'secondary' : 'primary'"
+                class="w-full"
+                @click="signInWithProvider"
+            >
                 {{ t('auth.signInWithProvider') }}
             </AppButton>
         </form>

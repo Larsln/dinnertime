@@ -37,6 +37,19 @@ class AuthApiTest extends TestCase
             ->assertJsonMissingPath('data.password');
     }
 
+    public function test_password_login_can_be_turned_off(): void
+    {
+        config(['services.password_login' => false]);
+        User::factory()->create(['username' => 'lars', 'password' => 'correct-horse']);
+
+        $this->getJson('/api/v1/server')->assertJsonPath('auth_methods', []);
+        $this->postJson('/api/v1/auth/login', [
+            'username' => 'lars',
+            'password' => 'correct-horse',
+            'device_name' => 'iPhone',
+        ])->assertNotFound();
+    }
+
     public function test_it_rejects_wrong_credentials(): void
     {
         User::factory()->create(['username' => 'lars', 'password' => 'correct-horse']);

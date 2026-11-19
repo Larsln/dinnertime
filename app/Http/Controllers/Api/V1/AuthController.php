@@ -23,6 +23,8 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
+        abort_unless(config('services.password_login'), 404);
+
         $user = User::firstWhere('username', $request->validated('username'));
 
         if ($user?->password === null || ! Hash::check($request->validated('password'), $user->password)) {

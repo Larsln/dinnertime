@@ -41,6 +41,10 @@ return [
         'client_id' => env('OIDC_CLIENT_ID'),
     ],
 
+    // Sign-in with username and password. Turn off to allow only the
+    // identity provider; local accounts then cannot sign in at all.
+    'password_login' => (bool) env('PASSWORD_LOGIN', true),
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

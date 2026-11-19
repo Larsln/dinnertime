@@ -2,6 +2,9 @@
 
 Self-hosted recipe, meal plan and shopping list system for one household.
 
+This repository holds the server and the web client. The native iOS app lives
+in [dinnertime-ios](https://github.com/Larsln/dinnertime-ios).
+
 - **Import recipes** from TikTok, Instagram, YouTube or any web page. The whole
   video is analysed together with its caption.
 - **Products instead of free text.** Every ingredient line refers to a product

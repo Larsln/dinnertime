@@ -21,7 +21,7 @@ import PageHeader from '@/components/ui/PageHeader.vue';
  * checked off moves to the end.
  */
 const NOT_FOUND = 404;
-const GRID_CLASS = 'grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9';
+const GRID_CLASS = 'grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9';
 
 const { t, locale } = useI18n();
 const queryClient = useQueryClient();
@@ -121,7 +121,7 @@ const stock = useMutation({
         />
 
         <section v-for="section in sections" :key="section.title" class="mb-6">
-            <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
+            <h2 class="mb-2 font-display text-xl font-bold text-ink">
                 {{ section.title }}
             </h2>
             <ul :class="GRID_CLASS">
@@ -130,7 +130,7 @@ const stock = useMutation({
         </section>
 
         <section v-if="checkedItems.length > 0" class="mb-6">
-            <h2 class="mb-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
+            <h2 class="mb-2 text-[15px] font-semibold text-done-mark">
                 {{ t('shopping.done', { count: checkedItems.length }) }}
             </h2>
             <ul :class="GRID_CLASS">

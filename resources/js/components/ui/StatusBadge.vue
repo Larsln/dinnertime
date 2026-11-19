@@ -7,16 +7,19 @@ withDefaults(defineProps<{ tone?: 'neutral' | 'info' | 'warning' | 'danger' | 's
 });
 
 const TONES = {
-    neutral: 'bg-stone-100 text-stone-700',
-    info: 'bg-sky-100 text-sky-800',
-    warning: 'bg-amber-100 text-amber-800',
-    danger: 'bg-red-100 text-red-800',
-    success: 'bg-emerald-100 text-emerald-800',
+    neutral: 'bg-sunken text-ink-muted',
+    info: 'bg-accent-soft text-accent-deep',
+    warning: 'bg-warn-soft text-warn-deep',
+    danger: 'bg-danger-soft text-danger-deep',
+    success: 'bg-herb-soft text-herb',
 };
 </script>
 
 <template>
-    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :class="TONES[tone]">
+    <span
+        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+        :class="TONES[tone]"
+    >
         <slot />
     </span>
 </template>

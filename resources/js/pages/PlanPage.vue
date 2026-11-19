@@ -139,8 +139,8 @@ const createList = useMutation({
     <div class="space-y-6">
         <section v-for="day in days" :id="`day-${day}`" :key="day" class="scroll-mt-4">
             <div class="mb-2 flex items-center gap-3">
-                <h2 class="text-lg font-semibold">{{ formatLongDay(day, locale) }}</h2>
-                <StatusBadge v-if="day === today" tone="success">{{ t('plan.today') }}</StatusBadge>
+                <h2 class="text-lg font-display font-bold">{{ formatLongDay(day, locale) }}</h2>
+                <StatusBadge v-if="day === today" tone="info">{{ t('plan.today') }}</StatusBadge>
                 <AppButton
                     class="ml-auto"
                     size="icon"
@@ -162,7 +162,7 @@ const createList = useMutation({
             </ul>
             <p
                 v-else
-                class="rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-sm text-stone-500"
+                class="rounded-tile border border-dashed border-line-strong px-4 py-3 text-sm text-ink-muted"
             >
                 {{ t('plan.nothingPlanned') }}
             </p>

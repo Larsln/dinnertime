@@ -50,21 +50,21 @@ const identifiesAsBrowser = computed({
 </script>
 
 <template>
-    <section class="rounded-2xl border border-stone-200 bg-white p-4">
-        <h2 class="mb-2 font-semibold">{{ t('settings.import.title') }}</h2>
+    <section class="rounded-card border border-line bg-surface p-4">
+        <h2 class="mb-2 font-display text-lg font-bold">{{ t('settings.import.title') }}</h2>
         <SwitchField
             v-model="identifiesAsBrowser"
             :label="t('settings.import.browser')"
             :hint="t('settings.import.browserHint')"
         />
-        <div class="mt-3 border-t border-stone-100 pt-3">
-            <p class="text-sm font-medium text-stone-900">
+        <div class="mt-3 border-t border-line pt-3">
+            <p class="text-sm font-medium text-ink">
                 {{ t('settings.import.cookies') }}
                 <StatusBadge v-if="settings.data.value?.has_cookies" tone="success" class="ml-2">
                     {{ t('settings.import.cookiesStored') }}
                 </StatusBadge>
             </p>
-            <p class="mt-1 text-sm text-stone-500">{{ t('settings.import.cookiesHint') }}</p>
+            <p class="mt-1 text-sm text-ink-muted">{{ t('settings.import.cookiesHint') }}</p>
             <div class="mt-3 flex flex-wrap gap-2">
                 <FileButton accept=".txt,text/plain" @select="(file) => uploadCookies.mutate(file)">
                     <FileUp class="size-4" />{{ t('settings.import.uploadCookies') }}

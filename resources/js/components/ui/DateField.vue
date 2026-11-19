@@ -31,13 +31,13 @@ const date = computed({
             v-model="date"
             :locale="currentLocale()"
             granularity="day"
-            class="flex h-10 items-center rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20"
+            class="flex h-10 items-center rounded-field border border-line-strong bg-surface px-3 text-sm text-ink focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20"
         >
             <DateFieldInput
                 v-for="segment in segments"
                 :key="segment.part"
                 :part="segment.part"
-                class="rounded px-0.5 focus:bg-emerald-100 focus:outline-none data-[placeholder]:text-stone-400"
+                class="rounded px-0.5 focus:bg-accent-soft focus:outline-none data-[placeholder]:text-ink-muted"
             >
                 {{ segment.value }}
             </DateFieldInput>

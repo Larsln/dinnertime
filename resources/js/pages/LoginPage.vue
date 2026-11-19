@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { startOidcLogin } from '@/lib/oidc';
 import { useToasts } from '@/composables/useToasts';
 import { useSessionStore } from '@/stores/session';
+import AppLogo from '@/components/AppLogo.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import TextField from '@/components/ui/TextField.vue';
 
@@ -44,12 +45,17 @@ async function signInWithProvider(): Promise<void> {
 </script>
 
 <template>
-    <div class="flex min-h-dvh items-center justify-center bg-stone-50 px-4">
+    <div class="flex min-h-dvh items-center justify-center bg-paper px-4 text-ink">
         <form
-            class="w-full max-w-sm space-y-4 rounded-2xl border border-stone-200 bg-white p-6"
+            class="w-full max-w-sm space-y-4 rounded-card border border-line bg-surface p-6"
             @submit.prevent="submit"
         >
-            <h1 class="text-xl font-semibold text-stone-900">{{ session.server?.name ?? t('app.name') }}</h1>
+            <div class="flex items-center gap-3">
+                <AppLogo class="size-11" />
+                <h1 class="font-display text-2xl font-bold tracking-tight text-ink">
+                    {{ session.server?.name ?? t('app.name') }}
+                </h1>
+            </div>
             <TextField v-model="username" :label="t('auth.username')" autocomplete="username" required />
             <TextField
                 v-model="password"

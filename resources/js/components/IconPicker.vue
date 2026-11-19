@@ -66,7 +66,7 @@ function clear(): void {
                 <PopoverContent
                     align="start"
                     :side-offset="6"
-                    class="z-50 w-80 rounded-xl border border-stone-200 bg-white p-3 shadow-lg"
+                    class="z-50 w-80 rounded-tile border border-line bg-surface p-3 shadow-lg"
                 >
                     <TextField v-model="search" :label="t('common.search')" />
                     <ToggleGroupRoot
@@ -80,12 +80,12 @@ function clear(): void {
                             :value="entry.key"
                             :title="nameOf(entry)"
                             :aria-label="nameOf(entry)"
-                            class="flex aspect-square cursor-pointer items-center justify-center rounded-lg border border-transparent text-stone-600 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-emerald-600 data-[state=on]:border-emerald-600 data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700"
+                            class="flex aspect-square cursor-pointer items-center justify-center rounded-field border border-transparent text-ink-muted hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent data-[state=on]:border-accent data-[state=on]:bg-accent-soft data-[state=on]:text-accent-deep"
                         >
                             <ProductIcon :icon="entry.key" class="size-6" />
                         </ToggleGroupItem>
                     </ToggleGroupRoot>
-                    <p v-if="matches.length === 0" class="mt-2 text-sm text-stone-500">
+                    <p v-if="matches.length === 0" class="mt-2 text-sm text-ink-muted">
                         {{ t('products.noIcon') }}
                     </p>
                     <AppButton v-if="model" variant="ghost" class="mt-2" @click="clear">

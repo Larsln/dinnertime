@@ -41,13 +41,13 @@ async function signOut(): Promise<void> {
 <template>
     <PageHeader :title="t('nav.settings')" />
     <div class="max-w-md space-y-6">
-        <section class="rounded-2xl border border-stone-200 bg-white p-4">
-            <h2 class="mb-2 font-semibold">{{ t('settings.account') }}</h2>
-            <p class="text-sm text-stone-700">{{ session.user?.name }}</p>
-            <p class="text-sm text-stone-500">{{ session.user?.username }}</p>
+        <section class="rounded-card border border-line bg-surface p-4">
+            <h2 class="mb-2 font-display text-lg font-bold">{{ t('settings.account') }}</h2>
+            <p class="text-sm text-ink">{{ session.user?.name }}</p>
+            <p class="text-sm text-ink-muted">{{ session.user?.username }}</p>
             <AppButton class="mt-4" @click="signOut">{{ t('auth.signOut') }}</AppButton>
         </section>
-        <section class="rounded-2xl border border-stone-200 bg-white p-4">
+        <section class="rounded-card border border-line bg-surface p-4">
             <SelectField v-model="locale" :options="localeOptions" :label="t('settings.language')" />
         </section>
         <HouseholdSettingsCard />

@@ -18,7 +18,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <div class="rounded-xl border border-stone-200 p-3">
+    <div class="rounded-tile border border-line p-3">
         <div class="mb-2 flex items-center gap-2">
             <TextField v-model="title" class="flex-1" :placeholder="t('recipes.groupTitle')" />
             <AppButton

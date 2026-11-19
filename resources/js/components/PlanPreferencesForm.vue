@@ -31,7 +31,7 @@ const tagOptions = computed(() =>
 
 <template>
     <div class="space-y-4">
-        <div class="divide-y divide-stone-100 rounded-xl border border-stone-200 px-3">
+        <div class="divide-y divide-line rounded-tile border border-line px-3">
             <SwitchField
                 v-for="key in PREFERENCE_KEYS"
                 :key="key"

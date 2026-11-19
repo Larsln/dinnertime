@@ -73,7 +73,7 @@ const retry = useMutation({
 </script>
 
 <template>
-    <section class="mb-6 rounded-2xl border border-stone-200 bg-white p-4">
+    <section class="mb-6 rounded-card border border-line bg-surface p-4">
         <form class="flex flex-wrap items-end gap-2" @submit.prevent="create.mutate()">
             <TextField
                 v-model="url"
@@ -95,7 +95,7 @@ const retry = useMutation({
                 t('imports.submit')
             }}</AppButton>
         </form>
-        <ul v-if="recent.length > 0" class="mt-3 divide-y divide-stone-100">
+        <ul v-if="recent.length > 0" class="mt-3 divide-y divide-line">
             <li v-for="entry in recent" :key="entry.id" class="flex items-center gap-3 py-2 text-sm">
                 <StatusBadge :tone="TONES[entry.status]">
                     {{
@@ -107,12 +107,12 @@ const retry = useMutation({
                         v-for="recipe in entry.recipes"
                         :key="recipe.id"
                         :to="{ name: 'recipe', params: { id: recipe.id } }"
-                        class="truncate font-medium text-emerald-700 hover:underline"
+                        class="truncate font-medium text-accent-deep hover:underline"
                     >
                         {{ recipe.title }}
                     </RouterLink>
                 </div>
-                <span v-else class="min-w-0 flex-1 truncate text-stone-600">{{
+                <span v-else class="min-w-0 flex-1 truncate text-ink-muted">{{
                     entry.error_message ?? entry.url
                 }}</span>
                 <AppButton

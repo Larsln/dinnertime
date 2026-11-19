@@ -77,12 +77,12 @@ const remove = useMutation({
 
     <ul
         v-if="items.data.value?.length"
-        class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white"
+        class="divide-y divide-line rounded-card border border-line bg-surface"
     >
         <li v-for="item in items.data.value" :key="item.id" class="flex items-center gap-3 px-4 py-3">
             <div class="min-w-0 flex-1">
                 <p class="truncate font-medium">{{ item.product.name }}</p>
-                <p class="text-sm text-stone-500">{{ amount(item.amount, item.product.base_unit) }}</p>
+                <p class="text-sm text-ink-muted">{{ amount(item.amount, item.product.base_unit) }}</p>
             </div>
             <StatusBadge v-if="item.expires_on" :tone="expiryTone(item)">
                 {{ t('pantry.expires', { date: formatDay(item.expires_on, locale) }) }}

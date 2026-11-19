@@ -24,7 +24,7 @@ const id = useId();
             v-model="model"
             :rows="rows"
             :placeholder="placeholder"
-            class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
+            class="w-full rounded-field border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
     </div>
 </template>

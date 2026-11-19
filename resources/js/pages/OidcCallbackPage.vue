@@ -27,5 +27,5 @@ onMounted(async () => {
 </script>
 
 <template>
-    <p class="flex min-h-dvh items-center justify-center text-stone-600">{{ t('auth.signingIn') }}</p>
+    <p class="flex min-h-dvh items-center justify-center text-ink-muted">{{ t('auth.signingIn') }}</p>
 </template>

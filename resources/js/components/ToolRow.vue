@@ -73,7 +73,7 @@ const remove = useMutation({
         >
             <Check class="size-4" />
         </AppButton>
-        <span class="text-sm text-stone-500">{{
+        <span class="text-sm text-ink-muted">{{
             t('tools.recipeCount', { count: tool.recipe_count ?? 0 })
         }}</span>
         <CheckboxField

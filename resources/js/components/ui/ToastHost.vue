@@ -27,8 +27,8 @@ watch(
         <p
             v-for="toast in toasts"
             :key="toast.id"
-            class="rounded-xl px-4 py-2 text-sm font-medium text-white shadow-lg"
-            :class="toast.kind === 'error' ? 'bg-red-600' : 'bg-stone-900'"
+            class="rounded-full px-5 py-2.5 text-sm font-medium shadow-lg"
+            :class="toast.kind === 'error' ? 'bg-danger text-on-accent' : 'bg-ink text-paper'"
         >
             {{ toast.text }}
         </p>

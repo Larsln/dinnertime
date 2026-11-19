@@ -22,12 +22,12 @@ const isCooked = computed(() => props.entry.cooked_at !== null);
 
 <template>
     <li
-        class="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-3"
-        :class="{ 'opacity-60': isCooked }"
+        class="flex items-center gap-4 rounded-card border border-line p-3"
+        :class="isCooked ? 'bg-sunken' : 'bg-surface'"
     >
         <RouterLink
             :to="{ name: 'recipe', params: { id: entry.recipe.id } }"
-            class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-stone-100"
+            class="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-field bg-accent-soft"
             :aria-label="entry.recipe.title"
         >
             <img
@@ -37,21 +37,25 @@ const isCooked = computed(() => props.entry.cooked_at !== null);
                 class="size-full object-cover"
                 loading="lazy"
             />
-            <UtensilsCrossed v-else class="size-6 text-stone-300" />
+            <UtensilsCrossed v-else class="size-6 text-accent/40" />
         </RouterLink>
         <div class="min-w-0 flex-1">
-            <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">
+            <p
+                class="text-xs font-bold tracking-wider uppercase"
+                :class="isCooked ? 'text-ink-muted' : 'text-accent-deep'"
+            >
                 {{ t(`meals.${entry.meal}`) }}
             </p>
             <RouterLink
                 :to="{ name: 'recipe', params: { id: entry.recipe.id } }"
-                class="line-clamp-2 font-medium text-stone-900 hover:text-emerald-700"
-                :class="{ 'line-through': isCooked }"
+                class="line-clamp-2 font-semibold hover:text-accent-deep"
+                :class="isCooked ? 'text-ink-muted line-through' : 'text-ink'"
             >
                 {{ entry.recipe.title }}
             </RouterLink>
             <p
-                class="mt-1 inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600"
+                class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-ink-muted"
+                :class="isCooked ? 'bg-paper' : 'bg-sunken'"
             >
                 <Users class="size-3.5" />{{ t('plan.servingsLong', { count: entry.servings }) }}
             </p>

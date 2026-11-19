@@ -37,7 +37,7 @@ const unitOptions = computed(() => units.value.map((unit) => ({ value: unit.id, 
             <div
                 v-for="(row, index) in group.rows"
                 :key="row.key"
-                class="grid grid-cols-2 gap-2 border-b border-stone-100 py-2 last:border-b-0 md:grid-cols-[5rem_7rem_1fr_1fr_auto_auto] md:items-center"
+                class="grid grid-cols-2 gap-2 border-b border-line py-2 last:border-b-0 md:grid-cols-[5rem_7rem_1fr_1fr_auto_auto] md:items-center"
             >
                 <NumberField v-model="row.quantity" :step="0.5" :placeholder="t('recipes.quantity')" />
                 <SelectField

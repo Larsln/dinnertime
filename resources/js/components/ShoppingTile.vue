@@ -10,7 +10,7 @@ import {
     ContextMenuTrigger,
     Primitive,
 } from 'reka-ui';
-import { Trash2 } from 'lucide-vue-next';
+import { Check, Trash2 } from 'lucide-vue-next';
 import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
@@ -113,11 +113,11 @@ const remove = useMutation({
                     as="button"
                     type="button"
                     :aria-pressed="isChecked"
-                    class="relative flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl p-1.5 text-center transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                    class="relative flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-tile border p-1.5 text-center transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     :class="
                         isChecked
-                            ? 'bg-stone-200 text-stone-400 hover:bg-stone-300'
-                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            ? 'border-line bg-sunken text-done-ink hover:bg-line'
+                            : 'border-transparent bg-accent text-on-accent hover:bg-accent-hover'
                     "
                     @click="toggle.mutate()"
                 >
@@ -125,60 +125,63 @@ const remove = useMutation({
                         v-if="hasInfo"
                         class="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-current opacity-80"
                     />
+                    <Check v-if="isChecked" class="size-9 text-done-mark" aria-hidden="true" />
                     <ProductIcon
+                        v-else
                         :icon="item.product?.icon"
                         :section-key="item.product?.store_section?.key"
                         class="size-9"
                     />
-                    <span class="line-clamp-1 w-full text-xs leading-tight font-medium">{{ name }}</span>
-                    <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none opacity-75">
+                    <span
+                        class="line-clamp-1 w-full text-xs leading-tight font-semibold"
+                        :class="{ 'line-through': isChecked }"
+                        >{{ name }}</span
+                    >
+                    <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none font-medium">
                         {{ shortAmount }}<template v-if="item.is_approximate"> ≈</template>
                     </span>
                 </Primitive>
             </ContextMenuTrigger>
             <ContextMenuPortal>
                 <ContextMenuContent
-                    class="z-50 w-64 rounded-xl border border-stone-200 bg-white p-3 text-sm text-stone-700 shadow-lg"
+                    class="z-50 w-64 rounded-tile border border-line bg-surface p-3 text-sm text-ink shadow-lg"
                 >
-                    <p class="font-semibold text-stone-900">{{ name }}</p>
+                    <p class="font-semibold text-ink">{{ name }}</p>
                     <p v-if="purchase" class="mt-1">{{ purchase }}</p>
                     <p v-if="item.needed_amount !== null" class="mt-1">
                         {{ t('shopping.needed', { amount: amount(item.needed_amount, baseUnit) }) }}
                     </p>
-                    <ul class="mt-1 space-y-0.5 text-stone-600">
+                    <ul class="mt-1 space-y-0.5 text-ink-muted">
                         <li v-for="(use, index) in item.uses" :key="index">
                             {{ formatDay(use.date, locale) }} · {{ use.title }} ·
                             {{ amount(use.amount, baseUnit) }}
                         </li>
                     </ul>
-                    <p v-if="item.leftover_amount > 0" class="mt-1 text-amber-700">
+                    <p v-if="item.leftover_amount > 0" class="mt-1 text-warn-deep">
                         {{ t('shopping.leftover', { amount: amount(item.leftover_amount, baseUnit) }) }}
                     </p>
-                    <p v-if="item.wasted_amount > 0" class="mt-1 text-red-700">
+                    <p v-if="item.wasted_amount > 0" class="mt-1 text-danger-deep">
                         {{ t('shopping.wasted', { amount: amount(item.wasted_amount, baseUnit) }) }}
                     </p>
-                    <p v-if="item.is_approximate" class="mt-1 text-stone-500">
+                    <p v-if="item.is_approximate" class="mt-1 text-ink-muted">
                         {{ t('shopping.approximate') }}
                     </p>
-                    <ul v-if="item.product?.offers?.length" class="mt-2 border-t border-stone-100 pt-2">
+                    <ul v-if="item.product?.offers?.length" class="mt-2 border-t border-line pt-2">
                         <li
                             v-for="offer in item.product.offers"
                             :key="offer.id"
-                            :class="{ 'text-stone-400': !isActive(offer) }"
+                            :class="{ 'text-ink-muted': !isActive(offer) }"
                         >
                             {{ formatOffer(offer, storeName(offer), locale, currency, t('units.piece')) }}
                             <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                         </li>
                     </ul>
-                    <p
-                        v-if="item.product?.note"
-                        class="mt-2 border-t border-stone-100 pt-2 whitespace-pre-line"
-                    >
+                    <p v-if="item.product?.note" class="mt-2 border-t border-line pt-2 whitespace-pre-line">
                         {{ item.product.note }}
                     </p>
                     <ContextMenuItem
                         v-if="item.is_manual"
-                        class="mt-2 flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-red-700 outline-none data-[highlighted]:bg-red-50"
+                        class="mt-2 flex cursor-pointer items-center gap-2 rounded-field px-2 py-1.5 text-danger-deep outline-none data-[highlighted]:bg-danger-soft"
                         @select="remove.mutate()"
                     >
                         <Trash2 class="size-4" />{{ t('common.delete') }}

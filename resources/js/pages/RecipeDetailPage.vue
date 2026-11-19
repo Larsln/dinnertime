@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import { TabsRoot } from 'reka-ui';
 import { CalendarPlus, ExternalLink, Heart, Pencil, Trash2 } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
 import type { Ingredient, Step } from '@/api/types';
@@ -18,6 +18,8 @@ import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import NumberField from '@/components/ui/NumberField.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
+import TabBar from '@/components/ui/TabBar.vue';
+import TabItem from '@/components/ui/TabItem.vue';
 
 /**
  * A recipe with ingredients scaled to the chosen number of servings, the
@@ -32,9 +34,6 @@ const queryClient = useQueryClient();
 const { showError } = useToasts();
 
 const recipe = useQuery({ queryKey: ['recipe', () => props.id], queryFn: () => recipesApi.get(props.id) });
-
-const TAB_CLASS =
-    'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-stone-600 data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm';
 
 const { defaultServings } = useHouseholdSettings();
 
@@ -145,25 +144,27 @@ const remove = useMutation({
                 v-if="recipe.data.value.cover_url"
                 :src="recipe.data.value.cover_url"
                 :alt="recipe.data.value.title"
-                class="aspect-[4/3] w-full rounded-2xl object-cover"
+                class="aspect-[4/3] w-full rounded-card object-cover"
             />
             <div class="space-y-3">
-                <h1 class="text-2xl font-semibold text-stone-900">{{ recipe.data.value.title }}</h1>
-                <p v-if="recipe.data.value.description" class="text-stone-600">
+                <h1 class="font-display text-3xl font-bold tracking-tight text-ink">
+                    {{ recipe.data.value.title }}
+                </h1>
+                <p v-if="recipe.data.value.description" class="text-ink-muted">
                     {{ recipe.data.value.description }}
                 </p>
                 <p class="flex flex-wrap gap-2">
-                    <StatusBadge v-if="recipe.data.value.course_name" tone="success">
+                    <StatusBadge v-if="recipe.data.value.course_name" tone="info">
                         {{ recipe.data.value.course_name }}
                     </StatusBadge>
                     <StatusBadge v-for="name in tagNames" :key="name">{{ name }}</StatusBadge>
                 </p>
                 <div class="space-y-1">
-                    <p class="text-sm font-medium text-stone-700">{{ t('recipes.rating') }}</p>
+                    <p class="text-sm font-medium text-ink">{{ t('recipes.rating') }}</p>
                     <RatingControl v-model="rating" :label="t('recipes.rating')">
                         <span
                             v-if="recipe.data.value.average_rating != null"
-                            class="ml-auto text-sm text-stone-500 tabular-nums"
+                            class="ml-auto text-sm text-ink-muted tabular-nums"
                             :title="
                                 t('recipes.averageRating', {
                                     average: formatNumber(recipe.data.value.average_rating / 2, locale, 1),
@@ -177,7 +178,7 @@ const remove = useMutation({
                         </span>
                     </RatingControl>
                 </div>
-                <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-stone-600">
+                <dl class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-muted">
                     <div v-if="recipe.data.value.prep_minutes" class="flex gap-1">
                         <dt>{{ t('recipes.prep') }}:</dt>
                         <dd>{{ t('recipes.minutes', { count: recipe.data.value.prep_minutes }) }}</dd>
@@ -196,7 +197,7 @@ const remove = useMutation({
                         <CalendarPlus class="size-4" />{{ t('plan.addEntry') }}
                     </AppButton>
                     <AppButton :aria-pressed="isFavorite" @click="isFavorite = !isFavorite">
-                        <Heart class="size-4" :class="{ 'fill-rose-500 text-rose-500': isFavorite }" />
+                        <Heart class="size-4" :class="{ 'fill-accent text-accent': isFavorite }" />
                         {{ t('recipes.favorite') }}
                     </AppButton>
                     <RouterLink v-slot="{ navigate }" :to="{ name: 'recipe-edit', params: { id } }" custom>
@@ -212,7 +213,7 @@ const remove = useMutation({
                         :href="recipe.data.value.source_url"
                         target="_blank"
                         rel="noopener"
-                        class="inline-flex h-10 items-center gap-2 px-2 text-sm text-emerald-700 hover:underline"
+                        class="inline-flex h-10 items-center gap-2 px-2 text-sm text-accent-deep hover:underline"
                     >
                         <ExternalLink class="size-4" />{{ t('recipes.source') }}
                     </a>
@@ -221,18 +222,16 @@ const remove = useMutation({
         </header>
 
         <TabsRoot v-model="view" class="md:hidden">
-            <TabsList class="grid grid-cols-2 gap-1 rounded-xl bg-stone-200/70 p-1">
-                <TabsTrigger value="ingredients" :class="TAB_CLASS">{{
-                    t('recipes.ingredients')
-                }}</TabsTrigger>
-                <TabsTrigger value="method" :class="TAB_CLASS">{{ t('recipes.steps') }}</TabsTrigger>
-            </TabsList>
+            <TabBar class="grid grid-cols-2">
+                <TabItem value="ingredients">{{ t('recipes.ingredients') }}</TabItem>
+                <TabItem value="method">{{ t('recipes.steps') }}</TabItem>
+            </TabBar>
         </TabsRoot>
 
         <div class="grid gap-8 md:grid-cols-[18rem_1fr]">
             <section :class="{ 'hidden md:block': view !== 'ingredients' }">
                 <div class="mb-3 flex items-center justify-between gap-3">
-                    <h2 class="text-lg font-semibold">{{ t('recipes.ingredients') }}</h2>
+                    <h2 class="text-lg font-display font-bold">{{ t('recipes.ingredients') }}</h2>
                     <NumberField
                         v-if="recipe.data.value.servings"
                         v-model="servings"
@@ -244,27 +243,30 @@ const remove = useMutation({
                     />
                 </div>
                 <div v-for="(section, index) in sections" :key="index" class="mb-4">
-                    <h3 v-if="section.title" class="mb-1 text-sm font-semibold text-stone-700">
+                    <h3
+                        v-if="section.title"
+                        class="mb-1.5 text-xs font-bold tracking-wider text-ink-muted uppercase"
+                    >
                         {{ section.title }}
                     </h3>
-                    <ul class="divide-y divide-stone-100 text-sm">
+                    <ul class="divide-y divide-line rounded-tile border border-line bg-surface px-3 text-sm">
                         <li
                             v-for="ingredient in section.ingredients"
                             :key="ingredient.id"
-                            class="flex gap-3 py-1.5"
+                            class="flex gap-3 py-2"
                         >
-                            <span class="w-20 shrink-0 text-right font-medium tabular-nums">
+                            <span class="w-20 shrink-0 text-right font-semibold tabular-nums">
                                 {{ formatQuantity(ingredient, scale, locale) }}
                             </span>
                             <span>
                                 {{ ingredient.product?.name ?? ingredient.raw_text }}
-                                <span class="text-stone-500">{{ remarkOf(ingredient) }}</span>
+                                <span class="text-ink-muted">{{ remarkOf(ingredient) }}</span>
                             </span>
                         </li>
                     </ul>
                 </div>
                 <template v-if="recipe.data.value.tools.length > 0">
-                    <h2 class="mt-6 mb-2 text-lg font-semibold">{{ t('recipes.tools') }}</h2>
+                    <h2 class="mt-6 mb-2 text-lg font-display font-bold">{{ t('recipes.tools') }}</h2>
                     <ul class="flex flex-wrap gap-2 text-sm">
                         <li v-for="tool in recipe.data.value.tools" :key="tool.id">
                             <StatusBadge :tone="tool.is_owned ? 'neutral' : 'warning'">
@@ -276,17 +278,22 @@ const remove = useMutation({
             </section>
 
             <section :class="{ 'hidden md:block': view !== 'method' }">
-                <h2 class="mb-3 text-lg font-semibold">{{ t('recipes.steps') }}</h2>
+                <h2 class="mb-3 text-lg font-display font-bold">{{ t('recipes.steps') }}</h2>
                 <div v-for="(group, index) in stepGroups" :key="index" class="mb-6">
-                    <h3 v-if="group.title" class="mb-2 font-semibold text-stone-800">{{ group.title }}</h3>
+                    <h3
+                        v-if="group.title"
+                        class="mb-2 text-xs font-bold tracking-wider text-ink-muted uppercase"
+                    >
+                        {{ group.title }}
+                    </h3>
                     <ol class="space-y-4">
                         <li v-for="step in group.steps" :key="step.id" class="flex gap-3">
                             <span
-                                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800"
+                                class="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-soft font-display text-sm font-bold text-accent-deep"
                             >
                                 {{ step.position }}
                             </span>
-                            <p class="text-stone-800">
+                            <p class="text-ink">
                                 <span
                                     v-for="(segment, segmentIndex) in scaledStepSegments(
                                         step.text,
@@ -294,7 +301,7 @@ const remove = useMutation({
                                         locale,
                                     )"
                                     :key="segmentIndex"
-                                    :class="{ 'font-semibold': segment.isAmount }"
+                                    :class="{ 'font-semibold text-accent-deep': segment.isAmount }"
                                     >{{ segment.text }}</span
                                 >
                             </p>

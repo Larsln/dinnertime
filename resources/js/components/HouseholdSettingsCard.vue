@@ -32,8 +32,8 @@ const servings = computed({
 </script>
 
 <template>
-    <section class="rounded-2xl border border-stone-200 bg-white p-4">
-        <h2 class="mb-2 font-semibold">{{ t('settings.household.title') }}</h2>
+    <section class="rounded-card border border-line bg-surface p-4">
+        <h2 class="mb-2 font-display text-lg font-bold">{{ t('settings.household.title') }}</h2>
         <NumberField
             v-model="servings"
             :label="t('settings.household.servings')"
@@ -41,6 +41,6 @@ const servings = computed({
             :max="50"
             steppers
         />
-        <p class="mt-2 text-sm text-stone-500">{{ t('settings.household.servingsHint') }}</p>
+        <p class="mt-2 text-sm text-ink-muted">{{ t('settings.household.servingsHint') }}</p>
     </section>
 </template>

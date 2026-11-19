@@ -25,7 +25,7 @@ const selected = computed({
             v-for="option in options"
             :key="option.value"
             :value="String(option.value)"
-            class="cursor-pointer rounded-full border border-stone-300 bg-white px-3 py-1 text-sm text-stone-700 transition-colors hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 data-[state=on]:border-emerald-600 data-[state=on]:bg-emerald-600 data-[state=on]:text-white"
+            class="cursor-pointer rounded-full border border-line-strong bg-surface px-3 py-1 text-sm text-ink transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-on-accent"
         >
             {{ option.label }}
         </ToggleGroupItem>

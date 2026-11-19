@@ -38,22 +38,22 @@ const FORMAT: Intl.NumberFormatOptions = { maximumFractionDigits: 3, useGrouping
             :step-snapping="false"
             :locale="currentLocale()"
             :format-options="FORMAT"
-            class="flex h-10 items-center rounded-lg border border-stone-300 bg-white focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600/20"
+            class="flex h-10 items-center rounded-field border border-line-strong bg-surface focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20"
         >
             <NumberFieldDecrement
                 v-if="steppers"
-                class="flex h-full w-9 cursor-pointer items-center justify-center text-stone-500 hover:text-stone-900 disabled:opacity-30"
+                class="flex h-full w-9 cursor-pointer items-center justify-center text-ink-muted hover:text-ink disabled:opacity-30"
             >
                 <Minus class="size-4" />
             </NumberFieldDecrement>
             <NumberFieldInput
                 :placeholder="placeholder"
-                class="h-full w-full min-w-0 bg-transparent px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                class="h-full w-full min-w-0 bg-transparent px-3 text-sm text-ink placeholder:text-ink-muted focus:outline-none"
                 :class="{ 'px-0 text-center': steppers }"
             />
             <NumberFieldIncrement
                 v-if="steppers"
-                class="flex h-full w-9 cursor-pointer items-center justify-center text-stone-500 hover:text-stone-900 disabled:opacity-30"
+                class="flex h-full w-9 cursor-pointer items-center justify-center text-ink-muted hover:text-ink disabled:opacity-30"
             >
                 <Plus class="size-4" />
             </NumberFieldIncrement>

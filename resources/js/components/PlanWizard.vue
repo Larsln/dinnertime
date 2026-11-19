@@ -129,18 +129,18 @@ const save = useMutation({
                 class="flex items-center justify-center gap-2 rounded-full border px-3 py-1.5"
                 :class="
                     name === step
-                        ? 'border-emerald-600 bg-emerald-50 font-medium text-emerald-800'
-                        : 'border-stone-200 text-stone-500'
+                        ? 'border-accent bg-accent-soft font-medium text-accent-deep'
+                        : 'border-line text-ink-muted'
                 "
             >
-                <Check v-if="index < stepIndex" class="size-4 text-emerald-600" />
+                <Check v-if="index < stepIndex" class="size-4 text-accent-deep" />
                 <span v-else class="tabular-nums">{{ index + 1 }}</span>
                 {{ t(`plan.steps.${name}`) }}
             </li>
         </ol>
 
         <template v-if="step === 'days'">
-            <p class="text-sm text-stone-600">{{ t('plan.daysHint') }}</p>
+            <p class="text-sm text-ink-muted">{{ t('plan.daysHint') }}</p>
             <div class="flex items-center justify-between gap-2">
                 <AppButton size="icon" :aria-label="t('plan.previousWeek')" @click="$emit('shiftWeek', -1)">
                     <ChevronLeft class="size-4" />

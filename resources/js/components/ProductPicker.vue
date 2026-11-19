@@ -45,7 +45,7 @@ async function create(name: string): Promise<void> {
     >
         <template #item="{ item }">
             <span>{{ item.name }}</span>
-            <span v-if="item.aliases?.length" class="ml-2 text-xs text-stone-500">{{
+            <span v-if="item.aliases?.length" class="ml-2 text-xs text-ink-muted">{{
                 item.aliases.join(', ')
             }}</span>
         </template>

@@ -29,7 +29,7 @@ const detail = useQuery({
         <div class="flex items-center gap-3 px-4 py-3">
             <div class="min-w-0 flex-1">
                 <p class="truncate font-medium">{{ product.name }}</p>
-                <p class="truncate text-sm text-stone-500">
+                <p class="truncate text-sm text-ink-muted">
                     {{ product.store_section?.name ?? t('products.noSection') }}
                     <template v-if="product.aliases?.length"> · {{ product.aliases.join(', ') }}</template>
                 </p>

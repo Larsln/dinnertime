@@ -206,7 +206,7 @@ const save = useMutation({
             }}</AppButton>
         </PageHeader>
 
-        <section class="grid gap-4 rounded-2xl border border-stone-200 bg-white p-4 sm:grid-cols-2">
+        <section class="grid gap-4 rounded-card border border-line bg-surface p-4 sm:grid-cols-2">
             <TextField v-model="form.title" class="sm:col-span-2" :label="t('recipes.title')" required />
             <TextArea
                 v-model="form.description"
@@ -236,13 +236,13 @@ const save = useMutation({
                     <li
                         v-for="(tool, index) in tools"
                         :key="tool.id"
-                        class="inline-flex items-center gap-1 rounded-full bg-stone-100 py-0.5 pr-1 pl-3 text-sm"
+                        class="inline-flex items-center gap-1 rounded-full bg-sunken py-0.5 pr-1 pl-3 text-sm"
                     >
                         {{ tool.name }}
                         <AppButton
                             size="icon"
                             variant="ghost"
-                            class="size-6"
+                            class="size-6!"
                             :aria-label="t('common.delete')"
                             @click="tools.splice(index, 1)"
                         >
@@ -258,21 +258,21 @@ const save = useMutation({
             </div>
         </section>
 
-        <section class="space-y-4 rounded-2xl border border-stone-200 bg-white p-4">
+        <section class="space-y-4 rounded-card border border-line bg-surface p-4">
             <div v-for="type in TAG_TYPES" :key="type">
                 <FieldLabel>{{ t(`tagTypes.${type}`) }}</FieldLabel>
                 <ChipGroup v-model="tagModels[type].value" :options="tagOptions(type)" />
             </div>
         </section>
 
-        <section class="rounded-2xl border border-stone-200 bg-white p-4">
-            <h2 class="mb-3 text-lg font-semibold">{{ t('recipes.ingredients') }}</h2>
+        <section class="rounded-card border border-line bg-surface p-4">
+            <h2 class="mb-3 text-lg font-display font-bold">{{ t('recipes.ingredients') }}</h2>
             <RecipeIngredientsEditor v-model="ingredientGroups" />
         </section>
 
-        <section class="rounded-2xl border border-stone-200 bg-white p-4">
-            <h2 class="mb-1 text-lg font-semibold">{{ t('recipes.steps') }}</h2>
-            <p class="mb-3 text-sm text-stone-500">
+        <section class="rounded-card border border-line bg-surface p-4">
+            <h2 class="mb-1 text-lg font-display font-bold">{{ t('recipes.steps') }}</h2>
+            <p class="mb-3 text-sm text-ink-muted">
                 {{ t('recipes.groupsHint') }} {{ t('recipes.amountsHint') }}
             </p>
             <RecipeStepsEditor v-model="stepGroups" />

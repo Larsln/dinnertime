@@ -71,9 +71,9 @@ const remove = useMutation({
 <template>
     <div>
         <FieldLabel>{{ t('products.offers') }}</FieldLabel>
-        <ul v-if="product.offers?.length" class="mb-2 space-y-1 text-sm text-stone-700">
+        <ul v-if="product.offers?.length" class="mb-2 space-y-1 text-sm text-ink">
             <li v-for="offer in product.offers" :key="offer.id" class="flex items-center gap-2">
-                <span class="flex-1" :class="{ 'text-stone-400': !isActive(offer) }">
+                <span class="flex-1" :class="{ 'text-ink-muted': !isActive(offer) }">
                     {{ formatOffer(offer, storeName(offer), locale, currency, t('units.piece')) }}
                     <template v-if="!isActive(offer)"> · {{ t('stores.paused') }}</template>
                 </span>

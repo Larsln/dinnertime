@@ -216,19 +216,19 @@ const remove = useMutation({
 </script>
 
 <template>
-    <article class="rounded-2xl border border-stone-200 bg-white p-4">
+    <article class="rounded-card border border-line bg-surface p-4">
         <header class="mb-4 flex flex-wrap items-center gap-2">
-            <h2 class="text-lg font-semibold">{{ product.name }}</h2>
+            <h2 class="text-lg font-display font-bold">{{ product.name }}</h2>
             <StatusBadge v-if="product.status === 'suggested'" tone="warning">{{
                 t('products.suggested')
             }}</StatusBadge>
             <StatusBadge v-if="product.enriched_at === null" tone="info">{{
                 t('products.notEnriched')
             }}</StatusBadge>
-            <span v-if="product.recipe_count !== undefined" class="text-sm text-stone-500">
+            <span v-if="product.recipe_count !== undefined" class="text-sm text-ink-muted">
                 {{ t('products.recipeCount', { count: product.recipe_count }) }}
             </span>
-            <span v-if="product.aliases?.length" class="text-sm text-stone-500"
+            <span v-if="product.aliases?.length" class="text-sm text-ink-muted"
                 >· {{ product.aliases.join(', ') }}</span
             >
         </header>
@@ -298,7 +298,7 @@ const remove = useMutation({
                     :key="row.unitId"
                     class="mb-2 flex items-center gap-2"
                 >
-                    <span class="flex-1 text-sm text-stone-700">1 {{ row.unitName }} =</span>
+                    <span class="flex-1 text-sm text-ink">1 {{ row.unitName }} =</span>
                     <NumberField
                         v-if="row.isConvertible"
                         v-model="row.amount"

@@ -34,7 +34,7 @@ function numberOf(groupIndex: number, index: number): number {
         >
             <div v-for="(row, index) in group.rows" :key="row.key" class="flex gap-3 py-2">
                 <span
-                    class="mt-2 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-800"
+                    class="mt-2 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft font-display text-xs font-bold text-accent-deep"
                 >
                     {{ numberOf(groupIndex, index) }}
                 </span>

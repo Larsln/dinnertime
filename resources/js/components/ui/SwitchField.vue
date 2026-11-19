@@ -15,16 +15,16 @@ const id = useId();
 <template>
     <div class="flex items-center justify-between gap-4 py-2">
         <Label :for="id" class="cursor-pointer">
-            <span class="block text-sm font-medium text-stone-900">{{ label }}</span>
-            <span v-if="hint" class="block text-sm text-stone-500">{{ hint }}</span>
+            <span class="block text-sm font-medium text-ink">{{ label }}</span>
+            <span v-if="hint" class="block text-sm text-ink-muted">{{ hint }}</span>
         </Label>
         <SwitchRoot
             :id="id"
             v-model="model"
-            class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full bg-stone-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 data-[state=checked]:bg-emerald-600"
+            class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full bg-ink-muted/40 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-[state=checked]:bg-herb"
         >
             <SwitchThumb
-                class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[1.375rem]"
+                class="block size-5 translate-x-0.5 rounded-full bg-white shadow transition-[translate,background-color] data-[state=checked]:bg-on-accent data-[state=checked]:translate-x-[1.375rem]"
             />
         </SwitchRoot>
     </div>

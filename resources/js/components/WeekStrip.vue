@@ -19,20 +19,26 @@ function weekday(day: string): string {
 </script>
 
 <template>
-    <div class="mb-6 grid grid-cols-7 gap-1 rounded-2xl border border-stone-200 bg-white p-2">
+    <div class="mb-6 grid grid-cols-7 gap-1 rounded-card border border-line bg-surface p-2">
         <AppButton
             v-for="day in days"
             :key="day"
             variant="ghost"
-            class="h-auto flex-col gap-0.5 px-0 py-2"
-            :class="{ 'bg-emerald-50 text-emerald-700': day === today }"
+            class="h-auto! flex-col gap-0.5! rounded-tile! px-0! py-2"
+            :class="day === today ? 'bg-accent! text-on-accent! hover:bg-accent-hover!' : 'text-ink!'"
             @click="$emit('select', day)"
         >
-            <span class="text-xs font-normal text-stone-500">{{ weekday(day) }}</span>
-            <span class="text-base font-semibold tabular-nums">{{ fromIsoDate(day).getDate() }}</span>
+            <span
+                class="text-xs font-semibold tracking-wider uppercase"
+                :class="day === today ? 'text-on-accent' : 'text-ink-muted'"
+                >{{ weekday(day) }}</span
+            >
+            <span class="font-display text-xl leading-none font-bold tabular-nums">{{
+                fromIsoDate(day).getDate()
+            }}</span>
             <span
                 class="size-1.5 rounded-full"
-                :class="planned.has(day) ? 'bg-emerald-600' : 'bg-transparent'"
+                :class="planned.has(day) ? (day === today ? 'bg-on-accent' : 'bg-accent') : 'bg-transparent'"
             />
         </AppButton>
     </div>

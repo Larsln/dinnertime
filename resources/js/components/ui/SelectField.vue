@@ -48,22 +48,22 @@ const selected = computed({
         <SelectRoot v-model="selected">
             <SelectTrigger
                 :id="id"
-                class="flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-stone-300 bg-white px-3 text-left text-sm text-stone-900 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 data-[placeholder]:text-stone-400"
+                class="flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-field border border-line-strong bg-surface px-3 text-left text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 data-[placeholder]:text-ink-muted"
             >
                 <SelectValue :placeholder="placeholder" class="truncate" />
-                <SelectIcon><ChevronDown class="size-4 text-stone-500" /></SelectIcon>
+                <SelectIcon><ChevronDown class="size-4 text-ink-muted" /></SelectIcon>
             </SelectTrigger>
             <SelectPortal>
                 <SelectContent
                     position="popper"
                     :side-offset="4"
-                    class="z-50 max-h-72 min-w-(--reka-select-trigger-width) overflow-hidden rounded-lg border border-stone-200 bg-white shadow-lg"
+                    class="z-50 max-h-72 min-w-(--reka-select-trigger-width) overflow-hidden rounded-tile border border-line bg-surface shadow-lg"
                 >
                     <SelectViewport class="p-1">
                         <SelectItem
                             v-if="emptyLabel"
                             :value="EMPTY"
-                            class="relative flex cursor-pointer items-center rounded-md py-2 pr-8 pl-3 text-sm text-stone-500 outline-none data-[highlighted]:bg-emerald-50"
+                            class="relative flex cursor-pointer items-center rounded-field py-2 pr-8 pl-3 text-sm text-ink-muted outline-none data-[highlighted]:bg-accent-soft"
                         >
                             <SelectItemText>{{ emptyLabel }}</SelectItemText>
                         </SelectItem>
@@ -71,11 +71,11 @@ const selected = computed({
                             v-for="option in options"
                             :key="option.value"
                             :value="String(option.value)"
-                            class="relative flex cursor-pointer items-center rounded-md py-2 pr-8 pl-3 text-sm text-stone-900 outline-none data-[highlighted]:bg-emerald-50"
+                            class="relative flex cursor-pointer items-center rounded-field py-2 pr-8 pl-3 text-sm text-ink outline-none data-[highlighted]:bg-accent-soft"
                         >
                             <SelectItemText>{{ option.label }}</SelectItemText>
                             <SelectItemIndicator class="absolute right-2">
-                                <Check class="size-4 text-emerald-600" />
+                                <Check class="size-4 text-accent-deep" />
                             </SelectItemIndicator>
                         </SelectItem>
                     </SelectViewport>

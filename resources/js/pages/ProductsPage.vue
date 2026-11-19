@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { Plus } from 'lucide-vue-next';
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import { TabsContent, TabsRoot } from 'reka-ui';
 import { productsApi } from '@/api/products';
 import { storesApi } from '@/api/stores';
 import { toolsApi } from '@/api/tools';
@@ -17,15 +17,14 @@ import ToolRow from '@/components/ToolRow.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
+import TabBar from '@/components/ui/TabBar.vue';
+import TabItem from '@/components/ui/TabItem.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
  * Review list of suggested values, the catalog of all products and the
  * catalog of tools.
  */
-const TAB_CLASS =
-    'cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-900 data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm';
-
 const { t } = useI18n();
 const queryClient = useQueryClient();
 const { showError } = useToasts();
@@ -86,17 +85,17 @@ const products = useQuery({
     <PageHeader :title="t('nav.products')" :subtitle="t('products.subtitle')" />
 
     <TabsRoot v-model="tab">
-        <TabsList class="mb-5 inline-flex gap-1 rounded-xl bg-stone-200/70 p-1">
-            <TabsTrigger value="review" :class="TAB_CLASS">
+        <TabBar class="mb-5 inline-flex max-w-full overflow-x-auto">
+            <TabItem value="review">
                 {{ t('products.reviewTab', { count: review.data.value?.meta.total ?? 0 }) }}
-            </TabsTrigger>
-            <TabsTrigger value="all" :class="TAB_CLASS">{{ t('products.allTab') }}</TabsTrigger>
-            <TabsTrigger value="tools" :class="TAB_CLASS">{{ t('products.toolsTab') }}</TabsTrigger>
-            <TabsTrigger value="stores" :class="TAB_CLASS">{{ t('stores.tab') }}</TabsTrigger>
-        </TabsList>
+            </TabItem>
+            <TabItem value="all">{{ t('products.allTab') }}</TabItem>
+            <TabItem value="tools">{{ t('products.toolsTab') }}</TabItem>
+            <TabItem value="stores">{{ t('stores.tab') }}</TabItem>
+        </TabBar>
 
         <TabsContent value="review" class="space-y-4">
-            <p v-if="review.data.value?.data.length" class="text-sm text-stone-500">
+            <p v-if="review.data.value?.data.length" class="text-sm text-ink-muted">
                 {{ t('products.reviewHint') }}
             </p>
             <ProductCard v-for="product in review.data.value?.data" :key="product.id" :product="product" />
@@ -119,7 +118,7 @@ const products = useQuery({
                     <Plus class="size-4" />{{ t('products.add') }}
                 </AppButton>
             </form>
-            <ul class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
+            <ul class="divide-y divide-line rounded-card border border-line bg-surface">
                 <ProductRow
                     v-for="product in products.data.value?.data"
                     :key="product.id"
@@ -141,7 +140,7 @@ const products = useQuery({
             </form>
             <ul
                 v-if="tools.data.value?.length"
-                class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white"
+                class="divide-y divide-line rounded-card border border-line bg-surface"
             >
                 <ToolRow v-for="tool in tools.data.value" :key="tool.id" :tool="tool" />
             </ul>
@@ -154,10 +153,7 @@ const products = useQuery({
                     <Plus class="size-4" />{{ t('stores.add') }}
                 </AppButton>
             </form>
-            <ul
-                v-if="stores.length"
-                class="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white"
-            >
+            <ul v-if="stores.length" class="divide-y divide-line rounded-card border border-line bg-surface">
                 <StoreRow v-for="store in stores" :key="store.id" :store="store" />
             </ul>
             <EmptyState v-else :title="t('stores.empty')" :hint="t('stores.emptyHint')" />

@@ -22,10 +22,10 @@ const id = useId();
             :id="id"
             v-model="model"
             :aria-label="ariaLabel"
-            class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded border border-stone-400 bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 data-[state=checked]:border-emerald-600 data-[state=checked]:bg-emerald-600"
+            class="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-md border border-ink-muted bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-[state=checked]:border-accent data-[state=checked]:bg-accent"
         >
-            <CheckboxIndicator><Check class="size-3.5 text-white" /></CheckboxIndicator>
+            <CheckboxIndicator><Check class="size-3.5 text-on-accent" /></CheckboxIndicator>
         </CheckboxRoot>
-        <Label v-if="label" :for="id" class="cursor-pointer text-sm text-stone-800">{{ label }}</Label>
+        <Label v-if="label" :for="id" class="cursor-pointer text-sm text-ink">{{ label }}</Label>
     </div>
 </template>

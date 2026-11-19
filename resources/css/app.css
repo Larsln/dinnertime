@@ -3,8 +3,91 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+@font-face {
+    font-family: 'Bricolage Grotesque';
+    font-style: normal;
+    font-weight: 200 800;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url('../fonts/BricolageGrotesque.woff2') format('woff2');
+}
+
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+        system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display:
+        'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        sans-serif;
+
+    --radius-field: 12px;
+    --radius-tile: 16px;
+    --radius-card: 20px;
+
+    --color-accent: #c6402a;
+    --color-accent-hover: #b03623;
+    --color-accent-deep: #9e2f1e;
+    --color-accent-soft: #f8e0d7;
+    --color-on-accent: #ffffff;
+    --color-paper: #fbf6ef;
+    --color-surface: #ffffff;
+    --color-sunken: #f3eadf;
+    --color-line: #efe4d7;
+    --color-line-strong: #e6d9ca;
+    --color-ink: #2b201b;
+    --color-ink-muted: #6b5d53;
+    --color-herb: #2f6b4a;
+    --color-herb-soft: #dcebdd;
+    --color-done-ink: #6b5d53;
+    --color-done-mark: #2f6b4a;
+    --color-danger: #b3213b;
+    --color-danger-deep: #8c1a2f;
+    --color-danger-soft: #fbe2e4;
+    --color-warn-deep: #7a4700;
+    --color-warn-soft: #fbebc8;
+    --color-scrim: rgb(43 32 27 / 0.45);
+}
+
+@layer base {
+    :root {
+        color-scheme: light dark;
+        accent-color: var(--color-accent);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --color-accent: #e8674f;
+            --color-accent-hover: #ee7d68;
+            --color-accent-deep: #f5b3a4;
+            --color-accent-soft: #4a2a22;
+            --color-on-accent: #1c1613;
+            --color-paper: #1c1613;
+            --color-surface: #2a211c;
+            --color-sunken: #241c18;
+            --color-line: #3d312a;
+            --color-line-strong: #54453b;
+            --color-ink: #f5ece3;
+            --color-ink-muted: #c9bbae;
+            --color-herb: #b9bf93;
+            --color-herb-soft: #34382a;
+            --color-done-ink: #a3958a;
+            --color-done-mark: #c9bbae;
+            --color-danger: #f28b9b;
+            --color-danger-deep: #f9c2ca;
+            --color-danger-soft: #4a2229;
+            --color-warn-deep: #f3cd8a;
+            --color-warn-soft: #453417;
+            --color-scrim: rgb(0 0 0 / 0.6);
+        }
+    }
+
+    body {
+        background-color: var(--color-paper);
+        color: var(--color-ink);
+    }
+
+    ::selection {
+        background-color: var(--color-accent-soft);
+        color: var(--color-ink);
+    }
 }

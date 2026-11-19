@@ -60,13 +60,13 @@ function fillOf(star: number): string {
 <template>
     <div class="flex items-center gap-3">
         <div
-            class="relative rounded-lg focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-emerald-600"
+            class="relative rounded-field focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-accent"
         >
             <div class="flex gap-1" aria-hidden="true">
                 <span v-for="star in STARS" :key="star" class="relative size-8">
-                    <Star class="size-8 text-stone-300" />
+                    <Star class="size-8 text-line-strong" />
                     <span class="absolute inset-0 overflow-hidden" :style="{ width: fillOf(star) }">
-                        <Star class="size-8 fill-amber-400 text-amber-400" />
+                        <Star class="size-8 fill-accent text-accent" />
                     </span>
                 </span>
             </div>

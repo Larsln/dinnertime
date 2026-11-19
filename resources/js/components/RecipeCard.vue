@@ -20,12 +20,12 @@ const meals = computed(() => (props.recipe.tags ?? []).filter((tag) => tag.type 
 <template>
     <RouterLink
         :to="{ name: 'recipe', params: { id: recipe.id } }"
-        class="group overflow-hidden rounded-2xl border border-stone-200 bg-white transition-shadow hover:shadow-md"
+        class="group overflow-hidden rounded-card border border-line bg-surface transition-shadow hover:shadow-md"
     >
-        <div class="relative flex aspect-[4/3] items-center justify-center bg-stone-100">
+        <div class="relative flex aspect-[4/3] items-center justify-center bg-accent-soft">
             <Heart
                 v-if="recipe.is_favorite"
-                class="absolute top-2 right-2 size-5 fill-rose-500 text-rose-500 drop-shadow"
+                class="absolute top-2 right-2 size-5 fill-accent text-accent drop-shadow"
                 :aria-label="t('recipes.favorite')"
             />
             <img
@@ -35,18 +35,16 @@ const meals = computed(() => (props.recipe.tags ?? []).filter((tag) => tag.type 
                 class="size-full object-cover"
                 loading="lazy"
             />
-            <UtensilsCrossed v-else class="size-10 text-stone-300" />
+            <UtensilsCrossed v-else class="size-10 text-accent/40" />
         </div>
         <div class="p-3">
-            <h2 class="line-clamp-2 font-medium text-stone-900 group-hover:text-emerald-700">
+            <h2 class="line-clamp-2 leading-snug font-semibold text-ink group-hover:text-accent-deep">
                 {{ recipe.title }}
             </h2>
-            <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500">
-                <span v-if="recipe.course_name" class="font-medium text-stone-700">{{
-                    recipe.course_name
-                }}</span>
+            <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+                <span v-if="recipe.course_name" class="font-medium text-ink">{{ recipe.course_name }}</span>
                 <span v-if="recipe.average_rating != null" class="inline-flex items-center gap-1">
-                    <Star class="size-3.5 fill-amber-400 text-amber-400" />
+                    <Star class="size-3.5 fill-accent text-accent" />
                     {{ formatNumber(recipe.average_rating / 2, locale, 1) }}
                 </span>
                 <span v-if="totalMinutes > 0" class="inline-flex items-center gap-1">

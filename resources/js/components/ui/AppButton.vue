@@ -15,10 +15,10 @@ withDefaults(
 );
 
 const VARIANTS = {
-    primary: 'bg-emerald-600 text-white hover:bg-emerald-700',
-    secondary: 'border border-stone-300 bg-white text-stone-800 hover:bg-stone-50',
-    ghost: 'text-stone-600 hover:bg-stone-100',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
+    primary: 'bg-accent text-on-accent hover:bg-accent-hover',
+    secondary: 'border border-line-strong bg-surface text-ink hover:bg-sunken',
+    ghost: 'text-ink-muted hover:bg-sunken',
+    danger: 'bg-danger text-on-accent hover:bg-danger-deep',
 };
 
 const SIZES = {
@@ -33,7 +33,7 @@ const SIZES = {
         as="button"
         :type="type"
         :disabled="disabled"
-        class="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
         :class="[VARIANTS[variant], SIZES[size]]"
     >
         <slot />

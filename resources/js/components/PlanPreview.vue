@@ -30,7 +30,7 @@ function minutesOf(row: PreviewRow): number {
 <template>
     <div class="space-y-3">
         <div class="flex items-center justify-between gap-3">
-            <p class="text-sm text-stone-600">
+            <p class="text-sm text-ink-muted">
                 {{ t('plan.candidates', { recipes: candidateCount, meals: rows.length }) }}
             </p>
             <AppButton size="sm" :disabled="busy" @click="$emit('rerollAll')">
@@ -41,14 +41,16 @@ function minutesOf(row: PreviewRow): number {
             <li
                 v-for="row in rows"
                 :key="`${row.date}|${row.meal}`"
-                class="flex items-center gap-3 rounded-xl border border-stone-200 p-2"
+                class="flex items-center gap-3 rounded-tile border border-line p-2"
             >
                 <div class="w-9 shrink-0 text-center">
-                    <p class="text-base font-semibold tabular-nums">{{ fromIsoDate(row.date).getDate() }}</p>
-                    <p class="text-xs text-stone-500">{{ weekday(row.date) }}</p>
+                    <p class="font-display text-lg leading-tight font-bold tabular-nums">
+                        {{ fromIsoDate(row.date).getDate() }}
+                    </p>
+                    <p class="text-xs text-ink-muted">{{ weekday(row.date) }}</p>
                 </div>
                 <div
-                    class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-stone-100"
+                    class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-field bg-accent-soft"
                 >
                     <img
                         v-if="row.recipe.cover_url"
@@ -56,11 +58,11 @@ function minutesOf(row: PreviewRow): number {
                         alt=""
                         class="size-full object-cover"
                     />
-                    <UtensilsCrossed v-else class="size-5 text-stone-300" />
+                    <UtensilsCrossed v-else class="size-5 text-accent/40" />
                 </div>
                 <div class="min-w-0 flex-1">
-                    <p class="line-clamp-2 text-sm font-medium text-stone-900">{{ row.recipe.title }}</p>
-                    <p class="text-xs text-stone-500">
+                    <p class="line-clamp-2 text-sm font-medium text-ink">{{ row.recipe.title }}</p>
+                    <p class="text-xs text-ink-muted">
                         {{ t(`meals.${row.meal}`) }}
                         <template v-if="minutesOf(row) > 0">
                             · {{ t('recipes.minutes', { count: minutesOf(row) }) }}</template
@@ -70,7 +72,7 @@ function minutesOf(row: PreviewRow): number {
                 <Toggle
                     v-model="row.locked"
                     :aria-label="t('plan.lock')"
-                    class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-emerald-600 data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-700"
+                    class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-muted hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent data-[state=on]:bg-accent-soft data-[state=on]:text-accent-deep"
                 >
                     <component :is="row.locked ? Lock : LockOpen" class="size-4" />
                 </Toggle>

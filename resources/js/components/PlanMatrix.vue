@@ -106,7 +106,7 @@ function applyDays(preset: DayPreset): void {
                         <th
                             v-for="meal in meals"
                             :key="meal"
-                            class="px-1 pb-1 text-xs font-medium text-stone-500"
+                            class="px-1 pb-1 text-xs font-medium text-ink-muted"
                         >
                             {{ t(`meals.${meal}`) }}
                         </th>
@@ -114,13 +114,13 @@ function applyDays(preset: DayPreset): void {
                 </thead>
                 <tbody>
                     <tr v-for="day in days" :key="day">
-                        <th class="pr-2 text-left font-medium whitespace-nowrap text-stone-700">
+                        <th class="pr-2 text-left font-medium whitespace-nowrap text-ink">
                             {{ dayLabel(day) }}
                         </th>
                         <td v-for="meal in meals" :key="meal">
                             <span
                                 v-if="planned.has(slotKey({ date: day, meal }))"
-                                class="flex h-10 items-center justify-center rounded-lg bg-stone-100 text-xs text-stone-500"
+                                class="flex h-10 items-center justify-center rounded-field bg-sunken text-xs text-ink-muted"
                             >
                                 {{ t('plan.planned') }}
                             </span>
@@ -128,12 +128,12 @@ function applyDays(preset: DayPreset): void {
                                 v-else
                                 :model-value="selected.has(slotKey({ date: day, meal }))"
                                 :aria-label="`${dayLabel(day)} ${t(`meals.${meal}`)}`"
-                                class="flex h-10 w-full min-w-14 cursor-pointer items-center justify-center rounded-lg border border-stone-300 bg-white transition-colors hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 data-[state=on]:border-emerald-600 data-[state=on]:bg-emerald-600"
+                                class="flex h-10 w-full min-w-14 cursor-pointer items-center justify-center rounded-field border border-line-strong bg-surface transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-[state=on]:border-accent data-[state=on]:bg-accent"
                                 @update:model-value="(isOn) => toggle({ date: day, meal }, isOn)"
                             >
                                 <Check
                                     v-if="selected.has(slotKey({ date: day, meal }))"
-                                    class="size-4 text-white"
+                                    class="size-4 text-on-accent"
                                 />
                             </Toggle>
                         </td>

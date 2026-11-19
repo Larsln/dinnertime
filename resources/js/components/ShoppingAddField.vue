@@ -45,6 +45,7 @@ function addText(label: string): void {
         :display="(product) => product.name"
         :label="t('shopping.add')"
         :placeholder="t('shopping.addPlaceholder')"
+        pill
         :create-label="(name) => t('shopping.addText', { name })"
         @create="addText"
     >
@@ -53,7 +54,7 @@ function addText(label: string): void {
                 <ProductIcon
                     :icon="item.icon"
                     :section-key="item.store_section?.key"
-                    class="size-5 text-stone-600"
+                    class="size-5 text-ink-muted"
                 />
                 {{ item.name }}
             </span>

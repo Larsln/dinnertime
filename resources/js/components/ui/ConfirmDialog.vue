@@ -24,12 +24,14 @@ defineEmits<{ confirm: [] }>();
 <template>
     <AlertDialogRoot v-model:open="open">
         <AlertDialogPortal>
-            <AlertDialogOverlay class="fixed inset-0 z-40 bg-stone-900/40" />
+            <AlertDialogOverlay class="fixed inset-0 z-40 bg-scrim" />
             <AlertDialogContent
-                class="fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-5 shadow-xl focus:outline-none"
+                class="fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-card border border-line bg-surface p-5 shadow-xl focus:outline-none"
             >
-                <AlertDialogTitle class="text-lg font-semibold text-stone-900">{{ title }}</AlertDialogTitle>
-                <AlertDialogDescription class="mt-2 text-sm text-stone-600">{{
+                <AlertDialogTitle class="font-display text-xl font-bold text-ink">{{
+                    title
+                }}</AlertDialogTitle>
+                <AlertDialogDescription class="mt-2 text-sm text-ink-muted">{{
                     description
                 }}</AlertDialogDescription>
                 <div class="mt-6 flex justify-end gap-2">

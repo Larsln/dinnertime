@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useId } from 'vue';
+import { Search } from 'lucide-vue-next';
 import FieldLabel from './FieldLabel.vue';
 
 /**
  * Single-line free-text input. The shared wrapper for all text entry.
+ * The `search` type is drawn as a capsule with a magnifier.
  */
 const model = defineModel<string>({ required: true });
 
@@ -24,14 +26,26 @@ const id = useId();
 <template>
     <div>
         <FieldLabel v-if="label" :for="id">{{ label }}</FieldLabel>
-        <input
-            :id="id"
-            v-model="model"
-            :type="type"
-            :placeholder="placeholder"
-            :autocomplete="autocomplete"
-            :required="required"
-            class="h-10 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
-        />
+        <div class="relative">
+            <Search
+                v-if="type === 'search'"
+                class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-muted"
+                aria-hidden="true"
+            />
+            <input
+                :id="id"
+                v-model="model"
+                :type="type"
+                :placeholder="placeholder"
+                :autocomplete="autocomplete"
+                :required="required"
+                class="h-10 w-full border text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                :class="
+                    type === 'search'
+                        ? 'rounded-full border-line bg-sunken pr-4 pl-10'
+                        : 'rounded-field border-line-strong bg-surface px-3'
+                "
+            />
+        </div>
     </div>
 </template>

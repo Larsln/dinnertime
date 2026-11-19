@@ -139,7 +139,7 @@ const remove = useMutation({
                         >{{ name }}</span
                     >
                     <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none font-medium">
-                        {{ shortAmount }}<template v-if="item.is_approximate"> ≈</template>
+                        <template v-if="item.is_approximate">≈ </template>{{ shortAmount }}
                     </span>
                 </Primitive>
             </ContextMenuTrigger>
@@ -148,7 +148,9 @@ const remove = useMutation({
                     class="z-50 w-64 rounded-tile border border-line bg-surface p-3 text-sm text-ink shadow-lg"
                 >
                     <p class="font-semibold text-ink">{{ name }}</p>
-                    <p v-if="purchase" class="mt-1">{{ purchase }}</p>
+                    <p v-if="purchase" class="mt-1">
+                        <template v-if="item.is_approximate">≈ </template>{{ purchase }}
+                    </p>
                     <p v-if="item.needed_amount !== null" class="mt-1">
                         {{ t('shopping.needed', { amount: amount(item.needed_amount, baseUnit) }) }}
                     </p>

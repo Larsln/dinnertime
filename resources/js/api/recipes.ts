@@ -4,8 +4,8 @@ import type { CourseKey, Paginated, Recipe, RecipeImport, RecipeInput, RecipeSum
 export const recipesApi = {
     list: (filters: {
         search?: string;
-        tag?: number | null;
-        course?: CourseKey | null;
+        tags?: number[];
+        courses?: CourseKey[];
         favorite?: 1 | null;
         page?: number;
     }) => api.get<Paginated<RecipeSummary>>('/recipes', filters),

@@ -16,8 +16,9 @@ export function formatNumber(value: number, locale: string, maximumFractionDigit
 }
 
 /**
- * Format an amount given in a product's base unit, switching to kilograms
- * or liters from a thousand upwards.
+ * Format an amount given in a product's base unit. Grams and milliliters
+ * are whole numbers, switching to kilograms or liters with up to two
+ * decimals from a thousand upwards. Pieces keep their decimals.
  *
  * @param pieceLabel Label appended to amounts counted in pieces.
  */
@@ -27,10 +28,11 @@ export function formatAmount(amount: number, baseUnit: BaseUnit, locale: string,
     }
 
     const labels = BASE_UNIT_LABELS[baseUnit];
+    const whole = Math.round(amount);
 
-    return amount >= LARGE_UNIT_THRESHOLD
+    return whole >= LARGE_UNIT_THRESHOLD
         ? `${formatNumber(amount / LARGE_UNIT_THRESHOLD, locale)} ${labels.large}`
-        : `${formatNumber(amount, locale)} ${labels.small}`;
+        : `${formatNumber(whole, locale)} ${labels.small}`;
 }
 
 /**

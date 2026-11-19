@@ -17,7 +17,7 @@ interface ApiContext {
     onUnauthorized: () => void;
 }
 
-type Query = Record<string, string | number | null | undefined>;
+type Query = Record<string, string | number | readonly (string | number)[] | null | undefined>;
 
 const BASE_PATH = '/api/v1';
 
@@ -39,7 +39,9 @@ function buildUrl(path: string, query: Query = {}): string {
     const parameters = new URLSearchParams();
 
     for (const [key, value] of Object.entries(query)) {
-        if (value !== null && value !== undefined && value !== '') {
+        if (Array.isArray(value)) {
+            value.forEach((entry) => parameters.append(`${key}[]`, String(entry)));
+        } else if (value !== null && value !== undefined && value !== '') {
             parameters.set(key, String(value));
         }
     }

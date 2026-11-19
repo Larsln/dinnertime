@@ -87,7 +87,7 @@ const sectionOptions = computed(() =>
     storeSections.value.map((section) => ({ value: section.id, label: section.name })),
 );
 const baseUnitOptions = computed(() =>
-    BASE_UNITS.map((value) => ({ value, label: t(`baseUnits.${value}`) })),
+    BASE_UNITS.map((value) => ({ value, label: t(`dimensions.${value}`) })),
 );
 const baseUnitLabel = computed(() => t(`baseUnits.${details.baseUnit ?? 'g'}`));
 

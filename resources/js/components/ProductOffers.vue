@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQueryClient } from '@tanstack/vue-query';
 import { Check, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import { productsApi, type OfferInput } from '@/api/products';
-import type { OfferUnit, Product, ProductOffer } from '@/api/types';
+import type { BaseUnit, OfferUnit, Product, ProductOffer } from '@/api/types';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useStores } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
@@ -31,11 +31,21 @@ const editingId = ref<number | null>(null);
 const store = ref('');
 const amount = ref<number | null>(null);
 const unit = ref<OfferUnit | null>(props.product.base_unit);
+
+watch(
+    () => props.product.base_unit,
+    (baseUnit) => {
+        unit.value = baseUnit;
+    },
+);
 const price = ref<number | null>(null);
 
-const UNITS: OfferUnit[] = ['g', 'kg', 'ml', 'l', 'piece'];
+const UNITS: Record<BaseUnit, OfferUnit[]> = { g: ['g', 'kg'], ml: ['ml', 'l'], piece: ['piece'] };
 const unitOptions = computed(() =>
-    UNITS.map((value) => ({ value, label: value === 'piece' ? t('units.piece') : value })),
+    UNITS[props.product.base_unit].map((value) => ({
+        value,
+        label: value === 'piece' ? t('units.piece') : value,
+    })),
 );
 
 const { activeStores, storeName, isActive } = useStores();

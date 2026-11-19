@@ -31,6 +31,7 @@ const messages: typeof de = {
     },
     locales: { de: 'Deutsch', en: 'English' },
     units: { piece: 'pc' },
+    dimensions: { g: 'Weight (g, kg)', ml: 'Volume (ml, l)', piece: 'Pieces' },
     baseUnits: { g: 'grams', ml: 'milliliters', piece: 'pieces' },
     meals: {
         breakfast: 'Breakfast',
@@ -248,7 +249,7 @@ const messages: typeof de = {
         sectionIcon: 'Use the icon of the section',
         section: 'Store section',
         noSection: 'No section',
-        baseUnit: 'Bought in',
+        baseUnit: 'Bought by',
         shelfLife: 'Shelf life once opened (days)',
         note: 'Note',
         offers: 'Packages and stores',

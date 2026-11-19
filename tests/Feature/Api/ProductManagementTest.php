@@ -55,7 +55,8 @@ class ProductManagementTest extends TestCase
             ->assertJsonPath('data.amount', 1.5)
             ->assertJsonPath('data.unit', 'kg');
         $this->postJson("/api/v1/products/{$butter->id}/offers", ['store' => 'Lidl', 'amount' => 1, 'unit' => 'pound'])->assertUnprocessable();
-        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => 1, 'unit' => 'l'])->assertOk()->assertJsonPath('data.unit', 'l');
+        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => 1, 'unit' => 'l'])->assertUnprocessable();
+        $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => 1, 'unit' => 'kg'])->assertOk()->assertJsonPath('data.unit', 'kg');
         $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['amount' => null])->assertOk()->assertJsonPath('data.unit', null);
         $this->patchJson("/api/v1/product-offers/{$offer['id']}", ['price' => 2.79])->assertOk()->assertJsonPath('data.price', 2.79)->assertJsonPath('data.store', 'Lidl');
         $this->getJson("/api/v1/products/{$halloumi->id}")->assertJsonPath('data.offers.0.price', 2.79);

@@ -297,7 +297,8 @@ to signed-in users; its content is never returned.
   this product, as with pieces of fruit that vary in weight.
 - **Offer:** `{id, store_id, store, amount, unit, price}`: a package the
   product is sold in. `amount` and `unit` are its size as the shelf label
-  states it, `unit` being `g`, `kg`, `ml`, `l` or `piece`; `price` is what
+  states it, `unit` being one that measures what the product is bought by
+  (`g` or `kg` by weight, `ml` or `l` by volume, `piece`); `price` is what
   it costs, in the currency of the household settings. Size and price may
   be `null`. `store_id` names the store that sells it and `store` repeats
   its name; both are `null` for a size sold everywhere. Clients that keep

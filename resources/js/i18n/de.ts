@@ -29,6 +29,7 @@ export default {
     },
     locales: { de: 'Deutsch', en: 'English' },
     units: { piece: 'Stk.' },
+    dimensions: { g: 'Gewicht (g, kg)', ml: 'Volumen (ml, l)', piece: 'Stück' },
     baseUnits: { g: 'Gramm', ml: 'Milliliter', piece: 'Stück' },
     meals: {
         breakfast: 'Frühstück',
@@ -256,7 +257,7 @@ export default {
         sectionIcon: 'Symbol des Bereichs verwenden',
         section: 'Supermarkt-Bereich',
         noSection: 'Ohne Bereich',
-        baseUnit: 'Gekauft in',
+        baseUnit: 'Gekauft nach',
         shelfLife: 'Haltbar nach dem Öffnen (Tage)',
         note: 'Notiz',
         offers: 'Packungen und Läden',

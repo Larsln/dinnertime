@@ -25,9 +25,19 @@ class ProductOfferRequest extends FormRequest
             'store_id' => ['sometimes', 'nullable', 'integer', Rule::exists('stores', 'id')],
             'store' => ['sometimes', 'nullable', 'string', 'max:100'],
             'amount' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:999999'],
-            'unit' => ['sometimes', 'nullable', Rule::enum(OfferUnit::class)],
+            'unit' => ['sometimes', 'nullable', Rule::enum(OfferUnit::class)->only(OfferUnit::measuring($this->product()->base_unit))],
             'price' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999'],
         ];
+    }
+
+    /**
+     * Product the offer belongs to.
+     */
+    private function product(): Product
+    {
+        $offer = $this->route('offer');
+
+        return $offer instanceof ProductOffer ? $offer->product : $this->route('product');
     }
 
     /**
@@ -58,14 +68,13 @@ class ProductOfferRequest extends FormRequest
     private function withUnit(array $data): array
     {
         $offer = $this->route('offer');
-        $product = $offer instanceof ProductOffer ? $offer->product : $this->route('product');
         $amount = array_key_exists('amount', $data) ? $data['amount'] : $offer?->amount;
 
         if ($amount === null) {
             return array_key_exists('amount', $data) || array_key_exists('unit', $data) ? [...$data, 'unit' => null] : $data;
         }
 
-        $fallback = ($offer instanceof ProductOffer ? $offer->unit : null) ?? ($product instanceof Product ? OfferUnit::from($product->base_unit->value) : OfferUnit::Gram);
+        $fallback = ($offer instanceof ProductOffer ? $offer->unit : null) ?? OfferUnit::from($this->product()->base_unit->value);
 
         return [...$data, 'unit' => $data['unit'] ?? $fallback];
     }

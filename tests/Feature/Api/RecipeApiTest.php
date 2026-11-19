@@ -42,6 +42,25 @@ class RecipeApiTest extends TestCase
             ->assertJsonPath('data.0.tags.0.name', 'Abendessen');
     }
 
+    public function test_several_filters_widen_within_meals_and_courses_and_narrow_within_tags(): void
+    {
+        $dinner = Tag::create(['type' => TagType::Meal, 'key' => 'dinner', 'position' => 1]);
+        $lunch = Tag::create(['type' => TagType::Meal, 'key' => 'lunch', 'position' => 2]);
+        $quick = Tag::create(['type' => TagType::Tag, 'key' => 'quick', 'position' => 1]);
+        $vegan = Tag::create(['type' => TagType::Tag, 'key' => 'vegan', 'position' => 2]);
+        Recipe::factory()->create(['title' => 'Curry', 'course' => 'main'])->tags()->attach([$dinner->id, $quick->id, $vegan->id]);
+        Recipe::factory()->create(['title' => 'Salat', 'course' => 'salad'])->tags()->attach([$lunch->id, $quick->id]);
+        Recipe::factory()->create(['title' => 'Torte', 'course' => 'baking']);
+
+        $titles = fn (string $query) => $this->getJson("/api/v1/recipes?{$query}")->assertOk()->json('data.*.title');
+
+        $this->assertSame(['Curry', 'Salat'], $titles("tags[]={$dinner->id}&tags[]={$lunch->id}"));
+        $this->assertSame(['Curry'], $titles("tags[]={$quick->id}&tags[]={$vegan->id}"));
+        $this->assertSame(['Salat'], $titles("tags[]={$dinner->id}&tags[]={$lunch->id}&tags[]={$quick->id}&courses[]=salad&courses[]=baking"));
+        $this->assertSame(['Salat', 'Torte'], $titles('courses[]=salad&courses[]=baking'));
+        $this->getJson('/api/v1/recipes?courses[]=nonsense')->assertUnprocessable();
+    }
+
     public function test_it_shows_a_recipe_with_ingredients_and_steps(): void
     {
         $recipe = Recipe::factory()->create();

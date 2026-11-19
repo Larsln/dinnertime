@@ -72,7 +72,7 @@ setting `MERCURE_JWT_KEY`.
 
 | Method | Path | Body or query | Answer |
 |---|---|---|---|
-| GET | `/recipes` | `?search=`, `?tag=<tag id>`, `?course=<key>`, `?favorite=1` | Paginated RecipeSummary |
+| GET | `/recipes` | `search`, `tags[]`, `courses[]`, `favorite`, `page` | Page of RecipeSummary. A recipe has to be of one of the `courses`, suit one of the meal tags in `tags[]` and carry all other tags in `tags[]`. `tag` and `course` take a single value and remain for older clients |
 | GET | `/recipes/{id}` | | Recipe |
 | POST | `/recipes` | RecipeInput | Recipe, `201` |
 | PATCH | `/recipes/{id}` | RecipeInput, all fields optional | Recipe |

@@ -76,6 +76,7 @@ const messages: typeof de = {
         steps: 'Method',
         estimated: 'amount estimated',
         quantity: 'Amount',
+        quantityInvalid: 'Amount not readable. Use for example 2, 1.5, 1/2 or 1 1/2.',
         unit: 'Unit',
         noUnit: 'pieces',
         freeText: 'or free text',

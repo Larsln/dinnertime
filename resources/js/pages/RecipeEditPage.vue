@@ -96,6 +96,7 @@ function fill(recipe: Recipe): void {
             key: newKey(),
             product: ingredient.product,
             quantity: ingredient.quantity,
+            quantityInvalid: false,
             unitId: ingredient.unit?.id ?? null,
             note: ingredient.note ?? '',
             isEstimated: ingredient.is_estimated,
@@ -174,6 +175,10 @@ function toInput(): RecipeInput {
     };
 }
 
+const hasInvalidQuantity = computed(() =>
+    ingredientGroups.value.some((group) => group.rows.some((row) => row.quantityInvalid)),
+);
+
 const save = useMutation({
     mutationFn: async () => {
         const recipe =
@@ -195,10 +200,23 @@ const save = useMutation({
     },
     onError: showError,
 });
+
+/**
+ * Save the recipe unless an ingredient quantity cannot be read.
+ */
+function submit(): void {
+    if (hasInvalidQuantity.value) {
+        showError(new Error(t('recipes.quantityInvalid')));
+
+        return;
+    }
+
+    save.mutate();
+}
 </script>
 
 <template>
-    <form class="space-y-8" @submit.prevent="save.mutate()">
+    <form class="space-y-8" @submit.prevent="submit">
         <PageHeader :title="props.id === undefined ? t('recipes.new') : t('recipes.edit')">
             <AppButton @click="router.back()">{{ t('common.cancel') }}</AppButton>
             <AppButton type="submit" variant="primary" :disabled="save.isPending.value">{{

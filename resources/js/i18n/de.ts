@@ -74,6 +74,7 @@ export default {
         steps: 'Zubereitung',
         estimated: 'Menge geschätzt',
         quantity: 'Menge',
+        quantityInvalid: 'Menge nicht lesbar. Erlaubt sind z. B. 2, 1,5, 1/2 oder 1 1/2.',
         unit: 'Einheit',
         noUnit: 'Stück',
         freeText: 'oder freier Text',

@@ -1,4 +1,5 @@
 import { formatNumber } from './format';
+import { formatKitchenQuantity } from './kitchenQuantity';
 
 /**
  * Part of a step text: plain wording or an ingredient amount that scales
@@ -9,6 +10,7 @@ export interface StepSegment {
     isAmount: boolean;
 }
 
+const FRACTION_LIMIT = 20;
 const MARKER = /\{(\d+(?:[.,]\d+)?|\d+\/\d+)\}/g;
 
 /**
@@ -22,6 +24,14 @@ function amountValue(written: string): number | null {
     }
 
     return Number(denominator) === 0 ? null : Number(numerator) / Number(denominator);
+}
+
+/**
+ * Write a scaled amount with kitchen fractions. Large amounts, which are
+ * usually grams or milliliters, stay decimal.
+ */
+function amountText(value: number, locale: string): string {
+    return value >= FRACTION_LIMIT ? formatNumber(value, locale) : formatKitchenQuantity(value, locale);
 }
 
 /**
@@ -43,7 +53,7 @@ export function scaledStepSegments(text: string, scale: number, locale: string):
             segments.push({ text: text.slice(end, match.index), isAmount: false });
         }
 
-        segments.push({ text: formatNumber(value * scale, locale), isAmount: true });
+        segments.push({ text: amountText(value * scale, locale), isAmount: true });
         end = match.index + match[0].length;
     }
 

@@ -7,6 +7,7 @@ export interface IngredientRow {
     key: number;
     product: Product | null;
     quantity: number | null;
+    quantityInvalid: boolean;
     unitId: number | null;
     note: string;
     isEstimated: boolean;
@@ -45,6 +46,7 @@ export function emptyIngredientRow(): IngredientRow {
         key: newKey(),
         product: null,
         quantity: null,
+        quantityInvalid: false,
         unitId: null,
         note: '',
         isEstimated: false,

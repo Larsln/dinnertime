@@ -2,13 +2,14 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { FolderPlus, Trash2 } from 'lucide-vue-next';
+import type { Unit } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { emptyGroup, emptyIngredientRow, type EditGroup, type IngredientRow } from '@/lib/recipeGroups';
 import GroupFrame from '@/components/GroupFrame.vue';
 import ProductPicker from '@/components/ProductPicker.vue';
+import QuantityField from '@/components/QuantityField.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
-import NumberField from '@/components/ui/NumberField.vue';
 import SelectField from '@/components/ui/SelectField.vue';
 import TextField from '@/components/ui/TextField.vue';
 
@@ -21,6 +22,10 @@ const { t } = useI18n();
 const { units } = useReferenceData();
 
 const unitOptions = computed(() => units.value.map((unit) => ({ value: unit.id, label: unit.code })));
+
+function unitOf(row: IngredientRow): Unit | null {
+    return units.value.find((unit) => unit.id === row.unitId) ?? null;
+}
 </script>
 
 <template>
@@ -39,7 +44,12 @@ const unitOptions = computed(() => units.value.map((unit) => ({ value: unit.id, 
                 :key="row.key"
                 class="grid grid-cols-2 gap-2 border-b border-line py-2 last:border-b-0 md:grid-cols-[5rem_7rem_1fr_1fr_auto_auto] md:items-center"
             >
-                <NumberField v-model="row.quantity" :step="0.5" :placeholder="t('recipes.quantity')" />
+                <QuantityField
+                    v-model="row.quantity"
+                    v-model:invalid="row.quantityInvalid"
+                    :unit="unitOf(row)"
+                    :placeholder="t('recipes.quantity')"
+                />
                 <SelectField
                     v-model="row.unitId"
                     :options="unitOptions"
@@ -68,6 +78,9 @@ const unitOptions = computed(() => units.value.map((unit) => ({ value: unit.id, 
                 >
                     <Trash2 class="size-4" />
                 </AppButton>
+                <p v-if="row.quantityInvalid" class="col-span-full text-sm text-danger-deep" role="alert">
+                    {{ t('recipes.quantityInvalid') }}
+                </p>
             </div>
         </GroupFrame>
         <AppButton @click="groups.push(emptyGroup(emptyIngredientRow()))">

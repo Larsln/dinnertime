@@ -1,4 +1,5 @@
-import type { BaseUnit, Ingredient, ProductOffer } from '@/api/types';
+import type { BaseUnit, Ingredient, ProductOffer, Unit } from '@/api/types';
+import { formatKitchenQuantity, type QuantityStyle } from './kitchenQuantity';
 
 const LARGE_UNIT_THRESHOLD = 1000;
 
@@ -57,14 +58,27 @@ export function formatOffer(
 }
 
 /**
- * Quantity and unit of an ingredient line, scaled by a factor.
+ * How quantities in a unit are written: weights and volumes as decimals,
+ * everything else, including no unit at all, with kitchen fractions.
+ */
+export function quantityStyle(unit: Pick<Unit, 'kind'> | null | undefined): QuantityStyle {
+    return unit?.kind === 'mass' || unit?.kind === 'volume' ? 'metric' : 'kitchen';
+}
+
+/**
+ * Quantity and unit of an ingredient line, scaled by a factor. Fractions
+ * are used unless the unit is a weight or volume.
  */
 export function formatQuantity(ingredient: Ingredient, scale: number, locale: string): string {
     if (ingredient.quantity === null) {
         return '';
     }
 
-    const quantity = formatNumber(ingredient.quantity * scale, locale);
+    const quantity = formatKitchenQuantity(
+        ingredient.quantity * scale,
+        locale,
+        quantityStyle(ingredient.unit),
+    );
 
     return ingredient.unit ? `${quantity} ${ingredient.unit.code}` : quantity;
 }

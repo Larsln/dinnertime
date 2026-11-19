@@ -5,7 +5,8 @@ import FieldLabel from './FieldLabel.vue';
 
 /**
  * Single-line free-text input. The shared wrapper for all text entry.
- * The `search` type is drawn as a capsule with a magnifier.
+ * The `search` type is drawn as a capsule with a magnifier. An invalid
+ * field is outlined in the danger colour.
  */
 const model = defineModel<string>({ required: true });
 
@@ -16,8 +17,16 @@ withDefaults(
         placeholder?: string;
         autocomplete?: string;
         required?: boolean;
+        invalid?: boolean;
     }>(),
-    { label: undefined, type: 'text', placeholder: undefined, autocomplete: 'off', required: false },
+    {
+        label: undefined,
+        type: 'text',
+        placeholder: undefined,
+        autocomplete: 'off',
+        required: false,
+        invalid: false,
+    },
 );
 
 const id = useId();
@@ -39,12 +48,17 @@ const id = useId();
                 :placeholder="placeholder"
                 :autocomplete="autocomplete"
                 :required="required"
-                class="h-10 w-full border text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                :class="
-                    type === 'search'
-                        ? 'rounded-full border-line bg-sunken pr-4 pl-10'
-                        : 'rounded-field border-line-strong bg-surface px-3'
-                "
+                :aria-invalid="invalid || undefined"
+                class="h-10 w-full border text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2"
+                :class="[
+                    type === 'search' ? 'rounded-full bg-sunken pr-4 pl-10' : 'rounded-field bg-surface px-3',
+                    invalid
+                        ? 'border-danger focus:border-danger focus:ring-danger/20'
+                        : [
+                              'focus:border-accent focus:ring-accent/20',
+                              type === 'search' ? 'border-line' : 'border-line-strong',
+                          ],
+                ]"
             />
         </div>
     </div>

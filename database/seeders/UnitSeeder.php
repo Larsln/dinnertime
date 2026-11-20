@@ -15,6 +15,7 @@ class UnitSeeder extends Seeder
         'liter' => [UnitKind::Volume, 1000],
         'tablespoon' => [UnitKind::ProductSpecific, null],
         'teaspoon' => [UnitKind::ProductSpecific, null],
+        'cup' => [UnitKind::ProductSpecific, null],
         'pinch' => [UnitKind::ProductSpecific, null],
         'piece' => [UnitKind::ProductSpecific, null],
         'bunch' => [UnitKind::ProductSpecific, null],

@@ -73,9 +73,10 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.11.name', 'Hofladen');
 
         $this->getJson('/api/v1/units', ['Accept-Language' => 'de'])
-            ->assertJsonCount(13, 'data')
+            ->assertJsonCount(14, 'data')
             ->assertJsonPath('data.4.code', 'EL')
-            ->assertJsonPath('data.6.plural_name', 'Prisen');
+            ->assertJsonPath('data.6.plural_name', 'Tassen')
+            ->assertJsonPath('data.7.plural_name', 'Prisen');
 
         $this->getJson('/api/v1/units', ['Accept-Language' => 'en'])->assertJsonPath('data.4.code', 'tbsp');
         $this->getJson('/api/v1/tags', ['Accept-Language' => 'en'])->assertJsonCount(20, 'data');

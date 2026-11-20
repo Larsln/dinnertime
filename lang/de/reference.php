@@ -23,6 +23,7 @@ return [
         'liter' => ['code' => 'l', 'name' => 'Liter', 'plural' => 'Liter'],
         'tablespoon' => ['code' => 'EL', 'name' => 'Esslöffel', 'plural' => 'Esslöffel'],
         'teaspoon' => ['code' => 'TL', 'name' => 'Teelöffel', 'plural' => 'Teelöffel'],
+        'cup' => ['code' => 'Tasse', 'name' => 'Tasse', 'plural' => 'Tassen'],
         'pinch' => ['code' => 'Prise', 'name' => 'Prise', 'plural' => 'Prisen'],
         'piece' => ['code' => 'Stück', 'name' => 'Stück', 'plural' => 'Stück'],
         'bunch' => ['code' => 'Bund', 'name' => 'Bund', 'plural' => 'Bund'],

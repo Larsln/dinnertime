@@ -4,6 +4,8 @@ namespace App\Services\Import;
 
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\GeminiException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 
 /**
  * Lets the AI choose the most appetising of several candidate cover images.
@@ -20,7 +22,7 @@ class CoverPicker
 
     /**
      * Index of the best image. Falls back to the first one when there is
-     * no choice to make or the AI gives no usable answer.
+     * no choice to make or the AI gives no usable answer in time.
      *
      * @param  list<string>  $imagePaths  JPEG files.
      */
@@ -40,7 +42,7 @@ class CoverPicker
                 [['text' => self::PROMPT], ...$images],
                 ['type' => 'OBJECT', 'properties' => ['index' => ['type' => 'INTEGER']], 'required' => ['index']],
             );
-        } catch (GeminiException) {
+        } catch (GeminiException|ConnectionException|RequestException) {
             return 0;
         }
 

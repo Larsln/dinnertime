@@ -15,10 +15,14 @@ use Illuminate\Support\Sleep;
 class VideoDownloader
 {
     /**
-     * 720p is enough for the AI and keeps uploads small. Platforms that
-     * only offer separate video and audio streams get them merged.
+     * 720p is enough for the AI and keeps uploads small. Both sides are
+     * limited, because platforms report the long side of portrait videos as
+     * their height. Platforms that only offer separate video and audio
+     * streams get them merged.
      */
-    private const string FORMAT = 'best[ext=mp4][height<=720]/bestvideo[height<=720]+bestaudio/best[height<=720]/best';
+    private const string FORMAT = 'best[ext=mp4][height<=1280][width<=1280]'
+        .'/bestvideo[height<=1280][width<=1280]+bestaudio'
+        .'/best[height<=1280][width<=1280]/best';
 
     private const int ATTEMPTS = 3;
 

@@ -23,12 +23,11 @@ class WebRecipeImporter implements RecipeSourceImporter
 {
     private const int MAX_TEXT_LENGTH = 30000;
 
-    private const array IMAGE_EXTENSIONS = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-
     public function __construct(
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
         private readonly PublicFetcher $fetcher,
+        private readonly ImageDownloader $images,
         private readonly CoverStore $covers,
     ) {}
 
@@ -106,15 +105,14 @@ class WebRecipeImporter implements RecipeSourceImporter
             return;
         }
 
-        $image = rescue(fn () => $this->fetcher->get(html_entity_decode($match[1])), report: false);
-        $extension = self::IMAGE_EXTENSIONS[Str::before((string) $image?->header('Content-Type'), ';')] ?? null;
+        $image = $this->images->download(html_entity_decode($match[1]));
 
-        if (! $image?->successful() || $extension === null) {
+        if ($image === null) {
             return;
         }
 
         foreach ($recipes as $recipe) {
-            $this->covers->put($recipe, $image->body(), $extension);
+            $this->covers->put($recipe, $image['contents'], $image['extension']);
         }
     }
 }

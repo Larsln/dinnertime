@@ -47,19 +47,20 @@ class CoverStore
 
     /**
      * Write a small version of the image and return its path, or null
-     * when the image cannot be converted.
+     * when the image cannot be converted in time. Clients then show the
+     * full image instead.
      */
     private function shrink(string $path, string $target): ?string
     {
         $disk = Storage::disk(self::DISK);
-        $result = Process::timeout(60)->run([
+        $result = rescue(fn () => Process::timeout(60)->run([
             'ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
             '-i', $disk->path($path),
             '-vf', 'scale='.self::THUMB_WIDTH.':-2',
             '-frames:v', '1', '-q:v', '5',
             $disk->path($target),
-        ]);
+        ]));
 
-        return $result->successful() && $disk->exists($target) ? $target : null;
+        return $result?->successful() && $disk->exists($target) ? $target : null;
     }
 }

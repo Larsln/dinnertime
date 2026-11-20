@@ -7,7 +7,6 @@ use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
-use App\Services\Recipes\CoverStore;
 use App\Support\SourceLink;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
@@ -25,15 +24,11 @@ use Illuminate\Support\Str;
  */
 class VideoRecipeImporter implements RecipeSourceImporter
 {
-    private const int MAX_COVER_CANDIDATES = 4;
-
     public function __construct(
         private readonly VideoDownloader $downloader,
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
-        private readonly FrameExtractor $frames,
-        private readonly CoverPicker $coverPicker,
-        private readonly CoverStore $covers,
+        private readonly VideoCoverMaker $covers,
     ) {}
 
     public function import(string $url, ?int $dishCount, Closure $report): Collection
@@ -46,6 +41,8 @@ class VideoRecipeImporter implements RecipeSourceImporter
         $existing = Recipe::fromVideo(SourceLink::fromUrl($resolvedUrl)->platform, $videoId)->get();
 
         if ($existing->isNotEmpty()) {
+            $existing->whereNull('cover_image_path')->each(fn (Recipe $recipe) => $this->covers->fromPreview($recipe, $metadata['thumbnail'] ?? null));
+
             return $existing;
         }
 
@@ -65,7 +62,14 @@ class VideoRecipeImporter implements RecipeSourceImporter
             ));
 
             foreach ($recipes as $index => $recipe) {
-                $this->storeCover($recipe, $video, $drafts[$index]['cover_seconds'], $directory);
+                $this->covers->fromVideo(
+                    $recipe,
+                    $video,
+                    $drafts[$index]['cover_seconds'] ?? [],
+                    isset($metadata['duration']) ? (float) $metadata['duration'] : null,
+                    $metadata['thumbnail'] ?? null,
+                    $directory,
+                );
             }
 
             return new Collection($recipes);
@@ -100,30 +104,5 @@ class VideoRecipeImporter implements RecipeSourceImporter
         }
 
         return $answer['recipes'];
-    }
-
-    /**
-     * Take the sharpest frame around each suggested moment and keep the
-     * one the AI likes best.
-     *
-     * @param  list<float|int>  $seconds
-     */
-    private function storeCover(Recipe $recipe, string $video, array $seconds, string $directory): void
-    {
-        $candidates = [];
-
-        foreach (array_slice($seconds, 0, self::MAX_COVER_CANDIDATES) as $index => $second) {
-            $path = "{$directory}/cover-{$recipe->id}-{$index}.jpg";
-
-            if ($this->frames->sharpestFrame($video, (float) $second, $path)) {
-                $candidates[] = $path;
-            }
-        }
-
-        if ($candidates === []) {
-            return;
-        }
-
-        $this->covers->put($recipe, File::get($candidates[$this->coverPicker->pick($candidates)]), 'jpg');
     }
 }

@@ -290,7 +290,7 @@ const messages: typeof de = {
         active: 'active',
         preferred: 'preferred',
         everywhere: 'Everywhere',
-        hint: 'Preferred stores decide which package sizes the shopping list uses. Other stores only count for what nothing else sells.',
+        hint: 'Starred stores decide which package sizes the shopping list uses. Other stores only count for what nothing else sells.',
         paused: 'paused',
         offerCount: '{count} products',
         empty: 'No stores yet',

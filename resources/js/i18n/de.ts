@@ -298,7 +298,7 @@ export default {
         active: 'aktiv',
         preferred: 'bevorzugt',
         everywhere: 'Überall',
-        hint: 'Bevorzugte Läden bestimmen, mit welchen Packungsgrößen die Einkaufsliste rechnet. Andere Läden zählen nur für das, was es sonst nirgends gibt.',
+        hint: 'Läden mit Stern bestimmen, mit welchen Packungsgrößen die Einkaufsliste rechnet. Andere Läden zählen nur für das, was es sonst nirgends gibt.',
         paused: 'pausiert',
         offerCount: '{count} Produkte',
         empty: 'Noch keine Läden',

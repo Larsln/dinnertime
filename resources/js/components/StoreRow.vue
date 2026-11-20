@@ -9,13 +9,13 @@ import { STORES_KEY } from '@/composables/useStores';
 import { useToasts } from '@/composables/useToasts';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+import StarToggle from '@/components/ui/StarToggle.vue';
 import SwitchField from '@/components/ui/SwitchField.vue';
 import TextField from '@/components/ui/TextField.vue';
 
 /**
- * Line of the store list: rename the store, state whether the household
- * usually goes there and whether it buys there at the moment, or delete
- * it.
+ * Line of the store list: star the stores the household usually goes to,
+ * rename a store, state whether it buys there at the moment, or delete it.
  */
 const props = defineProps<{ store: Store }>();
 
@@ -55,6 +55,11 @@ const remove = useMutation({
 
 <template>
     <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+        <StarToggle
+            :model-value="store.is_preferred"
+            :label="t('stores.preferred')"
+            @update:model-value="(preferred) => update.mutate({ is_preferred: preferred })"
+        />
         <TextField v-model="name" class="min-w-40 flex-1" />
         <AppButton
             v-if="name.trim() !== store.name && name.trim() !== ''"
@@ -67,11 +72,6 @@ const remove = useMutation({
         <span class="text-sm text-ink-muted">{{
             t('stores.offerCount', { count: store.offer_count ?? 0 })
         }}</span>
-        <SwitchField
-            :model-value="store.is_preferred"
-            :label="t('stores.preferred')"
-            @update:model-value="(preferred) => update.mutate({ is_preferred: preferred })"
-        />
         <SwitchField
             :model-value="store.is_active"
             :label="t('stores.active')"

@@ -3,11 +3,19 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { ChevronLeft, ChevronRight, Plus, ShoppingCart, Sparkles } from 'lucide-vue-next';
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    Plus,
+    ShoppingCart,
+    Sparkles,
+} from 'lucide-vue-next';
 import { mealPlanApi, shoppingApi } from '@/api/planning';
-import type { MealPlanEntry } from '@/api/types';
+import type { MealPlanEntry, PlanReason } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
-import { addDays, isoWeek, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
+import { addDays, fromIsoDate, isoWeek, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
 import { formatDay, formatLongDay } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
 import { slotKey } from '@/lib/planSlots';
@@ -15,20 +23,24 @@ import PlanEntryCard from '@/components/PlanEntryCard.vue';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
 import PlanWizard from '@/components/PlanWizard.vue';
 import WeekStrip from '@/components/WeekStrip.vue';
+import ActionMenu from '@/components/ui/ActionMenu.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 /**
  * The meal plan of one week with manual entries, the leftover-aware
- * generator and the step on to the shopping list.
+ * generator and the step on to the shopping list. Every meal tells why it
+ * goes with the others. Meals can be changed, moved, and the whole plan
+ * from a day on pushed back or brought forward; the shopping list follows
+ * on the server.
  */
 const DAYS_PER_WEEK = 7;
 
 const { t, locale } = useI18n();
 const router = useRouter();
 const queryClient = useQueryClient();
-const { showError } = useToasts();
+const { showError, showSuccess } = useToasts();
 
 const monday = ref(startOfWeek(new Date()));
 const period = computed(() => ({
@@ -39,6 +51,14 @@ const days = computed(() => weekDays(monday.value).map(toIsoDate));
 const today = toIsoDate(new Date());
 
 const entries = useQuery({ queryKey: ['meal-plan', period], queryFn: () => mealPlanApi.list(period.value) });
+const reasons = useQuery({
+    queryKey: ['meal-plan', 'reasons', period],
+    queryFn: () => mealPlanApi.reasons(period.value),
+});
+
+const reasonsByEntry = computed(
+    () => new Map<number, PlanReason[]>((reasons.data.value ?? []).map((row) => [row.entry_id, row.reasons])),
+);
 
 const entriesByDay = computed(() => {
     const groups = new Map<string, MealPlanEntry[]>(days.value.map((day) => [day, []]));
@@ -55,6 +75,8 @@ const entriesByDay = computed(() => {
 
 const addingFor = ref(today);
 const isAdding = ref(false);
+const editing = ref<MealPlanEntry | null>(null);
+const isEditing = ref(false);
 const isGenerating = ref(false);
 const plannedSlots = computed(() => new Set((entries.data.value ?? []).map(slotKey)));
 
@@ -66,6 +88,7 @@ function scrollToDay(day: string): void {
 
 function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['meal-plan'] });
+    queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
 }
 
 function shiftWeek(weeks: number): void {
@@ -89,10 +112,48 @@ function startAdding(day: string): void {
     isAdding.value = true;
 }
 
+function startEditing(entry: MealPlanEntry): void {
+    editing.value = entry;
+    isEditing.value = true;
+}
+
+function dayActions(day: string) {
+    return [
+        {
+            label: t('plan.shiftLater'),
+            icon: ChevronsRight,
+            select: () => shift.mutate({ from: day, days: 1 }),
+        },
+        {
+            label: t('plan.shiftEarlier'),
+            icon: ChevronsLeft,
+            select: () => shift.mutate({ from: day, days: -1 }),
+        },
+    ];
+}
+
 const setCooked = useMutation({
     mutationFn: (change: { id: number; cooked: boolean }) =>
         mealPlanApi.update(change.id, { cooked: change.cooked }),
     onSuccess: refresh,
+    onError: showError,
+});
+
+const move = useMutation({
+    mutationFn: (change: { entry: MealPlanEntry; days: number }) =>
+        mealPlanApi.update(change.entry.id, {
+            date: toIsoDate(addDays(fromIsoDate(change.entry.date), change.days)),
+        }),
+    onSuccess: refresh,
+    onError: showError,
+});
+
+const shift = useMutation({
+    mutationFn: (change: { from: string; days: number }) => mealPlanApi.shift(change.from, change.days),
+    onSuccess: (moved) => {
+        refresh();
+        showSuccess(t('plan.shifted', { count: moved.length }));
+    },
     onError: showError,
 });
 
@@ -150,13 +211,17 @@ const createList = useMutation({
                 >
                     <Plus class="size-4" />
                 </AppButton>
+                <ActionMenu :label="t('plan.dayActions')" :actions="dayActions(day)" />
             </div>
             <ul v-if="entriesByDay.get(day)?.length" class="space-y-2">
                 <PlanEntryCard
                     v-for="entry in entriesByDay.get(day)"
                     :key="entry.id"
                     :entry="entry"
+                    :reasons="reasonsByEntry.get(entry.id)"
                     @cooked="(cooked) => setCooked.mutate({ id: entry.id, cooked })"
+                    @edit="startEditing(entry)"
+                    @move="(days) => move.mutate({ entry, days })"
                     @remove="remove.mutate(entry.id)"
                 />
             </ul>
@@ -170,6 +235,7 @@ const createList = useMutation({
     </div>
 
     <PlanEntryDialog v-model:open="isAdding" :date="addingFor" />
+    <PlanEntryDialog v-model:open="isEditing" :date="editing?.date ?? today" :entry="editing" />
 
     <PlanWizard
         v-model:open="isGenerating"

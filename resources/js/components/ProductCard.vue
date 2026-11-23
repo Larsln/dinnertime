@@ -7,6 +7,7 @@ import { productsApi } from '@/api/products';
 import type { BaseUnit, Product } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
+import BuyAsField from '@/components/BuyAsField.vue';
 import IconPicker from '@/components/IconPicker.vue';
 import ProductOffers from '@/components/ProductOffers.vue';
 import ProductPicker from '@/components/ProductPicker.vue';
@@ -23,6 +24,9 @@ import TextField from '@/components/ui/TextField.vue';
 
 /**
  * Editor for a product with its package sizes and unit conversions.
+ *
+ * A product can be bought as another one, so both share an entry on the
+ * shopping list while recipes keep their own.
  *
  * Suggested values can be corrected and are confirmed together with one
  * tap. A unit can be marked as not convertible, for products whose single
@@ -52,6 +56,7 @@ const details = reactive({
     isPantryStaple: false,
     shelfLife: null as number | null,
     note: '',
+    buyAs: null as { id: number; name: string } | null,
 });
 
 const conversions = ref<ConversionRow[]>([]);
@@ -71,6 +76,7 @@ watch(
             isPantryStaple: product.is_pantry_staple,
             shelfLife: product.shelf_life_opened_days,
             note: product.note ?? '',
+            buyAs: product.buy_as ?? null,
         });
 
         conversions.value = (product.conversions ?? []).map((entry) => ({
@@ -134,6 +140,7 @@ function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['review'] });
     queryClient.invalidateQueries({ queryKey: ['products'] });
     queryClient.invalidateQueries({ queryKey: ['product'] });
+    queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
 }
 
 const save = useMutation({
@@ -146,6 +153,7 @@ const save = useMutation({
             is_pantry_staple: details.isPantryStaple,
             shelf_life_opened_days: details.shelfLife,
             note: details.note.trim() || null,
+            buy_as_id: details.buyAs?.id ?? null,
         });
         await saveConversions();
 
@@ -225,6 +233,8 @@ const remove = useMutation({
         </div>
 
         <TextArea v-model="details.note" class="mt-4" :rows="2" :label="t('products.note')" />
+
+        <BuyAsField v-model="details.buyAs" class="mt-4" :product="product" />
 
         <IconPicker
             v-model="details.icon"

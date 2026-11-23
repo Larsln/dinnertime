@@ -13,23 +13,25 @@ import {
 import { Check, Trash2 } from 'lucide-vue-next';
 import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
-import { useAmounts } from '@/composables/useAmounts';
+import { useShoppingAmounts } from '@/composables/useShoppingAmounts';
 import { useToasts } from '@/composables/useToasts';
-import { formatDay, formatNumber, formatOffer } from '@/lib/format';
+import { formatOffer } from '@/lib/format';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useStores } from '@/composables/useStores';
 import ProductIcon from '@/components/ProductIcon.vue';
+import ShoppingAmountDetails from '@/components/ShoppingAmountDetails.vue';
 
 /**
  * Tile of the shopping list: a line icon, the product's name and a short
- * amount. Tapping it checks the product off or brings it back. A long
- * press or right click tells what exactly to buy, which recipes need it
- * and what remains.
+ * amount. Products bought as this one follow by name, so whoever shops
+ * sees the nuance and decides what to take. Tapping it checks the product
+ * off or brings it back. A long press or right click tells what exactly
+ * to buy of each, which recipes need it and what remains.
  */
 const props = defineProps<{ item: ShoppingListItem }>();
 
 const { t, locale } = useI18n();
-const { amount } = useAmounts();
+const { short } = useShoppingAmounts();
 const { currency } = useHouseholdSettings();
 const { storeName, isActive } = useStores();
 const { showError } = useToasts();
@@ -37,57 +39,31 @@ const queryClient = useQueryClient();
 
 const isChecked = computed(() => props.item.checked_at !== null);
 const hasInfo = computed(
-    () => Boolean(props.item.product?.note) || (props.item.product?.offers ?? []).some(isActive),
+    () =>
+        Boolean(props.item.product?.note) ||
+        props.item.variants.length > 0 ||
+        (props.item.product?.offers ?? []).some(isActive),
 );
 const baseUnit = computed(() => props.item.product?.base_unit ?? 'g');
 const name = computed(() => props.item.product?.name ?? props.item.label ?? '');
-
-const amountText = computed(() =>
-    props.item.purchase_amount !== null ? amount(props.item.purchase_amount, baseUnit.value) : '',
-);
-
-const extras = computed(() =>
-    props.item.extra_amounts.map(
-        (extra) => `${formatNumber(extra.quantity, locale.value)} ${extra.unit_code}`,
-    ),
+const hasOwnAmounts = computed(
+    () =>
+        props.item.purchase_amount !== null ||
+        props.item.needed_amount !== null ||
+        props.item.extra_amounts.length > 0,
 );
 
 /**
- * The amount in as few characters as possible, for the tile.
+ * The amount in as few characters as possible, for the tile. Without an
+ * amount of its own, the tile names its variants with theirs instead.
  */
-const shortAmount = computed(() => {
-    const only = props.item.packages.length === 1 ? props.item.packages[0] : undefined;
-    const packed =
-        only && only.count > 1 ? `${only.count} × ${amount(only.amount, baseUnit.value)}` : amountText.value;
+const shortAmount = computed(() =>
+    hasOwnAmounts.value
+        ? short(props.item, baseUnit.value)
+        : props.item.variants.map((variant) => short(variant, variant.base_unit)).join(' + '),
+);
 
-    return [...(packed ? [packed] : []), ...extras.value].join(' + ');
-});
-
-/**
- * What to buy in full: every package with its size, plus needs in units
- * that cannot be converted.
- */
-const purchase = computed(() => {
-    const packages = props.item.packages.map(describePackage);
-
-    return [
-        ...(packages.length > 0 ? packages : amountText.value ? [amountText.value] : []),
-        ...extras.value,
-    ].join(' + ');
-});
-
-/**
- * Count, store and size of a package. The store is left out for sizes
- * sold everywhere, the size for single pieces of a store, where it adds
- * nothing to the name.
- */
-function describePackage(entry: ShoppingListItem['packages'][number]): string {
-    const label = entry.label.trim();
-    const isSinglePiece = baseUnit.value === 'piece' && entry.amount === 1;
-    const size = label !== '' && isSinglePiece ? '' : amount(entry.amount, baseUnit.value);
-
-    return [`${entry.count} ×`, label, size].filter((part) => part !== '').join(' ');
-}
+const variantNames = computed(() => props.item.variants.map((variant) => variant.name).join(', '));
 
 function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
@@ -141,6 +117,11 @@ const remove = useMutation({
                     <span v-if="shortAmount" class="w-full truncate text-[10px] leading-none font-medium">
                         <template v-if="item.is_approximate">≈ </template>{{ shortAmount }}
                     </span>
+                    <span
+                        v-if="variantNames && hasOwnAmounts"
+                        class="w-full truncate text-[10px] leading-none font-medium opacity-80"
+                        >+ {{ variantNames }}</span
+                    >
                 </Primitive>
             </ContextMenuTrigger>
             <ContextMenuPortal>
@@ -148,24 +129,24 @@ const remove = useMutation({
                     class="z-50 w-64 rounded-tile border border-line bg-surface p-3 text-sm text-ink shadow-lg"
                 >
                     <p class="font-semibold text-ink">{{ name }}</p>
-                    <p v-if="purchase" class="mt-1">
-                        <template v-if="item.is_approximate">≈ </template>{{ purchase }}
-                    </p>
-                    <p v-if="item.needed_amount !== null" class="mt-1">
-                        {{ t('shopping.needed', { amount: amount(item.needed_amount, baseUnit) }) }}
-                    </p>
-                    <ul class="mt-1 space-y-0.5 text-ink-muted">
-                        <li v-for="(use, index) in item.uses" :key="index">
-                            {{ formatDay(use.date, locale) }} · {{ use.title }} ·
-                            {{ amount(use.amount, baseUnit) }}
-                        </li>
-                    </ul>
-                    <p v-if="item.leftover_amount > 0" class="mt-1 text-warn-deep">
-                        {{ t('shopping.leftover', { amount: amount(item.leftover_amount, baseUnit) }) }}
-                    </p>
-                    <p v-if="item.wasted_amount > 0" class="mt-1 text-danger-deep">
-                        {{ t('shopping.wasted', { amount: amount(item.wasted_amount, baseUnit) }) }}
-                    </p>
+                    <ShoppingAmountDetails
+                        v-if="hasOwnAmounts"
+                        :amounts="item"
+                        :base-unit="baseUnit"
+                        :approximate="item.is_approximate"
+                    />
+                    <section
+                        v-for="variant in item.variants"
+                        :key="variant.product_id"
+                        class="mt-2 border-t border-line pt-2"
+                    >
+                        <p class="font-semibold text-ink">{{ variant.name }}</p>
+                        <ShoppingAmountDetails
+                            :amounts="variant"
+                            :base-unit="variant.base_unit"
+                            :approximate="item.is_approximate"
+                        />
+                    </section>
                     <p v-if="item.is_approximate" class="mt-1 text-ink-muted">
                         {{ t('shopping.approximate') }}
                     </p>

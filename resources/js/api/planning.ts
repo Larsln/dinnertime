@@ -1,6 +1,13 @@
 import { api, data } from './client';
 import type { SuggestBody, Suggestion } from '@/lib/planWizard';
-import type { MealPlanEntry, MealType, PantryItem, ShoppingList, ShoppingListItem } from './types';
+import type {
+    MealPlanEntry,
+    MealType,
+    PantryItem,
+    PlanReason,
+    ShoppingList,
+    ShoppingListItem,
+} from './types';
 
 export interface Period {
     from: string;
@@ -11,9 +18,19 @@ export const mealPlanApi = {
     list: (period: Period) => data(api.get<{ data: MealPlanEntry[] }>('/meal-plan', { ...period })),
     create: (entry: { date: string; meal: MealType; recipe_id: number; servings: number }) =>
         data(api.post<{ data: MealPlanEntry }>('/meal-plan', entry)),
-    update: (id: number, changes: { servings?: number; cooked?: boolean }) =>
-        data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
+    update: (
+        id: number,
+        changes: { date?: string; meal?: MealType; recipe_id?: number; servings?: number; cooked?: boolean },
+    ) => data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
     remove: (id: number) => api.delete(`/meal-plan/${id}`),
+    shift: (from: string, days: number) =>
+        data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/shift', { from, days })),
+    reasons: (period: Period) =>
+        data(
+            api.get<{ data: { entry_id: number; reasons: PlanReason[] }[] }>('/meal-plan/reasons', {
+                ...period,
+            }),
+        ),
     suggest: (body: SuggestBody) =>
         api.post<{ data: Suggestion[]; meta: { candidate_count: number } }>('/meal-plan/suggest', body),
     saveBatch: (entries: { date: string; meal: MealType; recipe_id: number; servings: number }[]) =>

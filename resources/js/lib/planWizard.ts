@@ -1,4 +1,4 @@
-import type { CourseKey, MealType, RecipeSummary } from '@/api/types';
+import type { CourseKey, MealType, PlanReason, RecipeSummary } from '@/api/types';
 import type { PlanSlot } from './planSlots';
 
 /**
@@ -20,6 +20,7 @@ export interface Suggestion {
     meal: MealType;
     recipe: RecipeSummary;
     kept: boolean;
+    reasons: PlanReason[];
 }
 
 /**

@@ -4,11 +4,13 @@ import { Toggle } from 'reka-ui';
 import { Dices, Lock, LockOpen, UtensilsCrossed } from 'lucide-vue-next';
 import { fromIsoDate } from '@/lib/dates';
 import type { PreviewRow } from '@/lib/planWizard';
+import PlanReasons from '@/components/PlanReasons.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 
 /**
- * Third step of planning a week: the suggested recipes, each of which can
- * be locked or replaced before the plan is saved.
+ * Third step of planning a week: the suggested recipes, each with why it
+ * goes with the others, and each of which can be locked or replaced
+ * before the plan is saved.
  */
 const rows = defineModel<PreviewRow[]>({ required: true });
 
@@ -68,6 +70,7 @@ function minutesOf(row: PreviewRow): number {
                             · {{ t('recipes.minutes', { count: minutesOf(row) }) }}</template
                         >
                     </p>
+                    <PlanReasons class="mt-1" :reasons="row.reasons" />
                 </div>
                 <Toggle
                     v-model="row.locked"

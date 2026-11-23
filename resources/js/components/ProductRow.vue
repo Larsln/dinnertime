@@ -32,6 +32,9 @@ const detail = useQuery({
                 <p class="truncate text-sm text-ink-muted">
                     {{ product.store_section?.name ?? t('products.noSection') }}
                     <template v-if="product.aliases?.length"> · {{ product.aliases.join(', ') }}</template>
+                    <template v-if="product.buy_as">
+                        · {{ t('products.boughtAs', { name: product.buy_as.name }) }}</template
+                    >
                 </p>
             </div>
             <StatusBadge v-if="product.is_pantry_staple">{{ t('products.staple') }}</StatusBadge>

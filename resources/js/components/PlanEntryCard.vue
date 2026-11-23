@@ -2,22 +2,33 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { Trash2, Users, UtensilsCrossed } from 'lucide-vue-next';
-import type { MealPlanEntry } from '@/api/types';
-import AppButton from '@/components/ui/AppButton.vue';
+import { ArrowLeft, ArrowRight, Pencil, Trash2, Users, UtensilsCrossed } from 'lucide-vue-next';
+import type { MealPlanEntry, PlanReason } from '@/api/types';
+import PlanReasons from '@/components/PlanReasons.vue';
+import ActionMenu from '@/components/ui/ActionMenu.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
 
 /**
- * One planned meal: cover of the recipe, meal, title and servings, with
- * the switch for "cooked" and the button to remove it from the plan.
+ * One planned meal: cover of the recipe, meal, title and servings, why it
+ * goes with the rest of the plan, the switch for "cooked" and a menu to
+ * change, move or remove it.
  */
-const props = defineProps<{ entry: MealPlanEntry }>();
+const props = withDefaults(defineProps<{ entry: MealPlanEntry; reasons?: PlanReason[] }>(), {
+    reasons: () => [],
+});
 
-defineEmits<{ cooked: [cooked: boolean]; remove: [] }>();
+const emit = defineEmits<{ cooked: [cooked: boolean]; edit: []; move: [days: number]; remove: [] }>();
 
 const { t } = useI18n();
 
 const isCooked = computed(() => props.entry.cooked_at !== null);
+
+const actions = computed(() => [
+    { label: t('plan.editEntry'), icon: Pencil, select: () => emit('edit') },
+    { label: t('plan.dayLater'), icon: ArrowRight, select: () => emit('move', 1) },
+    { label: t('plan.dayEarlier'), icon: ArrowLeft, select: () => emit('move', -1) },
+    { label: t('common.delete'), icon: Trash2, danger: true, select: () => emit('remove') },
+]);
 </script>
 
 <template>
@@ -59,14 +70,13 @@ const isCooked = computed(() => props.entry.cooked_at !== null);
             >
                 <Users class="size-3.5" />{{ t('plan.servingsLong', { count: entry.servings }) }}
             </p>
+            <PlanReasons v-if="!isCooked" class="mt-2" :reasons="reasons" />
         </div>
         <CheckboxField
             :model-value="isCooked"
             :label="t('plan.cooked')"
             @update:model-value="(cooked) => $emit('cooked', cooked)"
         />
-        <AppButton size="icon" variant="ghost" :aria-label="t('common.delete')" @click="$emit('remove')">
-            <Trash2 class="size-4" />
-        </AppButton>
+        <ActionMenu :label="t('plan.entryActions')" :actions="actions" />
     </li>
 </template>

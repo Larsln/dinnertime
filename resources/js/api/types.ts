@@ -99,6 +99,8 @@ export interface Product {
     is_pantry_staple: boolean;
     shelf_life_opened_days: number | null;
     note: string | null;
+    buy_as_id: number | null;
+    buy_as?: { id: number; name: string } | null;
     status: ReviewStatus;
     enriched_at: string | null;
     recipe_count?: number;
@@ -117,6 +119,7 @@ export interface ProductInput {
     is_pantry_staple?: boolean;
     shelf_life_opened_days?: number | null;
     note?: string | null;
+    buy_as_id?: number | null;
 }
 
 export interface RecipeSummary {
@@ -213,6 +216,18 @@ export interface MealPlanEntry {
     recipe: RecipeSummary;
 }
 
+/**
+ * Why a meal goes with the rest of the plan.
+ */
+export type PlanReason =
+    | { type: 'shares'; products: string[]; with: { title: string; date: string }[] }
+    | { type: 'pantry'; products: string[] }
+    | { type: 'favorite' }
+    | { type: 'rating'; value: number }
+    | { type: 'last_planned'; days: number }
+    | { type: 'not_recent' }
+    | { type: 'quick'; minutes: number | null };
+
 export type DinnerRoundStatus = 'voting' | 'matched' | 'undecided';
 
 export interface DinnerCard {
@@ -246,18 +261,34 @@ export interface PantryItem {
     product: Product;
 }
 
-export interface ShoppingListItem {
-    id: number;
-    label: string | null;
-    is_manual: boolean;
+/**
+ * What one product of a shopping list item needs and what to buy of it.
+ */
+export interface ShoppingAmounts {
     needed_amount: number | null;
     purchase_amount: number | null;
     packages: { package_id: number; label: string; amount: number; count: number }[];
     leftover_amount: number;
     wasted_amount: number;
     uses: { date: string; recipe_id: number; title: string; amount: number }[];
-    is_approximate: boolean;
     extra_amounts: { quantity: number; unit_code: string }[];
+}
+
+/**
+ * A product bought as the item's product, with its own amounts.
+ */
+export interface ShoppingVariant extends ShoppingAmounts {
+    product_id: number;
+    name: string;
+    base_unit: BaseUnit;
+}
+
+export interface ShoppingListItem extends ShoppingAmounts {
+    id: number;
+    label: string | null;
+    is_manual: boolean;
+    is_approximate: boolean;
+    variants: ShoppingVariant[];
     checked_at: string | null;
     product?: Product | null;
 }

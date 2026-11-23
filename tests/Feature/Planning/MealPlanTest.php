@@ -229,6 +229,77 @@ class MealPlanTest extends TestCase
         $this->postJson('/api/v1/meal-plan/batch', ['entries' => [['date' => '2026-11-16', 'meal' => 'dinner']]])->assertUnprocessable();
     }
 
+    public function test_an_entry_can_be_moved_swapped_and_resized(): void
+    {
+        $entry = MealPlanEntry::create(['date' => '2026-11-16', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Lasagne', [])->id, 'servings' => 2]);
+        $soup = $this->recipe('Suppe', [], 'lunch');
+
+        $this->patchJson("/api/v1/meal-plan/{$entry->id}", ['date' => '2026-11-18', 'meal' => 'lunch', 'recipe_id' => $soup->id, 'servings' => 5])
+            ->assertOk()
+            ->assertJsonPath('data.date', '2026-11-18')
+            ->assertJsonPath('data.meal', 'lunch')
+            ->assertJsonPath('data.recipe.title', 'Suppe')
+            ->assertJsonPath('data.servings', 5);
+    }
+
+    public function test_the_plan_moves_from_a_day_on_without_cooked_meals(): void
+    {
+        $recipe = $this->recipe('Lasagne', []);
+        $cooked = MealPlanEntry::create(['date' => '2026-11-16', 'meal' => MealType::Dinner, 'recipe_id' => $recipe->id, 'servings' => 2, 'cooked_at' => now()]);
+        $before = MealPlanEntry::create(['date' => '2026-11-15', 'meal' => MealType::Dinner, 'recipe_id' => $recipe->id, 'servings' => 2]);
+        $later = MealPlanEntry::create(['date' => '2026-11-22', 'meal' => MealType::Dinner, 'recipe_id' => $recipe->id, 'servings' => 2]);
+
+        $this->postJson('/api/v1/meal-plan/shift', ['from' => '2026-11-16', 'days' => 1])
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.date', '2026-11-23');
+
+        $this->assertSame('2026-11-16', $cooked->refresh()->date->toDateString());
+        $this->assertSame('2026-11-15', $before->refresh()->date->toDateString());
+        $this->assertSame('2026-11-23', $later->refresh()->date->toDateString());
+        $this->postJson('/api/v1/meal-plan/shift', ['from' => '2026-11-16', 'days' => 0])->assertJsonValidationErrors('days');
+        $this->postJson('/api/v1/meal-plan/shift', ['from' => '2026-11-16', 'days' => 15])->assertJsonValidationErrors('days');
+    }
+
+    public function test_a_suggestion_tells_why_its_meals_go_together(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+        $cream = $this->product('Sahne', [200], ['shelf_life_opened_days' => 4]);
+        $spinach = $this->product('Spinat', [250], ['shelf_life_opened_days' => 2]);
+        $lasagne = $this->recipe('Lasagne', [[$cream, 120, 'gram'], [$spinach, 200, 'gram']]);
+        $lasagne->marks()->create(['user_id' => $user->id, 'rating' => 9, 'is_favorite' => true]);
+        $this->recipe('Suppe', [[$cream, 80, 'gram']]);
+        PantryItem::create(['product_id' => $spinach->id, 'amount' => 100]);
+        MealPlanEntry::create(['date' => '2026-11-04', 'meal' => MealType::Dinner, 'recipe_id' => $lasagne->id, 'servings' => 2]);
+
+        $proposals = collect($this->suggest('2026-11-16', '2026-11-17')->json('data'))->keyBy('recipe.title');
+        $reasons = collect($proposals['Lasagne']['reasons'])->keyBy('type');
+
+        $this->assertSame(['Sahne'], $reasons['shares']['products']);
+        $this->assertSame('Suppe', $reasons['shares']['with'][0]['title']);
+        $this->assertSame(['Spinat'], $reasons['pantry']['products']);
+        $this->assertTrue($reasons->has('favorite'));
+        $this->assertEquals(9, $reasons['rating']['value']);
+        $this->assertSame(12, $reasons['last_planned']['days']);
+        $this->assertContains(['type' => 'not_recent'], $proposals['Suppe']['reasons']);
+    }
+
+    public function test_the_saved_plan_tells_why_its_meals_go_together(): void
+    {
+        $cream = $this->product('Sahne', [200], ['shelf_life_opened_days' => 4]);
+        $first = MealPlanEntry::create(['date' => '2026-11-16', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Lasagne', [[$cream, 120, 'gram']])->id, 'servings' => 2]);
+        $second = MealPlanEntry::create(['date' => '2026-11-18', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Suppe', [[$cream, 80, 'gram']])->id, 'servings' => 2]);
+        MealPlanEntry::create(['date' => '2026-11-25', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Curry', [[$cream, 80, 'gram']])->id, 'servings' => 2]);
+
+        $this->getJson('/api/v1/meal-plan/reasons?from=2026-11-16&to=2026-11-22')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.entry_id', $first->id)
+            ->assertJsonPath('data.0.reasons.0', ['type' => 'shares', 'products' => ['Sahne'], 'with' => [['title' => 'Suppe', 'date' => '2026-11-18']]])
+            ->assertJsonPath('data.1.entry_id', $second->id);
+    }
+
     /**
      * Ask for a dinner suggestion on every day of the period.
      *

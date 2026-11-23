@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Generated positions refer to a product and state the packages to buy,
  * manual positions and ingredients without a product only carry a label.
+ * Products bought as the position's product are listed as its variants.
  *
  * @property ?list<array{package_id: int, label: string, amount: float, count: int}> $packages
  * @property ?list<array{date: string, recipe_id: int, title: string, amount: float}> $uses
  * @property ?list<array{unit_id: ?int, quantity: float}> $extra_amounts
+ * @property ?list<array<string, mixed>> $variants Amounts of the products bought as this one, shaped like the position's own.
  * @property ?CarbonImmutable $checked_at
  */
 #[Fillable([
@@ -32,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'uses',
     'is_approximate',
     'extra_amounts',
+    'variants',
     'checked_at',
     'checked_by',
 ])]
@@ -61,6 +64,7 @@ class ShoppingListItem extends Model
             'uses' => 'array',
             'is_approximate' => 'boolean',
             'extra_amounts' => 'array',
+            'variants' => 'array',
             'checked_at' => 'immutable_datetime',
         ];
     }

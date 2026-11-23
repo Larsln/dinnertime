@@ -8,6 +8,7 @@ return [
     'leftovers_already_stocked' => 'Die Reste dieser Einkaufsliste wurden bereits in den Vorrat übernommen.',
 
     'product_in_use' => 'Das Produkt wird in Rezepten verwendet und kann nicht gelöscht werden.',
+    'buy_as_nested' => '„Kaufen als“ geht nur eine Ebene tief: nicht als das Produkt selbst, nicht als ein Produkt, das schon als etwas anderes gekauft wird, und nicht für ein Produkt, als das schon andere gekauft werden.',
 
     'tool_in_use' => 'Das Hilfsmittel wird in Rezepten verwendet und kann nicht gelöscht werden.',
 

@@ -39,9 +39,12 @@ class ShoppingForecaster
     }
 
     /**
-     * Forecast the meals planned between two days against the current pantry.
+     * Forecast the meals planned between two days against the current pantry
+     * and what has been bought for them already.
+     *
+     * @param  array<int, float>  $bought  Amounts in the base unit keyed by product id.
      */
-    public function forecastPeriod(CarbonImmutable $from, CarbonImmutable $to): ShoppingForecast
+    public function forecastPeriod(CarbonImmutable $from, CarbonImmutable $to, array $bought = []): ShoppingForecast
     {
         $meals = MealPlanEntry::query()
             ->with(array_map(fn (string $relation) => "recipe.{$relation}", self::RECIPE_RELATIONS))
@@ -50,7 +53,9 @@ class ShoppingForecaster
             ->map(PlannedMeal::fromEntry(...))
             ->all();
 
-        return $this->forecast($meals, PantryItem::all());
+        $purchases = collect($bought)->map(fn (float $amount, int $productId) => new PantryItem(['product_id' => $productId, 'amount' => $amount]));
+
+        return $this->forecast($meals, PantryItem::all()->concat($purchases->values()));
     }
 
     /**

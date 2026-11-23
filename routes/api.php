@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\HouseholdSettingsController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ImportSettingsController;
 use App\Http\Controllers\Api\V1\MealPlanController;
+use App\Http\Controllers\Api\V1\MealPlanReasonController;
+use App\Http\Controllers\Api\V1\MealPlanShiftController;
 use App\Http\Controllers\Api\V1\PantryController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -86,6 +88,8 @@ Route::prefix('v1')->group(function () {
 
         Route::post('meal-plan/suggest', [MealPlanController::class, 'suggest']);
         Route::post('meal-plan/batch', [MealPlanController::class, 'storeBatch']);
+        Route::post('meal-plan/shift', MealPlanShiftController::class);
+        Route::get('meal-plan/reasons', MealPlanReasonController::class);
         Route::apiResource('meal-plan', MealPlanController::class)
             ->parameters(['meal-plan' => 'entry'])
             ->except('show');

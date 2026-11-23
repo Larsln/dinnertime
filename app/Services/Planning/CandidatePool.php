@@ -30,7 +30,7 @@ class CandidatePool
             $recipes = $byMeal[$slot->meal->value] ??= $this->recipesForMeal($slot->meal->value, $request);
 
             if ($request->preferences->quickOnWeekdays && $slot->isOnWeekday()) {
-                $recipes = $this->filtered($recipes, $this->isQuick(...));
+                $recipes = $this->filtered($recipes, self::isQuick(...));
             }
 
             $avoided = $request->avoid[$slot->key()] ?? null;
@@ -74,7 +74,7 @@ class CandidatePool
     /**
      * Whether a recipe takes at most half an hour or is tagged as quick.
      */
-    private function isQuick(Recipe $recipe): bool
+    public static function isQuick(Recipe $recipe): bool
     {
         $minutes = $recipe->prep_minutes + $recipe->cook_minutes;
 

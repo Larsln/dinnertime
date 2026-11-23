@@ -151,13 +151,87 @@ class ShoppingListTest extends TestCase
         $this->plan('2026-11-17', $this->recipe('Pfanne', [[$rice, 400, 'gram']]));
 
         $refreshed = $this->createList()->assertOk()->json('data');
+        $rice = collect($refreshed['items'])->whereNotNull('product');
 
         $this->assertSame($list['id'], $refreshed['id']);
-        $this->assertCount(2, $refreshed['items']);
-        $this->assertEquals(1000, $refreshed['items'][0]['purchase_amount']);
-        $this->assertNotNull($refreshed['items'][0]['checked_at']);
-        $this->assertSame('Spülmittel', $refreshed['items'][1]['label']);
+        $this->assertCount(3, $refreshed['items']);
+        $this->assertEquals([500, 500], $rice->pluck('purchase_amount')->all());
+        $this->assertSame(1, $rice->whereNotNull('checked_at')->count());
+        $this->assertSame($list['items'][0]['id'], $rice->whereNotNull('checked_at')->value('id'));
+        $this->assertSame('Spülmittel', $refreshed['items'][2]['label']);
         $this->getJson('/api/v1/shopping-lists/current')->assertJsonPath('data.id', $list['id']);
+    }
+
+    public function test_bought_positions_cover_what_they_can_and_survive_a_smaller_plan(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $curry = $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']]));
+        $item = $this->createList()->json('data.items.0');
+        $this->patchJson("/api/v1/shopping-list-items/{$item['id']}", ['checked' => true])->assertOk();
+
+        $this->plan('2026-11-17', $this->recipe('Pfanne', [[$rice, 200, 'gram']]));
+        $this->assertCount(1, $this->createList()->json('data.items'));
+
+        $curry->delete();
+        $this->createList()->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.id', $item['id']);
+    }
+
+    public function test_products_bought_as_another_share_its_position(): void
+    {
+        $onion = $this->product('Zwiebel', [1], ['base_unit' => 'piece']);
+        $red = $this->product('Rote Zwiebel', [], ['base_unit' => 'piece', 'buy_as_id' => $onion->id]);
+        $pickles = $this->product('Saure Gurken', [330]);
+        $brine = $this->product('Gurkenwasser', [], ['base_unit' => 'ml', 'buy_as_id' => $pickles->id]);
+        $this->plan('2026-11-16', $this->recipe('Salat', [[$red, 1], [$brine, 50, 'milliliter']]));
+        $this->plan('2026-11-17', $this->recipe('Suppe', [[$onion, 2]]));
+
+        $items = collect($this->createList()->json('data.items'))->keyBy('product.name');
+
+        $this->assertCount(2, $items);
+        $this->assertEquals(2, $items['Zwiebel']['purchase_amount']);
+        $this->assertSame(['Rote Zwiebel'], array_column($items['Zwiebel']['variants'], 'name'));
+        $this->assertEquals(1, $items['Zwiebel']['variants'][0]['needed_amount']);
+        $this->assertSame('piece', $items['Zwiebel']['variants'][0]['base_unit']);
+        $this->assertNull($items['Saure Gurken']['purchase_amount']);
+        $this->assertSame('Gurkenwasser', $items['Saure Gurken']['variants'][0]['name']);
+        $this->assertSame('Salat', $items['Saure Gurken']['variants'][0]['uses'][0]['title']);
+        $this->assertSame([], $items['Saure Gurken']['packages']);
+    }
+
+    public function test_the_list_follows_changes_to_the_plan(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $cream = $this->product('Sahne', [200]);
+        $curry = $this->postJson('/api/v1/meal-plan', $this->entry('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']])))->json('data.id');
+        $listId = $this->createList()->json('data.id');
+        $soup = $this->recipe('Suppe', [[$cream, 100, 'gram']]);
+
+        $soupEntry = $this->postJson('/api/v1/meal-plan', $this->entry('2026-11-18', $soup))->json('data.id');
+        $this->assertSame(['Reis', 'Sahne'], $this->productNames($listId));
+
+        $this->patchJson("/api/v1/meal-plan/{$soupEntry}", ['date' => '2026-11-24'])->assertOk();
+        $this->assertSame(['Reis'], $this->productNames($listId));
+
+        $this->postJson('/api/v1/meal-plan/shift', ['from' => '2026-11-16', 'days' => 7])->assertOk()->assertJsonCount(2, 'data');
+        $this->assertSame([], $this->productNames($listId));
+
+        $this->postJson('/api/v1/meal-plan/shift', ['from' => '2026-11-23', 'days' => -7])->assertOk();
+        $this->assertSame(['Reis'], $this->productNames($listId));
+
+        $this->deleteJson("/api/v1/meal-plan/{$curry}")->assertNoContent();
+        $this->assertSame([], $this->productNames($listId));
+    }
+
+    public function test_a_list_whose_leftovers_were_stocked_stays_as_it_is(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']]));
+        $listId = $this->createList()->json('data.id');
+        $this->postJson("/api/v1/shopping-lists/{$listId}/stock-leftovers")->assertOk();
+
+        $this->postJson('/api/v1/meal-plan', $this->entry('2026-11-17', $this->recipe('Suppe', [[$this->product('Sahne', [200]), 100, 'gram']])))->assertCreated();
+
+        $this->assertSame(['Reis'], $this->productNames($listId));
     }
 
     public function test_a_manual_position_is_linked_to_its_product(): void
@@ -246,6 +320,22 @@ class ShoppingListTest extends TestCase
             'recipe_id' => $recipe->id,
             'servings' => $servings,
         ]);
+    }
+
+    /**
+     * @return array{date: string, meal: string, recipe_id: int, servings: int}
+     */
+    private function entry(string $date, Recipe $recipe): array
+    {
+        return ['date' => $date, 'meal' => 'dinner', 'recipe_id' => $recipe->id, 'servings' => 2];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function productNames(int $listId): array
+    {
+        return array_column($this->getJson("/api/v1/shopping-lists/{$listId}")->json('data.items.*.product'), 'name');
     }
 
     /**

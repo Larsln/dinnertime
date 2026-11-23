@@ -289,9 +289,14 @@ to signed-in users; its content is never returned.
 | DELETE | `/product-aliases/{id}` | | `204` |
 
 - **Product:** `{id, name, plural_name, icon, base_unit, is_pantry_staple,
-  shelf_life_opened_days, note, status, enriched_at, recipe_count,
-  store_section: StoreSection|null, aliases: [string],
-  conversions: [Conversion], offers: [Offer]}`. `status` is `suggested`
+  shelf_life_opened_days, note, buy_as_id, buy_as: {id, name}|null, status,
+  enriched_at, recipe_count, store_section: StoreSection|null,
+  aliases: [string], conversions: [Conversion], offers: [Offer]}`.
+  `buy_as_id` names the product this one is bought as, such as onions for
+  red onions or pickles for pickle brine: it shares that product's item on
+  the shopping list, while recipes keep naming this one. It is one level
+  deep, so a product others are bought as cannot be bought as something
+  else (`422`). `status` is `suggested`
   or `confirmed`. `icon` is the key of a line icon for the shopping list
   tile (listed in `resources/icons/products/manifest.json`; clients show the generic icon of the store section, `section-<key>`, for products without one or with a key they do not know), or
   `null`. `recipe_count`, `conversions` and `offers` are only present on
@@ -329,12 +334,35 @@ or `import`.
 |---|---|---|---|
 | GET | `/meal-plan` | `?from=&to=` | List of Entry |
 | POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` (optional, default from the household settings) | Entry, `201` |
-| PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry |
+| PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry; moves, swaps or resizes it |
 | DELETE | `/meal-plan/{id}` | | `204` |
+| POST | `/meal-plan/shift` | `from`, `days` (−14 to 14, not 0) | The Entries that moved: all not cooked from that day on |
+| GET | `/meal-plan/reasons` | `?from=&to=` | `{data: [{entry_id, reasons: [Reason]}]}` for the entries of the period |
 | POST | `/meal-plan/suggest` | PlanRequest | List of Suggestion plus `meta.candidate_count`; nothing is saved |
 | POST | `/meal-plan/batch` | `entries: [{date, meal, recipe_id, servings}]` | The Entries that were added, `201` |
 
 **Entry:** `{id, date, meal, servings, cooked_at, recipe: RecipeSummary}`
+
+Every change to the plan that touches what is cooked, on which day and for
+how many, refreshes the shopping lists covering the days before and after
+the change, unless their leftovers went to the pantry.
+
+**Reason:** why a meal goes with the rest of the plan, for the clients to
+put into words. Reasons are computed from the plan as it is, so they follow
+every change.
+
+- `{type: "shares", products: [name], with: [{title, date}]}`: the meal
+  draws from the same products as other meals, the most perishable first.
+- `{type: "pantry", products: [name]}`: it uses what the pantry holds, what
+  expires first first.
+- `{type: "favorite"}`: the user marked the recipe as favorite.
+- `{type: "rating", value}`: the household rates it well; `value` is the
+  average from 0 to 10.
+- `{type: "last_planned", days}`: it was last planned that many days before
+  the period; `{type: "not_recent"}` when not within 60 days.
+- `{type: "quick", minutes}`: a quick recipe on a weekday, only in
+  suggestions that asked for those; `minutes` may be `null` for recipes
+  tagged as quick.
 
 **PlanRequest:**
 
@@ -357,7 +385,7 @@ or `import`.
 - `avoid: [{date, meal, recipe_id}]` (optional): recipes not to suggest for a
   slot again, used to re-roll a single meal.
 
-**Suggestion:** `{date, meal, recipe: RecipeSummary, kept}`, ordered by day and
+**Suggestion:** `{date, meal, recipe: RecipeSummary, kept, reasons: [Reason]}`, ordered by day and
 meal. Every call may answer with a different plan. `meta.candidate_count` is
 the number of recipes that were eligible.
 
@@ -390,7 +418,13 @@ Without `expires_on` the expiry follows from the product's shelf life.
 - **Item:** `{id, label, is_manual, needed_amount, purchase_amount,
   packages: [{package_id, label, amount, count}], leftover_amount,
   wasted_amount, uses: [{date, recipe_id, title, amount}], is_approximate,
-  extra_amounts: [{quantity, unit_code}], checked_at, product: Product|null}`
+  extra_amounts: [{quantity, unit_code}], variants: [Variant], checked_at,
+  product: Product|null}`
+- **Variant:** `{product_id, name, base_unit, needed_amount,
+  purchase_amount, packages, leftover_amount, wasted_amount, uses,
+  extra_amounts}`: what a product bought as the item's product needs,
+  shaped like the item's own amounts. The item's own amounts are `null`
+  when only its variants are needed.
 
 Generated items name a product and the packages to buy. `leftover_amount`
 remains usable after the period, `wasted_amount` expires before a recipe uses
@@ -398,4 +432,6 @@ it. `is_approximate` marks amounts based on unconfirmed conversions.
 `extra_amounts` lists what recipes need in units that cannot be converted
 into the base unit, to be bought in addition, for example 3 pieces. Items
 without a product are manual entries or ingredient lines without a product.
-Refreshing a list keeps manual items and the checked state of products.
+Refreshing a list changes only what has not been bought: manual and
+checked items stay as they are, and what checked items bought counts as
+stock, so a refresh adds an item for what is missing beyond them.

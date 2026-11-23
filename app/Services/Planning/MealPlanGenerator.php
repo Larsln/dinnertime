@@ -6,7 +6,6 @@ use App\Enums\MealType;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\Recipe;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Random\Randomizer;
 
@@ -30,6 +29,8 @@ class MealPlanGenerator
         private readonly PlanCost $leftoverCost,
         private readonly PreferenceCost $preferenceCost,
         private readonly Randomizer $randomizer,
+        private readonly PlanHistory $history,
+        private readonly PlanExplainer $explainer,
     ) {}
 
     /**
@@ -54,23 +55,35 @@ class MealPlanGenerator
             fn (PlanSlot $slot) => ! isset($kept[$slot->key()]) && ($candidates[$slot->key()] ?? []) !== [],
         ));
 
-        $fixed = [
-            ...$existing->map(PlannedMeal::fromEntry(...))->all(),
-            ...array_map(fn (SlotAssignment $assignment) => $this->meal($assignment->slot, $assignment->recipe, $request), $kept),
+        $existingMeals = $existing->map(PlannedMeal::fromEntry(...))->values()->all();
+        $keptMeals = array_values(array_map(fn (SlotAssignment $assignment) => $this->meal($assignment->slot, $assignment->recipe, $request), $kept));
+
+        $recipes = $this->search($open, $candidates, [...$existingMeals, ...$keptMeals], $request);
+
+        $assignments = [
+            ...array_values($kept),
+            ...array_map(fn (PlanSlot $slot, Recipe $recipe) => new SlotAssignment($slot, $recipe, false), $open, $recipes),
         ];
 
-        $recipes = $this->search($open, $candidates, $fixed, $request);
-
-        $suggested = array_map(
-            fn (PlanSlot $slot, Recipe $recipe) => new SlotAssignment($slot, $recipe, false),
-            $open,
-            $recipes,
-        );
-
         return new PlanSuggestion(
-            $this->inPlanOrder([...array_values($kept), ...$suggested]),
+            $this->inPlanOrder($this->explained($assignments, $existingMeals, $request)),
             collect($candidates)->flatten()->unique('id')->count(),
         );
+    }
+
+    /**
+     * The assignments with the reasons they fit the whole plan.
+     *
+     * @param  list<SlotAssignment>  $assignments
+     * @param  list<PlannedMeal>  $existingMeals
+     * @return list<SlotAssignment>
+     */
+    private function explained(array $assignments, array $existingMeals, PlanRequest $request): array
+    {
+        $meals = array_map(fn (SlotAssignment $assignment) => $this->meal($assignment->slot, $assignment->recipe, $request), $assignments);
+        $reasons = array_slice($this->explainer->explain([...$existingMeals, ...$meals], $request->from, $request->user, $request->preferences), count($existingMeals));
+
+        return array_map(fn (SlotAssignment $assignment, array $reasons) => $assignment->withReasons($reasons), $assignments, $reasons);
     }
 
     /**
@@ -111,7 +124,7 @@ class MealPlanGenerator
     private function search(array $slots, array $candidates, array $fixed, PlanRequest $request): array
     {
         $pantry = PantryItem::all();
-        $daysSincePlanned = $this->daysSincePlanned($request->from);
+        $daysSincePlanned = $this->history->daysSincePlanned($request->from);
         $cost = fn (array $recipes) => $this->cost($slots, $recipes, $fixed, $pantry, $daysSincePlanned, $request);
 
         $best = [];
@@ -197,21 +210,6 @@ class MealPlanGenerator
     private function meal(PlanSlot $slot, Recipe $recipe, PlanRequest $request): PlannedMeal
     {
         return new PlannedMeal($slot->date, $recipe, $request->servings);
-    }
-
-    /**
-     * Days since each recipe was last planned before the period.
-     *
-     * @return array<int, int> Days keyed by recipe id.
-     */
-    private function daysSincePlanned(CarbonImmutable $from): array
-    {
-        return MealPlanEntry::query()
-            ->whereBetween('date', [$from->subDays(PreferenceCost::MEMORY_DAYS), $from->subDay()])
-            ->orderBy('date')
-            ->get(['recipe_id', 'date'])
-            ->mapWithKeys(fn (MealPlanEntry $entry) => [$entry->recipe_id => (int) $entry->date->diffInDays($from)])
-            ->all();
     }
 
     /**

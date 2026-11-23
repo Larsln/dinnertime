@@ -12,6 +12,7 @@ use App\Http\Resources\SlotAssignmentResource;
 use App\Models\MealPlanEntry;
 use App\Services\HouseholdSettings;
 use App\Services\Planning\MealPlanGenerator;
+use App\Services\Planning\ShoppingListRefresher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -37,40 +38,50 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Schedule a recipe.
+     * Schedule a recipe. Shopping lists covering the day follow.
      */
-    public function store(MealPlanEntryRequest $request, HouseholdSettings $settings): MealPlanEntryResource
+    public function store(MealPlanEntryRequest $request, HouseholdSettings $settings, ShoppingListRefresher $lists): MealPlanEntryResource
     {
         $entry = MealPlanEntry::create([
             'servings' => $settings->defaultServings(),
             ...$request->safe()->except('cooked'),
         ]);
 
+        $lists->afterChangesOn([$entry->date]);
+
         return new MealPlanEntryResource($entry->load('recipe.tags'));
     }
 
     /**
-     * Change an entry or mark it as cooked.
+     * Change, move or swap an entry or mark it as cooked. Shopping lists
+     * covering the old or the new day follow.
      */
-    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry): MealPlanEntryResource
+    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry, ShoppingListRefresher $lists): MealPlanEntryResource
     {
+        $previousDate = $entry->date;
         $entry->fill($request->safe()->except('cooked'));
 
         if ($request->has('cooked')) {
             $entry->cooked_at = $request->boolean('cooked') ? ($entry->cooked_at ?? now()) : null;
         }
 
+        $changesShopping = $entry->isDirty(['date', 'recipe_id', 'servings']);
         $entry->save();
+
+        if ($changesShopping) {
+            $lists->afterChangesOn([$previousDate, $entry->date]);
+        }
 
         return new MealPlanEntryResource($entry->load('recipe.tags'));
     }
 
     /**
-     * Remove an entry.
+     * Remove an entry. Shopping lists covering the day follow.
      */
-    public function destroy(MealPlanEntry $entry): Response
+    public function destroy(MealPlanEntry $entry, ShoppingListRefresher $lists): Response
     {
         $entry->delete();
+        $lists->afterChangesOn([$entry->date]);
 
         return response()->noContent();
     }
@@ -89,9 +100,10 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Schedule several recipes at once.
+     * Schedule several recipes at once. Shopping lists covering the days
+     * follow.
      */
-    public function storeBatch(Request $request): JsonResponse
+    public function storeBatch(Request $request, ShoppingListRefresher $lists): JsonResponse
     {
         $data = $request->validate([
             'entries' => ['required', 'array', 'min:1'],
@@ -105,6 +117,8 @@ class MealPlanController extends Controller
             fn (array $entry) => MealPlanEntry::create($entry)->load('recipe.tags'),
             $data['entries'],
         ));
+
+        $lists->afterChangesOn(array_map(fn (MealPlanEntry $entry) => $entry->date, $entries));
 
         return MealPlanEntryResource::collection($entries)->response()->setStatusCode(201);
     }

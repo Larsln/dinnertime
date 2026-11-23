@@ -30,7 +30,13 @@ class ShoppingListItemResource extends JsonResource
             'wasted_amount' => $this->wasted_amount,
             'uses' => $this->uses ?? [],
             'is_approximate' => $this->is_approximate,
-            'extra_amounts' => $this->extraAmounts(),
+            'extra_amounts' => $this->extraAmounts($this->extra_amounts ?? []),
+            'variants' => array_map(fn (array $variant) => [
+                ...$variant,
+                'packages' => $variant['packages'] ?? [],
+                'uses' => $variant['uses'] ?? [],
+                'extra_amounts' => $this->extraAmounts($variant['extra_amounts'] ?? []),
+            ], $this->variants ?? []),
             'checked_at' => $this->checked_at,
             'product' => new ProductResource($this->whenLoaded('product')),
         ];
@@ -41,15 +47,16 @@ class ShoppingListItemResource extends JsonResource
      * with the unit's abbreviation in the current locale. A missing unit
      * stands for pieces.
      *
+     * @param  list<array{unit_id: ?int, quantity: float}>  $amounts
      * @return list<array{quantity: float, unit_code: string}>
      */
-    private function extraAmounts(): array
+    private function extraAmounts(array $amounts): array
     {
         $units = once(fn () => Unit::all());
 
         return array_map(fn (array $amount) => [
             'quantity' => $amount['quantity'],
             'unit_code' => ($units->find($amount['unit_id']) ?? $units->firstWhere('key', Unit::PIECE_KEY))->displayCode(),
-        ], $this->extra_amounts ?? []);
+        ], $amounts);
     }
 }

@@ -24,6 +24,10 @@ use Illuminate\Support\Collection;
  * details. Its conversions are reviewed individually, so a
  * confirmed product can receive new suggestions later.
  *
+ * A product can be bought as another one, such as red onions as onions
+ * or pickle brine as pickles. Only one level deep: a product others are
+ * bought as is not bought as something else itself.
+ *
  * @property BaseUnit $base_unit
  * @property ReviewStatus $status
  * @property ?CarbonImmutable $enriched_at
@@ -37,6 +41,7 @@ use Illuminate\Support\Collection;
     'is_pantry_staple',
     'shelf_life_opened_days',
     'note',
+    'buy_as_id',
     'status',
     'enriched_at',
     'mealie_food_id',
@@ -87,6 +92,27 @@ class Product extends Model
     public function ingredients(): HasMany
     {
         return $this->hasMany(RecipeIngredient::class);
+    }
+
+    /**
+     * Product this one is bought as: it shares its entry on the shopping
+     * list, while recipes keep naming this one.
+     *
+     * @return BelongsTo<Product, $this>
+     */
+    public function buyAs(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'buy_as_id');
+    }
+
+    /**
+     * Products that are bought as this one.
+     *
+     * @return HasMany<Product, $this>
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(Product::class, 'buy_as_id');
     }
 
     /**

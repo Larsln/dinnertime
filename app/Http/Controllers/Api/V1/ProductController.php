@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'conversions.unit', 'offers.store'];
+    private const array DETAIL_RELATIONS = ['storeSection', 'aliases', 'buyAs', 'conversions.unit', 'offers.store'];
 
     /**
      * List products, optionally filtered by name or alias.
@@ -30,7 +30,7 @@ class ProductController extends Controller
         ]);
 
         $products = Product::query()
-            ->with(['storeSection', 'aliases'])
+            ->with(['storeSection', 'aliases', 'buyAs'])
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query
                 ->where(fn (Builder $query) => $query
                     ->whereLike('name', "%{$search}%")
@@ -116,13 +116,17 @@ class ProductController extends Controller
     }
 
     /**
-     * Delete a product no recipe uses.
+     * Delete a product no recipe uses. Products bought as it are bought
+     * as themselves again.
      */
     public function destroy(Product $product): Response
     {
         abort_if($product->ingredients()->exists(), 409, __('messages.product_in_use'));
 
-        $product->delete();
+        DB::transaction(function () use ($product) {
+            $product->variants->each->update(['buy_as_id' => null]);
+            $product->delete();
+        });
 
         return response()->noContent();
     }

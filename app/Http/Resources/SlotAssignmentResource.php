@@ -23,6 +23,7 @@ class SlotAssignmentResource extends JsonResource
             'meal' => $this->slot->meal,
             'recipe' => new RecipeSummaryResource($this->recipe),
             'kept' => $this->kept,
+            'reasons' => $this->reasons,
         ];
     }
 }

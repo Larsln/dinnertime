@@ -8,6 +8,7 @@ return [
     'leftovers_already_stocked' => 'The leftovers of this shopping list have already been moved to the pantry.',
 
     'product_in_use' => 'The product is used in recipes and cannot be deleted.',
+    'buy_as_nested' => 'Buying as works one level deep only: not as the product itself, not as a product that is bought as something else, and not for a product others are bought as.',
 
     'tool_in_use' => 'The tool is used in recipes and cannot be deleted.',
 

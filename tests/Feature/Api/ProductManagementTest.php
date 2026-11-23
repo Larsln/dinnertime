@@ -197,6 +197,41 @@ class ProductManagementTest extends TestCase
         $this->postJson("/api/v1/products/{$target->id}/merge", ['into' => $target->id])->assertUnprocessable();
     }
 
+    public function test_a_product_can_be_bought_as_another_one_level_deep(): void
+    {
+        $onion = $this->product('Zwiebel');
+        $red = $this->product('Rote Zwiebel');
+        $shallot = $this->product('Schalotte');
+
+        $this->patchJson("/api/v1/products/{$red->id}", ['buy_as_id' => $onion->id])
+            ->assertOk()
+            ->assertJsonPath('data.buy_as_id', $onion->id)
+            ->assertJsonPath('data.buy_as', ['id' => $onion->id, 'name' => 'Zwiebel']);
+
+        $this->patchJson("/api/v1/products/{$shallot->id}", ['buy_as_id' => $red->id])->assertJsonValidationErrors('buy_as_id');
+        $this->patchJson("/api/v1/products/{$onion->id}", ['buy_as_id' => $shallot->id])->assertJsonValidationErrors('buy_as_id');
+        $this->patchJson("/api/v1/products/{$shallot->id}", ['buy_as_id' => $shallot->id])->assertJsonValidationErrors('buy_as_id');
+        $this->patchJson("/api/v1/products/{$red->id}", ['buy_as_id' => null])->assertOk()->assertJsonPath('data.buy_as', null);
+    }
+
+    public function test_merging_and_deleting_keep_buying_as_one_level_deep(): void
+    {
+        $onion = $this->product('Zwiebel');
+        $duplicate = $this->product('Zwiebeln');
+        $red = $this->product('Rote Zwiebel', [], ['buy_as_id' => $duplicate->id]);
+
+        $this->postJson("/api/v1/products/{$duplicate->id}/merge", ['into' => $onion->id])->assertOk();
+        $this->assertSame($onion->id, $red->refresh()->buy_as_id);
+
+        $this->postJson("/api/v1/products/{$onion->id}/merge", ['into' => $red->id])->assertOk();
+        $this->assertNull($red->refresh()->buy_as_id);
+
+        $spring = $this->product('Frühlingszwiebel', [], ['buy_as_id' => $red->id]);
+        $red->ingredients()->delete();
+        $this->deleteJson("/api/v1/products/{$red->id}")->assertNoContent();
+        $this->assertNull($spring->refresh()->buy_as_id);
+    }
+
     public function test_it_only_deletes_unused_products(): void
     {
         $used = $this->product('Mehl');

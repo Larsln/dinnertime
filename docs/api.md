@@ -296,7 +296,7 @@ to signed-in users; its content is never returned.
   red onions or pickles for pickle brine: it shares that product's item on
   the shopping list, while recipes keep naming this one. It is one level
   deep, so a product others are bought as cannot be bought as something
-  else (`422`). `status` is `suggested`
+  else (`422`). Changing it refreshes the shopping lists still running. `status` is `suggested`
   or `confirmed`. `icon` is the key of a line icon for the shopping list
   tile (listed in `resources/icons/products/manifest.json`; clients show the generic icon of the store section, `section-<key>`, for products without one or with a key they do not know), or
   `null`. `recipe_count`, `conversions` and `offers` are only present on

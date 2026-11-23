@@ -291,13 +291,15 @@ class MealPlanTest extends TestCase
         $first = MealPlanEntry::create(['date' => '2026-11-16', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Lasagne', [[$cream, 120, 'gram']])->id, 'servings' => 2]);
         $second = MealPlanEntry::create(['date' => '2026-11-18', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Suppe', [[$cream, 80, 'gram']])->id, 'servings' => 2]);
         MealPlanEntry::create(['date' => '2026-11-25', 'meal' => MealType::Dinner, 'recipe_id' => $this->recipe('Curry', [[$cream, 80, 'gram']])->id, 'servings' => 2]);
+        MealPlanEntry::create(['date' => '2026-11-20', 'meal' => MealType::Dinner, 'recipe_id' => $second->recipe_id, 'servings' => 2]);
 
         $this->getJson('/api/v1/meal-plan/reasons?from=2026-11-16&to=2026-11-22')
             ->assertOk()
-            ->assertJsonCount(2, 'data')
+            ->assertJsonCount(3, 'data')
             ->assertJsonPath('data.0.entry_id', $first->id)
-            ->assertJsonPath('data.0.reasons.0', ['type' => 'shares', 'products' => ['Sahne'], 'with' => [['title' => 'Suppe', 'date' => '2026-11-18']]])
-            ->assertJsonPath('data.1.entry_id', $second->id);
+            ->assertJsonPath('data.0.reasons.0.with', [['title' => 'Suppe', 'date' => '2026-11-18'], ['title' => 'Suppe', 'date' => '2026-11-20']])
+            ->assertJsonPath('data.1.entry_id', $second->id)
+            ->assertJsonPath('data.1.reasons.0', ['type' => 'shares', 'products' => ['Sahne'], 'with' => [['title' => 'Lasagne', 'date' => '2026-11-16']]]);
     }
 
     /**

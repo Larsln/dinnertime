@@ -198,6 +198,19 @@ class ShoppingListTest extends TestCase
         $this->assertSame([], $items['Saure Gurken']['packages']);
     }
 
+    public function test_running_lists_follow_when_a_product_is_bought_as_another(): void
+    {
+        $this->travelTo('2026-11-18');
+        $onion = $this->product('Zwiebel', [1], ['base_unit' => 'piece']);
+        $red = $this->product('Rote Zwiebel', [1], ['base_unit' => 'piece']);
+        $this->plan('2026-11-16', $this->recipe('Salat', [[$red, 1], [$onion, 1]]));
+        $listId = $this->createList()->json('data.id');
+
+        $this->patchJson("/api/v1/products/{$red->id}", ['buy_as_id' => $onion->id])->assertOk();
+
+        $this->assertSame(['Zwiebel'], $this->productNames($listId));
+    }
+
     public function test_the_list_follows_changes_to_the_plan(): void
     {
         $rice = $this->product('Reis', [500]);

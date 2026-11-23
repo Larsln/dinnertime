@@ -51,8 +51,9 @@ class PlanExplainer
     }
 
     /**
-     * Products several meals draw from, most perishable first, with the
-     * meals each meal shares them with.
+     * Products several recipes draw from, most perishable first, with the
+     * meals each meal shares them with. The same recipe planned twice
+     * shares nothing with itself.
      *
      * @param  list<PlannedMeal>  $meals
      * @param  Collection<int, PantryItem>  $pantry
@@ -67,14 +68,14 @@ class PlanExplainer
         foreach ($products as $product) {
             $uses = collect($product->uses)->keyBy(fn (Demand $use) => $this->key($use->date, $use->recipe));
 
-            if ($uses->count() < 2) {
-                continue;
-            }
-
             foreach ($uses as $key => $use) {
-                $shared[$key]['products'][] = $product->product->name;
+                $others = $uses->reject(fn (Demand $other) => $other->recipe->is($use->recipe));
 
-                foreach ($uses->except($key) as $otherKey => $other) {
+                if ($others->isNotEmpty()) {
+                    $shared[$key]['products'][] = $product->product->name;
+                }
+
+                foreach ($others as $otherKey => $other) {
                     $shared[$key]['with'][$otherKey] ??= ['title' => $other->recipe->title, 'date' => $other->date->toDateString()];
                 }
             }

@@ -6,9 +6,11 @@ use App\Models\ShoppingList;
 use Carbon\CarbonImmutable;
 
 /**
- * Keeps shopping lists in step with the meal plan: when meals on some days
- * change, every list covering one of those days is refreshed. Lists whose
- * leftovers went to the pantry are closed and stay as they are.
+ * Keeps shopping lists in step with the meal plan and the catalog: when
+ * meals on some days change, every list covering one of those days is
+ * refreshed, and when products are grouped differently, every list still
+ * running. Lists whose leftovers went to the pantry are closed and stay as
+ * they are.
  */
 class ShoppingListRefresher
 {
@@ -31,6 +33,18 @@ class ShoppingListRefresher
             ->whereDate('ends_on', '>=', $dates->min())
             ->get()
             ->filter(fn (ShoppingList $list) => $dates->contains(fn (string $date) => $date >= $list->starts_on->toDateString() && $date <= $list->ends_on->toDateString()))
+            ->each(fn (ShoppingList $list) => $this->synchronizer->sync($list->starts_on, $list->ends_on));
+    }
+
+    /**
+     * Refresh the open lists whose period has not ended yet.
+     */
+    public function running(): void
+    {
+        ShoppingList::query()
+            ->whereNull('leftovers_stocked_at')
+            ->whereDate('ends_on', '>=', CarbonImmutable::today())
+            ->get()
             ->each(fn (ShoppingList $list) => $this->synchronizer->sync($list->starts_on, $list->ends_on));
     }
 }

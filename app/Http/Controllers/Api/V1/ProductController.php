@@ -9,6 +9,7 @@ use App\Http\Resources\ProductResource;
 use App\Jobs\EnrichProduct;
 use App\Models\Product;
 use App\Services\Catalog\ProductMerger;
+use App\Services\Planning\ShoppingListRefresher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -78,11 +79,16 @@ class ProductController extends Controller
     }
 
     /**
-     * Change the details of a product.
+     * Change the details of a product. When it is bought as another product
+     * from now on, or no longer, the running shopping lists follow.
      */
-    public function update(ProductRequest $request, Product $product): ProductResource
+    public function update(ProductRequest $request, Product $product, ShoppingListRefresher $lists): ProductResource
     {
         $product->update($request->validated());
+
+        if ($product->wasChanged('buy_as_id')) {
+            $lists->running();
+        }
 
         return new ProductResource($product->load(self::DETAIL_RELATIONS));
     }

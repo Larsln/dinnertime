@@ -19,8 +19,12 @@ import TextField from '@/components/ui/TextField.vue';
  * The package sizes of a product: each with the store that sells it, or
  * sold everywhere, and its price. The entry row adds a size or corrects
  * the one that was loaded into it.
+ *
+ * Sizes are stated in units of what the product is bought by as chosen in
+ * the editor around, saved or not. A choice not saved yet is saved first,
+ * so the size is accepted.
  */
-const props = defineProps<{ product: Product }>();
+const props = defineProps<{ product: Product; baseUnit: BaseUnit }>();
 
 const { t, locale } = useI18n();
 const { showError } = useToasts();
@@ -30,10 +34,10 @@ const queryClient = useQueryClient();
 const editingId = ref<number | null>(null);
 const store = ref('');
 const amount = ref<number | null>(null);
-const unit = ref<OfferUnit | null>(props.product.base_unit);
+const unit = ref<OfferUnit | null>(props.baseUnit);
 
 watch(
-    () => props.product.base_unit,
+    () => props.baseUnit,
     (baseUnit) => {
         unit.value = baseUnit;
     },
@@ -42,7 +46,7 @@ const price = ref<number | null>(null);
 
 const UNITS: Record<BaseUnit, OfferUnit[]> = { g: ['g', 'kg'], ml: ['ml', 'l'], piece: ['piece'] };
 const unitOptions = computed(() =>
-    UNITS[props.product.base_unit].map((value) => ({
+    UNITS[props.baseUnit].map((value) => ({
         value,
         label: value === 'piece' ? t('units.piece') : value,
     })),
@@ -61,7 +65,7 @@ function describe(offer: ProductOffer): string {
 }
 
 function refresh(): void {
-    for (const key of ['products', 'review', 'stores', 'shopping-list']) {
+    for (const key of ['products', 'product', 'review', 'stores', 'shopping-list']) {
         queryClient.invalidateQueries({ queryKey: [key] });
     }
 }
@@ -70,7 +74,7 @@ function edit(offer: ProductOffer): void {
     editingId.value = offer.id;
     store.value = storeName(offer) ?? '';
     amount.value = offer.amount;
-    unit.value = offer.unit ?? props.product.base_unit;
+    unit.value = offer.unit && UNITS[props.baseUnit].includes(offer.unit) ? offer.unit : props.baseUnit;
     price.value = offer.price;
 }
 
@@ -78,7 +82,7 @@ function reset(): void {
     editingId.value = null;
     store.value = '';
     amount.value = null;
-    unit.value = props.product.base_unit;
+    unit.value = props.baseUnit;
     price.value = null;
 }
 
@@ -94,10 +98,15 @@ function input(): OfferInput {
 }
 
 const save = useMutation({
-    mutationFn: () =>
-        editingId.value === null
+    mutationFn: async () => {
+        if (props.baseUnit !== props.product.base_unit) {
+            await productsApi.update(props.product.id, { base_unit: props.baseUnit });
+        }
+
+        return editingId.value === null
             ? productsApi.addOffer(props.product.id, input())
-            : productsApi.updateOffer(editingId.value, input()),
+            : productsApi.updateOffer(editingId.value, input());
+    },
     onSuccess: () => {
         if (editingId.value === null) {
             amount.value = null;

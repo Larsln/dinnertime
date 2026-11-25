@@ -37,7 +37,9 @@ const detail = useQuery({
                     >
                 </p>
             </div>
-            <StatusBadge v-if="product.is_pantry_staple">{{ t('products.staple') }}</StatusBadge>
+            <StatusBadge v-if="product.is_pantry_staple && product.status === 'confirmed'">{{
+                t('products.staple')
+            }}</StatusBadge>
             <StatusBadge v-if="product.status === 'suggested'" tone="warning">{{
                 t('products.suggested')
             }}</StatusBadge>

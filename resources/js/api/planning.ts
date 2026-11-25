@@ -55,5 +55,17 @@ export const shoppingApi = {
         data(api.post<{ data: ShoppingListItem }>(`/shopping-lists/${listId}/items`, entry)),
     setChecked: (itemId: number, checked: boolean) =>
         data(api.patch<{ data: ShoppingListItem }>(`/shopping-list-items/${itemId}`, { checked })),
+    setSkipped: (itemId: number, skipped: boolean) =>
+        data(api.patch<{ data: ShoppingListItem }>(`/shopping-list-items/${itemId}`, { skipped })),
+    substitute: (
+        itemId: number,
+        substitute: { substitute_product_id: number } | { substitute_label: string },
+    ) =>
+        data(
+            api.patch<{ data: ShoppingListItem }>(`/shopping-list-items/${itemId}`, {
+                checked: true,
+                ...substitute,
+            }),
+        ),
     removeItem: (itemId: number) => api.delete(`/shopping-list-items/${itemId}`),
 };

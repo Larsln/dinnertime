@@ -1,3 +1,5 @@
+import { logError } from '@/lib/errorLog';
+
 /**
  * Error answered by the API, carrying field messages for validation failures.
  */
@@ -8,6 +10,7 @@ export class ApiError extends Error {
         public readonly errors: Record<string, string[]> = {},
     ) {
         super(message);
+        this.name = 'ApiError';
     }
 }
 
@@ -54,6 +57,8 @@ function buildUrl(path: string, query: Query = {}): string {
 async function send<T>(method: string, url: string, body?: BodyInit, contentType?: string): Promise<T> {
     const token = context.token();
 
+    const place = `${method} ${url.split('?')[0]}`;
+
     const response = await fetch(url, {
         method,
         body,
@@ -63,6 +68,10 @@ async function send<T>(method: string, url: string, body?: BodyInit, contentType
             ...(contentType ? { 'Content-Type': contentType } : {}),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+    }).catch((error: unknown) => {
+        logError('request', place, error instanceof Error ? error.message : String(error));
+
+        throw error;
     });
 
     if (response.status === 204) {
@@ -76,7 +85,14 @@ async function send<T>(method: string, url: string, body?: BodyInit, contentType
             context.onUnauthorized();
         }
 
-        throw new ApiError(response.status, payload.message ?? response.statusText, payload.errors);
+        const message = payload.message ?? response.statusText;
+        const fields = Object.values((payload.errors ?? {}) as Record<string, string[]>).flat();
+
+        if (response.status !== 401) {
+            logError('request', place, [response.status, message, ...fields].join(' · '));
+        }
+
+        throw new ApiError(response.status, message, payload.errors);
     }
 
     return payload as T;

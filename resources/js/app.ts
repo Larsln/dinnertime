@@ -4,10 +4,13 @@ import { VueQueryPlugin } from '@tanstack/vue-query';
 import App from './App.vue';
 import { configureApi } from './api/client';
 import { currentLocale, i18n } from './i18n';
+import { watchScriptErrors } from './lib/errorLog';
 import { router } from './router';
 import { useSessionStore } from './stores/session';
 
 const app = createApp(App);
+
+watchScriptErrors();
 
 app.use(createPinia());
 app.use(i18n);

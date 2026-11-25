@@ -163,6 +163,7 @@ export interface Step {
 export interface Recipe extends RecipeSummary {
     source_url: string | null;
     source_platform: string | null;
+    video_url: string | null;
     meal_tags_locked: boolean;
     ingredients: Ingredient[];
     steps: Step[];
@@ -290,6 +291,8 @@ export interface ShoppingListItem extends ShoppingAmounts {
     is_approximate: boolean;
     variants: ShoppingVariant[];
     checked_at: string | null;
+    skipped_at: string | null;
+    substitute: { product_id: number | null; name: string } | null;
     product?: Product | null;
 }
 

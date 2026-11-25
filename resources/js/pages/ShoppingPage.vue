@@ -18,7 +18,7 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 
 /**
  * The current shopping list as tiles grouped by store section. What is
- * checked off moves to the end.
+ * checked off or skipped moves to the end.
  */
 const NOT_FOUND = 404;
 const GRID_CLASS = 'grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9';
@@ -41,10 +41,14 @@ const list = useQuery({
 
 const isStocking = ref(false);
 
+function isSettled(item: ShoppingListItem): boolean {
+    return item.checked_at !== null || item.skipped_at !== null;
+}
+
 const sections = computed(() => {
     const groups = new Map<string, ShoppingListItem[]>();
 
-    for (const item of (list.data.value?.items ?? []).filter((entry) => entry.checked_at === null)) {
+    for (const item of (list.data.value?.items ?? []).filter((entry) => !isSettled(entry))) {
         const title = item.product
             ? (item.product.store_section?.name ?? t('shopping.noSection'))
             : t('shopping.other');
@@ -55,13 +59,9 @@ const sections = computed(() => {
     return [...groups.entries()].map(([title, items]) => ({ title, items }));
 });
 
-const checkedItems = computed(() =>
-    (list.data.value?.items ?? []).filter((item) => item.checked_at !== null),
-);
+const checkedItems = computed(() => (list.data.value?.items ?? []).filter(isSettled));
 
-const openCount = computed(
-    () => (list.data.value?.items ?? []).filter((item) => item.checked_at === null).length,
-);
+const openCount = computed(() => (list.data.value?.items ?? []).filter((item) => !isSettled(item)).length);
 
 function refresh(): void {
     queryClient.invalidateQueries({ queryKey: ['shopping-list'] });

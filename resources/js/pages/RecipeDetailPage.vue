@@ -4,7 +4,7 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { TabsRoot } from 'reka-ui';
-import { CalendarPlus, ExternalLink, Heart, Pencil, Trash2 } from 'lucide-vue-next';
+import { CalendarPlus, ExternalLink, Heart, Pencil, Play, Trash2 } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
 import type { Ingredient, Step } from '@/api/types';
 import { useToasts } from '@/composables/useToasts';
@@ -14,6 +14,7 @@ import { scaledStepSegments } from '@/lib/stepText';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
 import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import RatingControl from '@/components/RatingControl.vue';
+import RecipeVideoDialog from '@/components/RecipeVideoDialog.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import NumberField from '@/components/ui/NumberField.vue';
@@ -25,7 +26,8 @@ import TabItem from '@/components/ui/TabItem.vue';
  * A recipe with ingredients scaled to the chosen number of servings, the
  * member's rating and favorite mark. Narrow screens switch between
  * ingredients and method, wide ones show both. Opens with the household's
- * usual number of servings unless the link names another one.
+ * usual number of servings unless the link names another one. A video
+ * kept on the server can be watched in place.
  */
 const props = withDefaults(defineProps<{ id: number; initialServings?: number }>(), {
     initialServings: undefined,
@@ -44,6 +46,7 @@ const view = ref<'ingredients' | 'method'>('ingredients');
 const servings = ref<number | null>(null);
 const isPlanning = ref(false);
 const isDeleting = ref(false);
+const isWatching = ref(false);
 const today = toIsoDate(new Date());
 
 watch(
@@ -211,6 +214,9 @@ const remove = useMutation({
                     <AppButton variant="ghost" @click="isDeleting = true"
                         ><Trash2 class="size-4" />{{ t('common.delete') }}</AppButton
                     >
+                    <AppButton v-if="recipe.data.value.video_url" variant="ghost" @click="isWatching = true"
+                        ><Play class="size-4" />{{ t('recipes.watchVideo') }}</AppButton
+                    >
                     <a
                         v-if="recipe.data.value.source_url"
                         :href="recipe.data.value.source_url"
@@ -322,6 +328,12 @@ const remove = useMutation({
             :confirm-label="t('common.delete')"
             :cancel-label="t('common.cancel')"
             @confirm="remove.mutate()"
+        />
+        <RecipeVideoDialog
+            v-if="recipe.data.value.video_url"
+            v-model:open="isWatching"
+            :title="recipe.data.value.title"
+            :url="recipe.data.value.video_url"
         />
     </article>
 </template>

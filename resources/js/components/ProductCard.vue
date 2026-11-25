@@ -28,6 +28,9 @@ import TextField from '@/components/ui/TextField.vue';
  * A product can be bought as another one, so both share an entry on the
  * shopping list while recipes keep their own.
  *
+ * Changes stay in the editor until they are saved, also while the product
+ * is loaded again because a package size was added.
+ *
  * Suggested values can be corrected and are confirmed together with one
  * tap. A unit can be marked as not convertible, for products whose single
  * items vary too much. Duplicates can be merged into another product.
@@ -65,26 +68,42 @@ const isMerging = ref(false);
 const isDeleting = ref(false);
 const mergeTarget = ref<Product | null>(null);
 
+const snapshot = ref('');
+
+function draft(): string {
+    return JSON.stringify([details, conversions.value]);
+}
+
+/**
+ * Load the product into the editor.
+ */
+function load(product: Product): void {
+    Object.assign(details, {
+        name: product.name,
+        icon: product.icon,
+        storeSectionId: product.store_section?.id ?? null,
+        baseUnit: product.base_unit,
+        isPantryStaple: product.is_pantry_staple,
+        shelfLife: product.shelf_life_opened_days,
+        note: product.note ?? '',
+        buyAs: product.buy_as ?? null,
+    });
+
+    conversions.value = (product.conversions ?? []).map((entry) => ({
+        unitId: entry.unit.id,
+        unitName: entry.unit.name,
+        amount: entry.amount_in_base,
+        isConvertible: entry.amount_in_base !== null,
+    }));
+    snapshot.value = draft();
+}
+
 watch(
     () => props.product,
-    (product) => {
-        Object.assign(details, {
-            name: product.name,
-            icon: product.icon,
-            storeSectionId: product.store_section?.id ?? null,
-            baseUnit: product.base_unit,
-            isPantryStaple: product.is_pantry_staple,
-            shelfLife: product.shelf_life_opened_days,
-            note: product.note ?? '',
-            buyAs: product.buy_as ?? null,
-        });
-
-        conversions.value = (product.conversions ?? []).map((entry) => ({
-            unitId: entry.unit.id,
-            unitName: entry.unit.name,
-            amount: entry.amount_in_base,
-            isConvertible: entry.amount_in_base !== null,
-        }));
+    (product, previous) => {
+        if (product.id !== previous?.id || draft() === snapshot.value) {
+            load(product);
+        }
     },
     { immediate: true },
 );
@@ -162,6 +181,7 @@ const save = useMutation({
         }
     },
     onSuccess: () => {
+        snapshot.value = draft();
         refresh();
         showSuccess(t('products.saved'));
     },
@@ -230,6 +250,12 @@ const remove = useMutation({
                 class="sm:col-span-2 lg:col-span-4"
                 :label="t('products.pantryStaple')"
             />
+            <p
+                v-if="details.isPantryStaple && product.status === 'suggested'"
+                class="-mt-2 text-sm text-ink-muted sm:col-span-2 lg:col-span-4"
+            >
+                {{ t('products.stapleUnconfirmed') }}
+            </p>
         </div>
 
         <TextArea v-model="details.note" class="mt-4" :rows="2" :label="t('products.note')" />
@@ -244,7 +270,7 @@ const remove = useMutation({
         />
 
         <div class="mt-5 grid gap-6 lg:grid-cols-2">
-            <ProductOffers :product="product" />
+            <ProductOffers :product="product" :base-unit="details.baseUnit ?? product.base_unit" />
 
             <section>
                 <FieldLabel>{{ t('products.conversions', { unit: baseUnitLabel }) }}</FieldLabel>

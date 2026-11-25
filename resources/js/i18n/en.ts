@@ -80,6 +80,7 @@ const messages: typeof de = {
         prepTime: 'Preparation (min)',
         cookTime: 'Cooking (min)',
         source: 'Source',
+        watchVideo: 'Watch video',
         tools: 'Tools',
         chooseCover: 'Choose cover image',
         ingredients: 'Ingredients',
@@ -247,6 +248,15 @@ const messages: typeof de = {
         wasted: '{amount} spoils',
         needed: 'Needed {amount}',
         done: 'Done ({count})',
+        skip: 'Do not buy',
+        unskip: 'Buy after all',
+        skipped: 'not bought',
+        reopen: 'Open again',
+        substitute: 'Bought a substitute …',
+        substituted: 'instead: {name}',
+        substituteTitle: 'Bought a substitute',
+        substituteDescription:
+            'What did you buy instead of “{name}”? The position counts as done, and “{name}” is not added to the pantry.',
     },
     pantry: {
         subtitle: 'Opened leftovers the planner uses up first',
@@ -289,6 +299,8 @@ const messages: typeof de = {
         offerPrice: 'Price',
         shelfLifeUnlimited: 'long',
         pantryStaple: 'Always in stock, never on the shopping list',
+        stapleUnconfirmed:
+            'Only counts once the product is confirmed. Until then it is shopped for as usual.',
         notConvertible: 'cannot be converted',
         toolsTab: 'Tools',
         conversions: 'Conversions ({unit})',
@@ -336,6 +348,14 @@ const messages: typeof de = {
         deleteDescription: '“{name}” will be deleted unless a recipe uses it.',
     },
     settings: {
+        errorLog: {
+            title: 'Error log',
+            hint: 'Errors this browser ran into. Export them to pass them on.',
+            empty: 'No errors so far.',
+            more: 'and one more | and {count} more',
+            export: 'Export',
+            clear: 'Clear',
+        },
         account: 'Account',
         language: 'Interface language',
         household: {

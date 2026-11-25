@@ -78,6 +78,7 @@ export default {
         prepTime: 'Vorbereitung (min)',
         cookTime: 'Garzeit (min)',
         source: 'Quelle',
+        watchVideo: 'Video ansehen',
         tools: 'Hilfsmittel',
         chooseCover: 'Titelbild wählen',
         ingredients: 'Zutaten',
@@ -255,6 +256,15 @@ export default {
         wasted: 'Verdirbt {amount}',
         needed: 'Bedarf {amount}',
         done: 'Erledigt ({count})',
+        skip: 'Nicht kaufen',
+        unskip: 'Doch kaufen',
+        skipped: 'nicht gekauft',
+        reopen: 'Wieder öffnen',
+        substitute: 'Ersatz gekauft …',
+        substituted: 'statt dessen: {name}',
+        substituteTitle: 'Ersatz gekauft',
+        substituteDescription:
+            'Was hast du statt „{name}“ gekauft? Die Position gilt als erledigt, „{name}“ kommt nicht in den Vorrat.',
     },
     pantry: {
         subtitle: 'Angebrochene Reste, die der Planer zuerst aufbraucht',
@@ -297,6 +307,7 @@ export default {
         offerPrice: 'Preis',
         shelfLifeUnlimited: 'lange',
         pantryStaple: 'Immer vorrätig, kommt nie auf die Einkaufsliste',
+        stapleUnconfirmed: 'Gilt erst, wenn das Produkt bestätigt ist. Bis dahin wird es normal eingekauft.',
         notConvertible: 'nicht umrechenbar',
         toolsTab: 'Hilfsmittel',
         conversions: 'Umrechnungen ({unit})',
@@ -344,6 +355,14 @@ export default {
         deleteDescription: '„{name}“ wird gelöscht, sofern kein Rezept es verwendet.',
     },
     settings: {
+        errorLog: {
+            title: 'Fehlerprotokoll',
+            hint: 'Fehler, die in diesem Browser aufgetreten sind. Exportiere sie, um sie weiterzugeben.',
+            empty: 'Bisher sind keine Fehler aufgetreten.',
+            more: 'und ein weiterer | und {count} weitere',
+            export: 'Exportieren',
+            clear: 'Leeren',
+        },
         account: 'Konto',
         language: 'Sprache der Oberfläche',
         household: {

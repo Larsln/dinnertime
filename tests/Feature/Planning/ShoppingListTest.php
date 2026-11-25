@@ -3,6 +3,7 @@
 namespace Tests\Feature\Planning;
 
 use App\Enums\MealType;
+use App\Enums\ReviewStatus;
 use App\Models\MealPlanEntry;
 use App\Models\PantryItem;
 use App\Models\Recipe;
@@ -316,6 +317,84 @@ class ShoppingListTest extends TestCase
         $this->assertSame('2026-11-16', $stock->opened_on->toDateString());
         $this->assertSame('2026-11-20', $stock->expires_on->toDateString());
         $this->postJson("/api/v1/shopping-lists/{$listId}/stock-leftovers")->assertConflict();
+    }
+
+    public function test_a_skipped_position_stays_off_the_list_and_out_of_the_pantry(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $cream = $this->product('Sahne', [200]);
+        $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram'], [$cream, 100, 'gram']]));
+        PantryItem::create(['product_id' => $rice->id, 'amount' => 20]);
+        $list = $this->createList()->json('data');
+        $riceItem = collect($list['items'])->firstWhere('product.name', 'Reis');
+
+        $this->patchJson("/api/v1/shopping-list-items/{$riceItem['id']}", ['skipped' => true])
+            ->assertOk()
+            ->assertJsonPath('data.checked_at', null)
+            ->assertJsonPath('data.skipped_at', fn (?string $skippedAt) => $skippedAt !== null);
+        $this->plan('2026-11-17', $this->recipe('Pfanne', [[$rice, 400, 'gram']]));
+
+        $this->createList()->assertJsonCount(2, 'data.items');
+        $this->postJson("/api/v1/shopping-lists/{$list['id']}/stock-leftovers")->assertOk();
+        $this->assertSame(20.0, PantryItem::where('product_id', $rice->id)->sole()->amount);
+        $this->assertSame(100.0, PantryItem::where('product_id', $cream->id)->sole()->amount);
+    }
+
+    public function test_a_skipped_position_can_be_opened_again(): void
+    {
+        $rice = $this->product('Reis', [500]);
+        $this->plan('2026-11-16', $this->recipe('Curry', [[$rice, 150, 'gram']]));
+        $item = $this->createList()->json('data.items.0');
+        $this->patchJson("/api/v1/shopping-list-items/{$item['id']}", ['skipped' => true])->assertOk();
+
+        $this->patchJson("/api/v1/shopping-list-items/{$item['id']}", ['skipped' => false])->assertJsonPath('data.skipped_at', null);
+
+        $this->createList()->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.id', $item['id']);
+    }
+
+    public function test_a_substitute_settles_a_position_without_stocking_its_product(): void
+    {
+        $tortilla = $this->product('Tortilla', [400]);
+        $wraps = $this->product('Wraps');
+        $this->plan('2026-11-16', $this->recipe('Burrito', [[$tortilla, 150, 'gram']]));
+        $list = $this->createList()->json('data');
+        $id = $list['items'][0]['id'];
+
+        $this->patchJson("/api/v1/shopping-list-items/{$id}", ['checked' => true, 'substitute_product_id' => $wraps->id])
+            ->assertOk()
+            ->assertJsonPath('data.substitute', ['product_id' => $wraps->id, 'name' => 'Wraps'])
+            ->assertJsonPath('data.checked_at', fn (?string $checkedAt) => $checkedAt !== null);
+        $this->plan('2026-11-17', $this->recipe('Quesadilla', [[$tortilla, 300, 'gram']]));
+
+        $this->createList()->assertJsonCount(1, 'data.items')->assertJsonPath('data.items.0.substitute.name', 'Wraps');
+        $this->postJson("/api/v1/shopping-lists/{$list['id']}/stock-leftovers")->assertOk();
+        $this->assertSame(0, PantryItem::count());
+    }
+
+    public function test_a_substitute_can_be_free_text_and_is_forgotten_when_the_position_opens_again(): void
+    {
+        $tortilla = $this->product('Tortilla', [400]);
+        $this->product('Wraps')->aliases()->create(['name' => 'Weizenwraps']);
+        $this->plan('2026-11-16', $this->recipe('Burrito', [[$tortilla, 150, 'gram']]));
+        $id = $this->createList()->json('data.items.0.id');
+
+        $this->patchJson("/api/v1/shopping-list-items/{$id}", ['checked' => true, 'substitute_label' => 'Fladenbrot vom Bäcker'])
+            ->assertJsonPath('data.substitute', ['product_id' => null, 'name' => 'Fladenbrot vom Bäcker']);
+        $this->patchJson("/api/v1/shopping-list-items/{$id}", ['substitute_label' => 'Weizenwraps'])
+            ->assertJsonPath('data.substitute.name', 'Wraps');
+        $this->patchJson("/api/v1/shopping-list-items/{$id}", ['checked' => false])
+            ->assertJsonPath('data.substitute', null);
+    }
+
+    public function test_suggested_staples_are_shopped_for_until_they_are_confirmed(): void
+    {
+        $oil = $this->product('Öl', [500], ['is_pantry_staple' => true, 'status' => ReviewStatus::Suggested]);
+        $this->plan('2026-11-16', $this->recipe('Pfanne', [[$oil, 20, 'gram']]));
+
+        $this->createList()->assertJsonCount(1, 'data.items');
+        $this->postJson("/api/v1/products/{$oil->id}/confirm")->assertOk();
+
+        $this->createList()->assertJsonCount(0, 'data.items');
     }
 
     public function test_it_validates_the_period(): void

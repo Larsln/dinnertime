@@ -12,6 +12,7 @@ use App\Models\Recipe;
 use App\Models\Tag;
 use App\Services\Recipes\CoverStore;
 use App\Services\Recipes\RecipeWriter;
+use App\Services\Recipes\VideoStore;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -139,11 +140,12 @@ class RecipeController extends Controller
     }
 
     /**
-     * Delete a recipe together with its cover image.
+     * Delete a recipe together with its cover image and its video.
      */
-    public function destroy(Recipe $recipe, CoverStore $covers): Response
+    public function destroy(Recipe $recipe, CoverStore $covers, VideoStore $videos): Response
     {
         $covers->delete($recipe);
+        $videos->delete($recipe);
         $recipe->delete();
 
         return response()->noContent();

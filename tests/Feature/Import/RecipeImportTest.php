@@ -99,6 +99,9 @@ class RecipeImportTest extends TestCase
         $this->assertNull($chicken->unit);
 
         Storage::disk('public')->assertExists($recipe->cover_image_path);
+        Storage::disk('public')->assertExists($recipe->video_path);
+        $this->assertSame('video-bytes', Storage::disk('public')->get($recipe->video_path));
+        $this->getJson("/api/v1/recipes/{$recipe->id}")->assertJsonPath('data.video_url', asset("storage/{$recipe->video_path}"));
         Queue::assertPushed(EnrichProduct::class, 2);
         $this->assertSame([], File::directories(storage_path('app/imports')));
 
@@ -136,6 +139,45 @@ class RecipeImportTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'data.recipes');
         $this->assertSame(2, Recipe::count());
+    }
+
+    public function test_recipes_of_one_video_share_its_copy_until_the_last_is_deleted(): void
+    {
+        Queue::fake([EnrichProduct::class]);
+        $this->fakeVideoTools();
+        $this->fakeGemini(['recipes' => [$this->draft(), [...$this->draft(), 'title' => 'Mango-Lassi', 'cover_seconds' => []]]]);
+        [$first, $second] = $this->runImport(self::VIDEO_URL, 2)->recipes;
+
+        $this->assertSame($first->video_path, $second->video_path);
+        $this->deleteJson("/api/v1/recipes/{$first->id}")->assertNoContent();
+        Storage::disk('public')->assertExists($second->video_path);
+
+        $this->deleteJson("/api/v1/recipes/{$second->id}")->assertNoContent();
+        Storage::disk('public')->assertMissing($second->video_path);
+    }
+
+    public function test_videos_are_not_kept_when_that_is_turned_off_or_they_are_too_large(): void
+    {
+        Queue::fake([EnrichProduct::class]);
+        $this->fakeVideoTools();
+        $this->fakeGemini(['recipes' => [$this->draft()]]);
+        config(['services.ytdlp.max_video_mb' => 0]);
+
+        $this->assertNull($this->runImport(self::VIDEO_URL)->recipes->sole()->video_path);
+    }
+
+    public function test_videos_of_earlier_imports_can_be_fetched(): void
+    {
+        $recipes = Recipe::factory()->count(2)->create(['source_platform' => SourcePlatform::Tiktok, 'source_url' => self::RESOLVED_URL]);
+        Recipe::factory()->create(['source_platform' => SourcePlatform::Web, 'source_url' => 'https://example.com/rezept']);
+        $this->fakeVideoTools();
+
+        $this->artisan('recipes:fetch-missing-videos')->assertSuccessful();
+
+        $path = $recipes[0]->refresh()->video_path;
+        Storage::disk('public')->assertExists($path);
+        $this->assertSame($path, $recipes[1]->refresh()->video_path);
+        $this->assertSame(1, Recipe::whereNull('video_path')->count());
     }
 
     public function test_the_number_of_dishes_is_stored_with_the_import(): void

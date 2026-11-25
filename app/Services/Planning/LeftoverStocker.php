@@ -4,10 +4,15 @@ namespace App\Services\Planning;
 
 use App\Models\PantryItem;
 use App\Models\ShoppingList;
+use App\Models\ShoppingListItem;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Moves what remains after a shopping list's period into the pantry.
+ *
+ * Products whose position was skipped or replaced by a substitute keep
+ * their stock as it is: they were not bought, and nobody knows how much
+ * of what was there got used.
  */
 class LeftoverStocker
 {
@@ -21,8 +26,16 @@ class LeftoverStocker
     {
         $forecast = $this->forecaster->forecastPeriod($list->starts_on, $list->ends_on);
 
-        DB::transaction(function () use ($list, $forecast) {
+        $dropped = $list->items
+            ->reject(fn (ShoppingListItem $item) => $item->is_manual || ! $item->isSettled() || $item->isBought())
+            ->flatMap(fn (ShoppingListItem $item) => $item->productIds());
+
+        DB::transaction(function () use ($list, $forecast, $dropped) {
             foreach ($forecast->products as $product) {
+                if ($dropped->contains($product->product->id)) {
+                    continue;
+                }
+
                 PantryItem::where('product_id', $product->product->id)->delete();
 
                 foreach ($product->remainingLots as $lot) {

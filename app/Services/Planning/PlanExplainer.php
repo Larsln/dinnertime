@@ -36,7 +36,7 @@ class PlanExplainer
     public function explain(array $meals, CarbonImmutable $from, User $user, ?PlanPreferences $preferences = null): array
     {
         $pantry = PantryItem::with('product')->where('amount', '>', 0)->get()
-            ->reject(fn (PantryItem $item) => $item->product->is_pantry_staple);
+            ->reject(fn (PantryItem $item) => $item->product->isStaple());
         $shares = $this->shares($meals, $pantry);
         $days = $this->history->daysSincePlanned($from);
         $recipes = Recipe::query()->withMarksOf($user)->findMany(array_map(fn (PlannedMeal $meal) => $meal->recipe->id, $meals))->keyBy('id');

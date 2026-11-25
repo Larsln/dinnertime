@@ -142,7 +142,7 @@ class SyncFeed
             ],
             'meal_plan_entries' => [MealPlanEntry::query()->with('recipe.tags'), MealPlanEntryResource::class],
             'pantry_items' => [PantryItem::query()->with('product.storeSection'), PantryItemResource::class],
-            'shopping_lists' => [ShoppingList::query()->with(['items.product.storeSection', 'items.product.offers.store']), ShoppingListResource::class],
+            'shopping_lists' => [ShoppingList::query()->with(['items.product.storeSection', 'items.product.offers.store', 'items.substituteProduct']), ShoppingListResource::class],
         ];
     }
 }

@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Creates or refreshes the shopping list of a period from the meal plan.
  *
- * Only what has not been bought yet changes. Checked positions stay as
- * they are and count as stock, so a refresh adds a position for what is
- * missing beyond them. Manual positions survive a refresh. An open
+ * Only what is still open changes. Checked positions stay as they are and
+ * count as stock, so a refresh adds a position for what is missing beyond
+ * them. Skipped positions and those replaced by a substitute stay too, add
+ * nothing to the stock and keep their product off the list. Manual
+ * positions survive a refresh. An open
  * position keeps its record, so changes clients made to it offline still
  * find it. Products bought as another one share its position.
  */
@@ -28,19 +30,22 @@ class ShoppingListSynchronizer
     {
         return DB::transaction(function () use ($from, $to) {
             $list = ShoppingList::firstOrCreate(['starts_on' => $from, 'ends_on' => $to]);
-            [$checked, $open] = $list->items()->where('is_manual', false)->get()
-                ->partition(fn (ShoppingListItem $item) => $item->checked_at !== null);
+            [$settled, $open] = $list->items()->where('is_manual', false)->get()
+                ->partition(fn (ShoppingListItem $item) => $item->isSettled());
+            [$checked, $dropped] = $settled->partition(fn (ShoppingListItem $item) => $item->isBought());
             $forecast = $this->forecaster->forecastPeriod($from, $to, $this->boughtAmounts($checked));
             $kept = [];
 
             foreach ($this->positions($forecast, $this->boughtProducts($checked)) as $productId => $parts) {
-                $item = $open->firstWhere('product_id', $productId) ?? $list->items()->make();
-                $item->fill($this->attributes->of($productId, $parts))->save();
-                $kept[] = $item->id;
+                if (! $dropped->contains('product_id', $productId)) {
+                    $item = $open->firstWhere('product_id', $productId) ?? $list->items()->make();
+                    $item->fill($this->attributes->of($productId, $parts))->save();
+                    $kept[] = $item->id;
+                }
             }
 
             foreach ($forecast->unresolved as $text) {
-                if (! $checked->whereNull('product_id')->contains('label', $text)) {
+                if (! $settled->whereNull('product_id')->contains('label', $text)) {
                     $kept[] = ($open->whereNull('product_id')->firstWhere('label', $text) ?? $list->items()->create(['label' => $text]))->id;
                 }
             }

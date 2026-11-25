@@ -85,6 +85,16 @@ class Product extends Model
     }
 
     /**
+     * Whether the household always has the product in stock, so it is
+     * neither planned nor shopped for. A suggestion of the AI only counts
+     * once somebody confirmed the product.
+     */
+    public function isStaple(): bool
+    {
+        return $this->is_pantry_staple && $this->status === ReviewStatus::Confirmed;
+    }
+
+    /**
      * Ingredient lines that use the product.
      *
      * @return HasMany<RecipeIngredient, $this>

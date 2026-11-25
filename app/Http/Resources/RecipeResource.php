@@ -20,6 +20,7 @@ class RecipeResource extends RecipeSummaryResource
             ...parent::toArray($request),
             'source_url' => $this->source_url,
             'source_platform' => $this->source_platform,
+            'video_url' => $this->video_path ? asset("storage/{$this->video_path}") : null,
             'meal_tags_locked' => $this->meal_tags_locked,
             'ingredients' => RecipeIngredientResource::collection($this->whenLoaded('ingredients')),
             'steps' => RecipeStepResource::collection($this->whenLoaded('steps')),

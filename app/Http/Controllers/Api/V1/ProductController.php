@@ -80,13 +80,14 @@ class ProductController extends Controller
 
     /**
      * Change the details of a product. When it is bought as another product
-     * from now on, or no longer, the running shopping lists follow.
+     * from now on, or no longer, or starts or stops being a staple, the
+     * running shopping lists follow.
      */
     public function update(ProductRequest $request, Product $product, ShoppingListRefresher $lists): ProductResource
     {
         $product->update($request->validated());
 
-        if ($product->wasChanged('buy_as_id')) {
+        if ($product->wasChanged(['buy_as_id', 'is_pantry_staple'])) {
             $lists->running();
         }
 
@@ -94,14 +95,19 @@ class ProductController extends Controller
     }
 
     /**
-     * Confirm a product together with all of its conversions.
+     * Confirm a product together with all of its conversions. Only then
+     * does a suggested staple leave the running shopping lists.
      */
-    public function confirm(Product $product): ProductResource
+    public function confirm(Product $product, ShoppingListRefresher $lists): ProductResource
     {
         DB::transaction(function () use ($product) {
             $product->update(['status' => ReviewStatus::Confirmed]);
             $product->conversions()->update(['status' => ReviewStatus::Confirmed]);
         });
+
+        if ($product->is_pantry_staple) {
+            $lists->running();
+        }
 
         return new ProductResource($product->load(self::DETAIL_RELATIONS));
     }

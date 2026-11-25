@@ -28,7 +28,7 @@ class RecipeAvailability
         $needed = [];
 
         foreach ($recipe->ingredients as $ingredient) {
-            if ($ingredient->product === null || $ingredient->product->is_pantry_staple) {
+            if ($ingredient->product === null || $ingredient->product->isStaple()) {
                 continue;
             }
 

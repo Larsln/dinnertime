@@ -7,6 +7,7 @@ use App\Enums\ImportStage;
 use App\Models\Recipe;
 use App\Services\Ai\GeminiClient;
 use App\Services\Ai\RecipeExtractionPrompt;
+use App\Services\Recipes\VideoStore;
 use App\Support\SourceLink;
 use Closure;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,7 +21,8 @@ use Illuminate\Support\Str;
  * The whole video is handed to Gemini together with its caption, so
  * recipes that are only shown or only written in the caption are found too.
  * Share links differ on every share, so a video imported before is
- * recognised by its id.
+ * recognised by its id. A copy of the video is kept with the recipes,
+ * because platforms take videos down.
  */
 class VideoRecipeImporter implements RecipeSourceImporter
 {
@@ -29,6 +31,7 @@ class VideoRecipeImporter implements RecipeSourceImporter
         private readonly GeminiClient $gemini,
         private readonly RecipeDraftWriter $writer,
         private readonly VideoCoverMaker $covers,
+        private readonly VideoStore $videos,
     ) {}
 
     public function import(string $url, ?int $dishCount, Closure $report): Collection
@@ -71,6 +74,8 @@ class VideoRecipeImporter implements RecipeSourceImporter
                     $directory,
                 );
             }
+
+            rescue(fn () => $this->videos->put($recipes, $video));
 
             return new Collection($recipes);
         } finally {

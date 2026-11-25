@@ -90,8 +90,11 @@ setting `MERCURE_JWT_KEY`.
   the mean over all household members with one decimal. The four fields are
   present on the recipe endpoints and absent where a recipe is embedded in
   another resource.
-- **Recipe:** RecipeSummary plus `{source_url, source_platform,
-  meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [Tool]}`
+- **Recipe:** RecipeSummary plus `{source_url, source_platform, video_url,
+  meal_tags_locked, ingredients: [Ingredient], steps: [Step], tools: [Tool]}`.
+  `video_url` is the address of the copy the server keeps of the video the
+  recipe was imported from, or `null`: platforms take videos down, so
+  clients play this copy and link `source_url` next to it.
 - **Ingredient:** `{id, position, section, quantity, unit: Unit|null,
   product: Product|null, note, is_estimated, raw_text}`. A missing unit means
   the quantity counts pieces. Lines without a product only carry `raw_text`.
@@ -292,6 +295,9 @@ to signed-in users; its content is never returned.
   shelf_life_opened_days, note, buy_as_id, buy_as: {id, name}|null, status,
   enriched_at, recipe_count, store_section: StoreSection|null,
   aliases: [string], conversions: [Conversion], offers: [Offer]}`.
+  `is_pantry_staple` marks what the household always has, so it is neither
+  planned nor shopped for; a suggestion of the AI only counts once the
+  product is `confirmed`.
   `buy_as_id` names the product this one is bought as, such as onions for
   red onions or pickles for pickle brine: it shares that product's item on
   the shopping list, while recipes keep naming this one. It is one level
@@ -410,7 +416,7 @@ Without `expires_on` the expiry follows from the product's shelf life.
 | GET | `/shopping-lists/{id}` | | ShoppingList |
 | POST | `/shopping-lists/{id}/stock-leftovers` | | ShoppingList; `409` when done before |
 | POST | `/shopping-lists/{id}/items` | `label` or `product_id` | Manual Item, `201`. A label that names a product is linked to it. A product added by hand before is answered with its Item, unchecked, `200` |
-| PATCH | `/shopping-list-items/{id}` | `checked: bool`, `label` | Item |
+| PATCH | `/shopping-list-items/{id}` | `checked: bool`, `skipped: bool`, `substitute_product_id` or `substitute_label`, `label` | Item |
 | DELETE | `/shopping-list-items/{id}` | | `204` |
 
 - **ShoppingList:** `{id, starts_on, ends_on, leftovers_stocked_at,
@@ -419,7 +425,7 @@ Without `expires_on` the expiry follows from the product's shelf life.
   packages: [{package_id, label, amount, count}], leftover_amount,
   wasted_amount, uses: [{date, recipe_id, title, amount}], is_approximate,
   extra_amounts: [{quantity, unit_code}], variants: [Variant], checked_at,
-  product: Product|null}`
+  skipped_at, substitute: {product_id, name}|null, product: Product|null}`
 - **Variant:** `{product_id, name, base_unit, needed_amount,
   purchase_amount, packages, leftover_amount, wasted_amount, uses,
   extra_amounts}`: what a product bought as the item's product needs,
@@ -435,3 +441,13 @@ without a product are manual entries or ingredient lines without a product.
 Refreshing a list changes only what has not been bought: manual and
 checked items stay as they are, and what checked items bought counts as
 stock, so a refresh adds an item for what is missing beyond them.
+
+An item is settled by checking it off or by skipping it. `skipped` states
+that it is not bought at all, for example because the ingredient is left
+out. A substitute, sent together with `checked: true`, states that
+something else was bought in its place: a product, or any text, which is
+linked to the product known under that name. Opening an item again with
+`checked: false` forgets its substitute. Skipped and substituted items
+stay through a refresh, keep their product off the list, add nothing to
+the stock, and when leftovers are moved to the pantry the stock of their
+products stays as it is.

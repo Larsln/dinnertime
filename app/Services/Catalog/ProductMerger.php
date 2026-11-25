@@ -25,6 +25,7 @@ class ProductMerger
             RecipeIngredient::where('product_id', $duplicate->id)->update(['product_id' => $target->id]);
             PantryItem::where('product_id', $duplicate->id)->update(['product_id' => $target->id]);
             ShoppingListItem::where('product_id', $duplicate->id)->update(['product_id' => $target->id]);
+            ShoppingListItem::where('substitute_product_id', $duplicate->id)->update(['substitute_product_id' => $target->id]);
             ProductAlias::where('product_id', $duplicate->id)->update(['product_id' => $target->id]);
             $root = $target->buy_as_id === null || $target->buy_as_id === $duplicate->id ? $target->id : $target->buy_as_id;
             $duplicate->variants->each(fn (Product $variant) => $variant->update(['buy_as_id' => $variant->id === $root ? null : $root]));

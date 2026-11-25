@@ -81,7 +81,7 @@ class ShoppingForecaster
 
                 if ($product === null) {
                     $unresolved[$line['text']] = true;
-                } elseif (! $product->is_pantry_staple) {
+                } elseif (! $product->isStaple()) {
                     $products[$product->id] = $product;
 
                     if ($amount === null && $line['quantity'] === null) {

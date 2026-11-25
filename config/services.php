@@ -34,6 +34,8 @@ return [
 
     'ytdlp' => [
         'cookies' => env('YTDLP_COOKIES_FILE'),
+        'keep_videos' => env('KEEP_VIDEOS', true),
+        'max_video_mb' => (int) env('KEEP_VIDEOS_MAX_MB', 300),
     ],
 
     'oidc' => [

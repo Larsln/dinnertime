@@ -38,6 +38,11 @@ class ShoppingListItemResource extends JsonResource
                 'extra_amounts' => $this->extraAmounts($variant['extra_amounts'] ?? []),
             ], $this->variants ?? []),
             'checked_at' => $this->checked_at,
+            'skipped_at' => $this->skipped_at,
+            'substitute' => $this->isSubstituted() ? [
+                'product_id' => $this->substitute_product_id,
+                'name' => $this->substituteProduct->name ?? $this->substitute_label,
+            ] : null,
             'product' => new ProductResource($this->whenLoaded('product')),
         ];
     }

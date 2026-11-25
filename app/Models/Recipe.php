@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'source_video_id',
     'cover_image_path',
     'cover_thumb_path',
+    'video_path',
     'meal_tags_locked',
     'mealie_recipe_id',
 ])]

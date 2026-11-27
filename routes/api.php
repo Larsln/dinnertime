@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\MealPlanController;
 use App\Http\Controllers\Api\V1\MealPlanReasonController;
 use App\Http\Controllers\Api\V1\MealPlanShiftController;
 use App\Http\Controllers\Api\V1\PantryController;
+use App\Http\Controllers\Api\V1\PortionFeedbackController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductConversionController;
@@ -86,6 +87,7 @@ Route::prefix('v1')->group(function () {
         Route::get('tags', TagController::class);
         Route::get('units', UnitController::class);
 
+        Route::put('meal-plan/{entry}/portion-feedback', [PortionFeedbackController::class, 'update'])->withoutMiddleware(HonorActionTime::class);
         Route::post('meal-plan/suggest', [MealPlanController::class, 'suggest']);
         Route::post('meal-plan/batch', [MealPlanController::class, 'storeBatch']);
         Route::post('meal-plan/shift', MealPlanShiftController::class);

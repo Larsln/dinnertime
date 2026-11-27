@@ -37,6 +37,6 @@ class MealPlanShiftController extends Controller
 
         $lists->afterChangesOn([...$days, ...$entries->map(fn (MealPlanEntry $entry) => $entry->date)->all()]);
 
-        return MealPlanEntryResource::collection($entries->load('recipe.tags'));
+        return MealPlanEntryResource::collection($entries->load(['recipe.tags', 'feedback']));
     }
 }

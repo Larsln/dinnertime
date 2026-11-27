@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
@@ -69,7 +70,7 @@ class HouseholdSettings
     /**
      * What clients are told about the household.
      *
-     * @return array{default_servings: int, currency: string, show_stocked_needs: bool}
+     * @return array{default_servings: int, currency: string, show_stocked_needs: bool, members: list<array{id: int, name: string}>}
      */
     public function toArray(): array
     {
@@ -77,6 +78,7 @@ class HouseholdSettings
             'default_servings' => $this->defaultServings(),
             'currency' => $this->currency(),
             'show_stocked_needs' => $this->showsStockedNeeds(),
+            'members' => User::orderBy('name')->get(['id', 'name'])->map->only(['id', 'name'])->all(),
         ];
     }
 }

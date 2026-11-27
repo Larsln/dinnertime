@@ -13,6 +13,7 @@ use App\Models\MealPlanEntry;
 use App\Services\HouseholdSettings;
 use App\Services\Planning\MealPlanGenerator;
 use App\Services\Planning\ShoppingListRefresher;
+use App\Services\Portions\PortionPlanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,13 +23,15 @@ use Illuminate\Validation\Rule;
 
 class MealPlanController extends Controller
 {
+    private const array NOT_FILLED = ['cooked', 'eater_ids', 'guests'];
+
     /**
      * List the entries of a period.
      */
     public function index(PeriodRequest $request): AnonymousResourceCollection
     {
         $entries = MealPlanEntry::query()
-            ->with('recipe.tags')
+            ->with(['recipe.tags', 'feedback'])
             ->whereBetween('date', [$request->from(), $request->to()])
             ->orderBy('date')
             ->orderBy('id')
@@ -40,39 +43,50 @@ class MealPlanController extends Controller
     /**
      * Schedule a recipe. Shopping lists covering the day follow.
      */
-    public function store(MealPlanEntryRequest $request, HouseholdSettings $settings, ShoppingListRefresher $lists): MealPlanEntryResource
+    public function store(MealPlanEntryRequest $request, HouseholdSettings $settings, ShoppingListRefresher $lists, PortionPlanner $portions): MealPlanEntryResource
     {
-        $entry = MealPlanEntry::create([
+        $entry = new MealPlanEntry([
             'servings' => $settings->defaultServings(),
-            ...$request->safe()->except('cooked'),
+            ...$request->safe()->except(self::NOT_FILLED),
         ]);
+
+        $portions->compose($entry, $request->eaterIds(), $request->integer('guests'));
+        $entry->save();
 
         $lists->afterChangesOn([$entry->date]);
 
-        return new MealPlanEntryResource($entry->load('recipe.tags'));
+        return new MealPlanEntryResource($entry->load(['recipe.tags', 'feedback']));
     }
 
     /**
      * Change, move or swap an entry or mark it as cooked. Shopping lists
      * covering the old or the new day follow.
      */
-    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry, ShoppingListRefresher $lists): MealPlanEntryResource
+    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry, ShoppingListRefresher $lists, PortionPlanner $portions): MealPlanEntryResource
     {
         $previousDate = $entry->date;
-        $entry->fill($request->safe()->except('cooked'));
+        $entry->fill($request->safe()->except(self::NOT_FILLED));
+
+        if ($request->has('eater_ids')) {
+            $portions->compose($entry, $request->eaterIds(), $request->integer('guests'));
+        } elseif ($entry->isDirty('servings')) {
+            $portions->compose($entry, null);
+        } elseif ($entry->isDirty('recipe_id')) {
+            $portions->refresh($entry);
+        }
 
         if ($request->has('cooked')) {
             $entry->cooked_at = $request->boolean('cooked') ? ($entry->cooked_at ?? now()) : null;
         }
 
-        $changesShopping = $entry->isDirty(['date', 'recipe_id', 'servings']);
+        $changesShopping = $entry->isDirty(['date', 'recipe_id', 'servings', 'portions']);
         $entry->save();
 
         if ($changesShopping) {
             $lists->afterChangesOn([$previousDate, $entry->date]);
         }
 
-        return new MealPlanEntryResource($entry->load('recipe.tags'));
+        return new MealPlanEntryResource($entry->load(['recipe.tags', 'feedback']));
     }
 
     /**
@@ -103,7 +117,7 @@ class MealPlanController extends Controller
      * Schedule several recipes at once. Shopping lists covering the days
      * follow.
      */
-    public function storeBatch(Request $request, ShoppingListRefresher $lists): JsonResponse
+    public function storeBatch(Request $request, ShoppingListRefresher $lists, PortionPlanner $portions): JsonResponse
     {
         $data = $request->validate([
             'entries' => ['required', 'array', 'min:1'],
@@ -114,7 +128,13 @@ class MealPlanController extends Controller
         ]);
 
         $entries = DB::transaction(fn () => array_map(
-            fn (array $entry) => MealPlanEntry::create($entry)->load('recipe.tags'),
+            function (array $attributes) use ($portions) {
+                $entry = new MealPlanEntry($attributes);
+                $portions->compose($entry, null);
+                $entry->save();
+
+                return $entry->load(['recipe.tags', 'feedback']);
+            },
             $data['entries'],
         ));
 

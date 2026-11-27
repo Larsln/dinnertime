@@ -10,6 +10,7 @@ use App\Models\DinnerRound;
 use App\Models\MealPlanEntry;
 use App\Services\Dinner\DinnerRoundStarter;
 use App\Services\HouseholdSettings;
+use App\Services\Portions\PortionPlanner;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,22 +92,26 @@ class DinnerRoundController extends Controller
     /**
      * Put the match on today's plan as dinner and close the round.
      */
-    public function plan(DinnerRound $dinnerRound, HouseholdSettings $settings): MealPlanEntryResource
+    public function plan(DinnerRound $dinnerRound, HouseholdSettings $settings, PortionPlanner $portions): MealPlanEntryResource
     {
         abort_if($dinnerRound->matched_recipe_id === null, 409, __('messages.dinner_round_without_match'));
 
-        $entry = DB::transaction(function () use ($dinnerRound, $settings) {
+        $entry = DB::transaction(function () use ($dinnerRound, $settings, $portions) {
             $dinnerRound->update(['closed_at' => now()]);
 
-            return MealPlanEntry::create([
+            $entry = new MealPlanEntry([
                 'date' => $dinnerRound->date,
                 'meal' => MealType::Dinner,
                 'recipe_id' => $dinnerRound->matched_recipe_id,
                 'servings' => $settings->defaultServings(),
             ]);
+            $portions->compose($entry, null);
+            $entry->save();
+
+            return $entry;
         });
 
-        return new MealPlanEntryResource($entry->load('recipe.tags'));
+        return new MealPlanEntryResource($entry->load(['recipe.tags', 'feedback']));
     }
 
     /**

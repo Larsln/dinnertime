@@ -246,7 +246,8 @@ marks made offline still find it.
 | GET | `/settings/household` | | HouseholdSettings |
 | PATCH | `/settings/household` | `default_servings: 1–50`, `show_stocked_needs: bool`, at least one | HouseholdSettings |
 
-**HouseholdSettings:** `{default_servings, currency, show_stocked_needs}`. `currency` is the ISO 4217
+**HouseholdSettings:** `{default_servings, currency, show_stocked_needs,
+members: [{id, name}]}`. `members` are the users of the household, to choose who eats a meal. `currency` is the ISO 4217
 code prices are noted in, set with `APP_CURRENCY`. `default_servings` is the number of servings a meal is
 planned and shopped for unless another number is chosen. Clients preset it
 when planning and show recipes scaled to it. `2` until the household changes
@@ -341,15 +342,36 @@ or `import`.
 | Method | Path | Body or query | Answer |
 |---|---|---|---|
 | GET | `/meal-plan` | `?from=&to=` | List of Entry |
-| POST | `/meal-plan` | `date`, `meal`, `recipe_id`, `servings` (optional, default from the household settings) | Entry, `201` |
+| POST | `/meal-plan` | `date`, `meal`, `recipe_id`, and either `servings` (optional, default from the household settings) or `eater_ids: [user id]` with `guests` | Entry, `201` |
 | PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry; moves, swaps or resizes it |
 | DELETE | `/meal-plan/{id}` | | `204` |
+| PUT | `/meal-plan/{id}/portion-feedback` | `verdict`: `too_small`, `right`, `too_big` or `null` | Entry |
 | POST | `/meal-plan/shift` | `from`, `days` (−14 to 14, not 0) | The Entries that moved: all not cooked from that day on |
 | GET | `/meal-plan/reasons` | `?from=&to=` | `{data: [{entry_id, reasons: [Reason]}]}` for the entries of the period |
 | POST | `/meal-plan/suggest` | PlanRequest | List of Suggestion plus `meta.candidate_count`; nothing is saved |
 | POST | `/meal-plan/batch` | `entries: [{date, meal, recipe_id, servings}]` | The Entries that were added, `201` |
 
-**Entry:** `{id, date, meal, servings, cooked_at, recipe: RecipeSummary}`
+**Entry:** `{id, date, meal, servings, portions, guests,
+eaters: [{user_id, name, factor}]|null, portion_feedback: [{user_id,
+verdict}], cooked_at, recipe: RecipeSummary}`
+
+`servings` counts the people who eat, `portions` is what is cooked and
+shopped for: clients scale the recipe by it. `eaters` names the household
+members who eat, each with the share of a standard portion that suits
+them, and `guests` the others, who count with a standard portion each.
+Sending `eater_ids` (which may be empty) and `guests` sets the servings to
+their sum. Sending only `servings` names every member when the servings
+seat the whole household, with guests for the rest, and nobody otherwise;
+then every serving is a standard portion.
+
+With the portion feedback the signed-in user says how the portion was for
+them. From these verdicts follows the `factor` of a member, between 0.5
+and 2: a verdict moves the portion of that recipe by about 15 % beyond the
+one that was served, the same verdict again moves it further, opposite
+verdicts settle between the two portions and narrow down with every
+further one. Recipes without a verdict of the member follow all their
+verdicts cautiously. Entries from today on that are not cooked and have no
+verdict yet take over new factors, and their shopping lists follow.
 
 Every change to the plan that touches what is cooked, on which day and for
 how many, refreshes the shopping lists covering the days before and after

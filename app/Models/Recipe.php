@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Course;
+use App\Enums\SideKind;
 use App\Enums\SourcePlatform;
 use App\Models\Concerns\BroadcastsChanges;
 use Database\Factories\RecipeFactory;
@@ -17,7 +18,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Recipe with its ingredient lines, steps, tags and tools.
  *
+ * A recipe that is a side dish names its `side_kind`. A dish that is
+ * served with sides lists the kinds that suit it in `side_options`.
+ *
  * @property ?Course $course
+ * @property ?SideKind $side_kind
+ * @property ?list<string> $side_options
  * @property ?SourcePlatform $source_platform
  */
 #[Fillable([
@@ -25,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'slug',
     'description',
     'course',
+    'side_kind',
+    'side_options',
     'servings',
     'yield_text',
     'prep_minutes',
@@ -57,6 +65,8 @@ class Recipe extends Model
     {
         return [
             'course' => Course::class,
+            'side_kind' => SideKind::class,
+            'side_options' => 'array',
             'source_platform' => SourcePlatform::class,
             'meal_tags_locked' => 'boolean',
         ];

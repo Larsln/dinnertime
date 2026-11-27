@@ -25,6 +25,8 @@ class RecipeSummaryResource extends JsonResource
             'description' => $this->description,
             'course' => $this->course,
             'course_name' => $this->course?->label(),
+            'side_kind' => $this->side_kind,
+            'side_options' => $this->side_options ?? [],
             'servings' => $this->servings,
             'yield_text' => $this->yield_text,
             'prep_minutes' => $this->prep_minutes,

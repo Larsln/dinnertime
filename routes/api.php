@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ImportSettingsController;
 use App\Http\Controllers\Api\V1\MealPlanController;
 use App\Http\Controllers\Api\V1\MealPlanReasonController;
 use App\Http\Controllers\Api\V1\MealPlanShiftController;
+use App\Http\Controllers\Api\V1\MealSideController;
 use App\Http\Controllers\Api\V1\PantryController;
 use App\Http\Controllers\Api\V1\PortionFeedbackController;
 use App\Http\Controllers\Api\V1\ProductAliasController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Api\V1\RecipeMarkController;
 use App\Http\Controllers\Api\V1\ServerController;
 use App\Http\Controllers\Api\V1\ShoppingListController;
 use App\Http\Controllers\Api\V1\ShoppingListItemController;
+use App\Http\Controllers\Api\V1\SideKindController;
 use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreSectionController;
 use App\Http\Controllers\Api\V1\SyncController;
@@ -41,6 +43,7 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/user', [AuthController::class, 'user']);
 
+        Route::get('recipes/{recipe}/sides', [MealSideController::class, 'index']);
         Route::post('recipes/{recipe}/cover', [RecipeController::class, 'cover']);
         Route::put('recipes/{recipe}/rating', [RecipeMarkController::class, 'rate'])->withoutMiddleware(HonorActionTime::class);
         Route::put('recipes/{recipe}/favorite', [RecipeMarkController::class, 'favorite'])->withoutMiddleware(HonorActionTime::class);
@@ -83,11 +86,13 @@ Route::prefix('v1')->group(function () {
         Route::delete('dinner-rounds/{dinnerRound}', [DinnerRoundController::class, 'destroy'])->withoutMiddleware(HonorActionTime::class);
 
         Route::get('courses', CourseController::class);
+        Route::get('side-kinds', SideKindController::class);
         Route::get('store-sections', StoreSectionController::class);
         Route::get('tags', TagController::class);
         Route::get('units', UnitController::class);
 
         Route::put('meal-plan/{entry}/portion-feedback', [PortionFeedbackController::class, 'update'])->withoutMiddleware(HonorActionTime::class);
+        Route::post('meal-plan/{entry}/sides', [MealSideController::class, 'store']);
         Route::post('meal-plan/suggest', [MealPlanController::class, 'suggest']);
         Route::post('meal-plan/batch', [MealPlanController::class, 'storeBatch']);
         Route::post('meal-plan/shift', MealPlanShiftController::class);

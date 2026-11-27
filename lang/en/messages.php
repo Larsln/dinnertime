@@ -14,4 +14,6 @@ return [
 
     'invalid_cookie_file' => 'The file is not a cookie export in Netscape format.',
 
+    'side_not_accepted' => 'This side is not served with this dish.',
+
 ];

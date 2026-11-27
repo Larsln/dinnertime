@@ -3,6 +3,7 @@
 namespace App\Services\Import;
 
 use App\Enums\Course;
+use App\Enums\SideKind;
 use App\Enums\TagType;
 use App\Models\Recipe;
 use App\Models\Tag;
@@ -37,6 +38,7 @@ class RecipeDraftWriter
             'title' => $draft['title'],
             'description' => $draft['description'] ?: null,
             'course' => Course::tryFrom($draft['course']),
+            ...$this->sides($draft),
             'servings' => $draft['servings'] > 0 ? $draft['servings'] : null,
             'yield_text' => $draft['yield_text'] ?: null,
             'prep_minutes' => $draft['prep_minutes'],
@@ -52,6 +54,24 @@ class RecipeDraftWriter
                 ...$this->tagIds(TagType::Tag, $draft['tags']),
             ],
         ]);
+    }
+
+    /**
+     * What kind of side the dish is, or which kinds it is served with. A
+     * side is not served with sides itself.
+     *
+     * @param  array<string, mixed>  $draft
+     * @return array{side_kind: ?SideKind, side_options: list<string>}
+     */
+    private function sides(array $draft): array
+    {
+        $kind = SideKind::tryFrom($draft['side_kind'] ?? '');
+        $options = array_filter($draft['side_options'] ?? [], fn (mixed $option) => SideKind::tryFrom($option) !== null);
+
+        return [
+            'side_kind' => $kind,
+            'side_options' => $kind === null ? array_values(array_unique($options)) : [],
+        ];
     }
 
     /**

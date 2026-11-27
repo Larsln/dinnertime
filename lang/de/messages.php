@@ -14,4 +14,6 @@ return [
 
     'invalid_cookie_file' => 'Die Datei ist kein Cookie-Export im Netscape-Format.',
 
+    'side_not_accepted' => 'Zu diesem Gericht passt diese Beilage nicht.',
+
 ];

@@ -14,6 +14,7 @@ use App\Services\HouseholdSettings;
 use App\Services\Planning\MealPlanGenerator;
 use App\Services\Planning\ShoppingListRefresher;
 use App\Services\Portions\PortionPlanner;
+use App\Services\Sides\MealSides;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -59,10 +60,11 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Change, move or swap an entry or mark it as cooked. Shopping lists
-     * covering the old or the new day follow.
+     * Change, move or swap an entry or mark it as cooked. Its sides
+     * follow, and a side that is moved becomes a meal of its own.
+     * Shopping lists covering the old or the new day follow.
      */
-    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry, ShoppingListRefresher $lists, PortionPlanner $portions): MealPlanEntryResource
+    public function update(MealPlanEntryRequest $request, MealPlanEntry $entry, ShoppingListRefresher $lists, PortionPlanner $portions, MealSides $sides): MealPlanEntryResource
     {
         $previousDate = $entry->date;
         $entry->fill($request->safe()->except(self::NOT_FILLED));
@@ -79,7 +81,12 @@ class MealPlanController extends Controller
             $entry->cooked_at = $request->boolean('cooked') ? ($entry->cooked_at ?? now()) : null;
         }
 
-        $changesShopping = $entry->isDirty(['date', 'recipe_id', 'servings', 'portions']);
+        if ($entry->isDirty(['date', 'meal'])) {
+            $entry->parent_id = null;
+        }
+
+        $changesShopping = $entry->isDirty(['date', 'recipe_id', 'servings', 'portions', 'eaters', 'guests']);
+        $sides->follow($entry);
         $entry->save();
 
         if ($changesShopping) {

@@ -45,6 +45,15 @@ return [
         'drink' => 'Drink',
     ],
 
+    'side_kinds' => [
+        'potato' => 'Potatoes',
+        'rice' => 'Rice',
+        'pasta' => 'Pasta',
+        'bread' => 'Bread',
+        'vegetable' => 'Vegetables',
+        'salad' => 'Salad',
+    ],
+
     'tags' => [
         'meal' => [
             'breakfast' => 'Breakfast',

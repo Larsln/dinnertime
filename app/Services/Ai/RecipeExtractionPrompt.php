@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Enums\Course;
+use App\Enums\SideKind;
 use App\Enums\TagType;
 use App\Models\Tag;
 use App\Models\Unit;
@@ -69,6 +70,8 @@ final readonly class RecipeExtractionPrompt
 
         Classification:
         - course: the one main category of the dish, such as starter, main or dessert.
+        - side_kind: only for a dish that is served as a side to another dish, what it is based on. Null for every other dish.
+        - side_options: for a dish that is usually served with a side and does not contain one already, such as a schnitzel or a curry without rice, every kind of side that suits it. Empty for every other dish.
         - meals: one to three meals the dish suits.
         - tags: only values that clearly apply. "quick" means less than 30 minutes in total.
 
@@ -120,6 +123,8 @@ final readonly class RecipeExtractionPrompt
             'tools' => ['type' => 'ARRAY', 'items' => $string],
             'meals' => $this->keysOf(TagType::Meal),
             'course' => ['type' => 'STRING', 'enum' => array_column(Course::cases(), 'value')],
+            'side_kind' => ['type' => 'STRING', 'nullable' => true, 'enum' => array_column(SideKind::cases(), 'value')],
+            'side_options' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING', 'enum' => array_column(SideKind::cases(), 'value')]],
             'tags' => $this->keysOf(TagType::Tag),
             'cover_seconds' => ['type' => 'ARRAY', 'items' => ['type' => 'NUMBER']],
         ];

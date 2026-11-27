@@ -24,6 +24,7 @@ class MealPlanEntryResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'parent_id' => $this->parent_id,
             'date' => $this->date->toDateString(),
             'meal' => $this->meal,
             'servings' => $this->servings,

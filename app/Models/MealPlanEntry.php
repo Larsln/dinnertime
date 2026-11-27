@@ -16,14 +16,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * `servings` counts the people who eat. `eaters` names the household
  * members among them with the share of a standard portion each gets, and
  * `guests` the others, who get a standard portion. `portions` is what is
- * cooked and shopped for, the servings while it is not set.
+ * cooked and shopped for, the servings while it is not set. An entry with
+ * a `parent_id` is a side served with that meal.
  *
  * @property CarbonImmutable $date
  * @property MealType $meal
  * @property ?list<array{user_id: int, factor: float}> $eaters
  * @property ?float $portions
  */
-#[Fillable(['date', 'meal', 'recipe_id', 'servings', 'cooked_at', 'eaters', 'guests', 'portions'])]
+#[Fillable(['date', 'meal', 'recipe_id', 'servings', 'cooked_at', 'eaters', 'guests', 'portions', 'parent_id'])]
 class MealPlanEntry extends Model
 {
     use BroadcastsChanges;
@@ -57,6 +58,16 @@ class MealPlanEntry extends Model
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(Recipe::class);
+    }
+
+    /**
+     * Sides served with the meal.
+     *
+     * @return HasMany<MealPlanEntry, $this>
+     */
+    public function sides(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     /**

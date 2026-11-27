@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\Course;
+use App\Enums\SideKind;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,9 @@ class RecipeRequest extends FormRequest
             'title' => [$this->isMethod('POST') ? 'required' : 'sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'course' => ['sometimes', 'nullable', Rule::enum(Course::class)],
+            'side_kind' => ['sometimes', 'nullable', Rule::enum(SideKind::class)],
+            'side_options' => ['sometimes', 'array'],
+            'side_options.*' => ['distinct', Rule::enum(SideKind::class)],
             'servings' => ['sometimes', 'nullable', 'integer', 'between:1,100'],
             'yield_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'prep_minutes' => ['sometimes', 'nullable', 'integer', 'between:0,10000'],

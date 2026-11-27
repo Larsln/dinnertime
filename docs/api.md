@@ -56,6 +56,7 @@ setting `MERCURE_JWT_KEY`.
 | Method | Path | Answer |
 |---|---|---|
 | GET | `/courses` | List of Course |
+| GET | `/side-kinds` | List of `{key, name}`: what a side dish can be based on |
 | GET | `/units` | List of Unit |
 | GET | `/store-sections` | List of StoreSection, in walking order |
 | GET | `/tags` | List of Tag |
@@ -76,6 +77,7 @@ setting `MERCURE_JWT_KEY`.
 |---|---|---|---|
 | GET | `/recipes` | `search`, `tags[]`, `courses[]`, `favorite`, `page` | Page of RecipeSummary. A recipe has to be of one of the `courses`, suit one of the meal tags in `tags[]` and carry all other tags in `tags[]`. `tag` and `course` take a single value and remain for older clients |
 | GET | `/recipes/{id}` | | Recipe |
+| GET | `/recipes/{id}/sides` | | List of RecipeSummary: the recipes whose `side_kind` is one of the `side_options` of the dish, those served with it most recently first |
 | POST | `/recipes` | RecipeInput | Recipe, `201` |
 | PATCH | `/recipes/{id}` | RecipeInput, all fields optional | Recipe |
 | POST | `/recipes/{id}/cover` | multipart `image` | Recipe |
@@ -84,6 +86,7 @@ setting `MERCURE_JWT_KEY`.
 | DELETE | `/recipes/{id}` | | `204` |
 
 - **RecipeSummary:** `{id, title, slug, description, course, course_name,
+  side_kind, side_options,
   servings, yield_text, prep_minutes, cook_minutes, cover_url, cover_thumb_url, tags: [Tag],
   rating, is_favorite, average_rating, rating_count}`. `rating` (0 bad to 10
   good) and `is_favorite` belong to the signed-in user, `average_rating` is
@@ -101,7 +104,8 @@ setting `MERCURE_JWT_KEY`.
 - **Step:** `{id, position, section, text}`. Consecutive steps with the same
   free-text `section` form a group, for example "Base", "Filling" and
   "Decoration" of a cake.
-- **RecipeInput:** `title`, `description`, `course`, `servings`, `yield_text`,
+- **RecipeInput:** `title`, `description`, `course`, `side_kind`,
+  `side_options: [key]`, `servings`, `yield_text`,
   `prep_minutes`, `cook_minutes`, `source_url`, `tag_ids: [int]`,
   `tool_ids: [int]`, `ingredients: [{section, product_id, quantity, unit_id,
   note, is_estimated, raw_text}]`, `steps: [{section, text}]`. Lists that are
@@ -345,15 +349,25 @@ or `import`.
 | POST | `/meal-plan` | `date`, `meal`, `recipe_id`, and either `servings` (optional, default from the household settings) or `eater_ids: [user id]` with `guests` | Entry, `201` |
 | PATCH | `/meal-plan/{id}` | any of the above, `cooked: bool` | Entry; moves, swaps or resizes it |
 | DELETE | `/meal-plan/{id}` | | `204` |
+| POST | `/meal-plan/{id}/sides` | `recipe_id` | The side as an Entry, `201`; `422` when the dish is not served with sides of that kind or the entry is a side itself |
 | PUT | `/meal-plan/{id}/portion-feedback` | `verdict`: `too_small`, `right`, `too_big` or `null` | Entry |
 | POST | `/meal-plan/shift` | `from`, `days` (−14 to 14, not 0) | The Entries that moved: all not cooked from that day on |
 | GET | `/meal-plan/reasons` | `?from=&to=` | `{data: [{entry_id, reasons: [Reason]}]}` for the entries of the period |
 | POST | `/meal-plan/suggest` | PlanRequest | List of Suggestion plus `meta.candidate_count`; nothing is saved |
 | POST | `/meal-plan/batch` | `entries: [{date, meal, recipe_id, servings}]` | The Entries that were added, `201` |
 
-**Entry:** `{id, date, meal, servings, portions, guests,
+**Entry:** `{id, parent_id, date, meal, servings, portions, guests,
 eaters: [{user_id, name, factor}]|null, portion_feedback: [{user_id,
 verdict}], cooked_at, recipe: RecipeSummary}`
+
+A recipe that is a side dish names its `side_kind`, and a dish lists the kinds
+of side it is served with in `side_options`. A side is an Entry of its own
+whose `parent_id` names the meal it is served with. It shares day, meal and
+eaters with that meal and has its own `portions` and portion feedback. Sides
+follow when their meal is moved, resized, marked as cooked or removed, and
+those a new dish is not served with are dropped when the recipe of the meal
+changes. A side that is moved to another day or meal becomes a meal of its
+own. Clients that do not know sides show them as further meals of the day.
 
 `servings` counts the people who eat, `portions` is what is cooked and
 shopped for: clients scale the recipe by it. `eaters` names the household

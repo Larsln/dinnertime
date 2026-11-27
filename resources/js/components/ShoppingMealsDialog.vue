@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { mealPlanApi } from '@/api/planning';
 import type { ShoppingList } from '@/api/types';
 import { useAmounts } from '@/composables/useAmounts';
-import { formatLongDay } from '@/lib/format';
+import { formatLongDay, formatNumber } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
 import { ingredientsOf } from '@/lib/shoppingMeals';
 import DialogPanel from '@/components/ui/DialogPanel.vue';
@@ -52,7 +52,7 @@ const meals = computed(() =>
         <article v-for="{ entry, ingredients } in meals" :key="entry.id">
             <p class="text-sm text-ink-muted">
                 {{ formatLongDay(entry.date, locale) }} · {{ t(`meals.${entry.meal}`) }} ·
-                {{ t('plan.servingsLong', { count: entry.servings }) }}
+                {{ t('plan.servingsLong', { count: formatNumber(entry.portions, locale) }) }}
             </p>
             <h3 class="font-semibold text-ink">{{ entry.recipe.title }}</h3>
             <ul v-if="ingredients.length > 0" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-sm">

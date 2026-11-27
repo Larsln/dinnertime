@@ -126,6 +126,11 @@ export default {
         recipe: 'Rezept',
         date: 'Tag',
         meal: 'Mahlzeit',
+        eaters: 'Wer isst mit',
+        guests: 'Gäste',
+        eatersHint:
+            'Gäste zählen mit einer Standardportion. Wer Portionen bewertet, bekommt seine eigene Größe.',
+        portion: { label: 'Portion', too_small: 'zu klein', right: 'passend', too_big: 'zu groß' },
         servingsLong: '{count} Portionen',
         week: 'KW {number}',
         currentWeek: 'Aktuelle Woche',

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { Users, UtensilsCrossed } from 'lucide-vue-next';
 import type { MealPlanEntry } from '@/api/types';
 import { daysUntil } from '@/lib/dates';
-import { formatLongDay } from '@/lib/format';
+import { formatLongDay, formatNumber } from '@/lib/format';
 
 /**
  * The next meal to cook as a wide banner that opens its recipe scaled to
@@ -28,7 +28,7 @@ const day = computed(() => {
 
 <template>
     <RouterLink
-        :to="{ name: 'recipe', params: { id: entry.recipe.id }, query: { servings: entry.servings } }"
+        :to="{ name: 'recipe', params: { id: entry.recipe.id }, query: { servings: entry.portions } }"
         class="group grid overflow-hidden rounded-card border border-line bg-surface transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:grid-cols-[2fr_3fr]"
     >
         <div
@@ -54,7 +54,9 @@ const day = computed(() => {
             <p
                 class="inline-flex items-center gap-1 self-start rounded-full bg-sunken px-2.5 py-1 text-sm text-ink-muted"
             >
-                <Users class="size-4" />{{ t('plan.servingsLong', { count: entry.servings }) }}
+                <Users class="size-4" />{{
+                    t('plan.servingsLong', { count: formatNumber(entry.portions, locale) })
+                }}
             </p>
         </div>
     </RouterLink>

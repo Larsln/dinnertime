@@ -1,6 +1,6 @@
 import { computed, type ComputedRef } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
-import { householdSettingsApi } from '@/api/settings';
+import { householdSettingsApi, type HouseholdMember } from '@/api/settings';
 
 export const HOUSEHOLD_SETTINGS_KEY = ['household-settings'];
 
@@ -17,6 +17,7 @@ export function useHouseholdSettings(): {
     defaultServings: ComputedRef<number>;
     currency: ComputedRef<string>;
     showsStockedNeeds: ComputedRef<boolean>;
+    members: ComputedRef<HouseholdMember[]>;
 } {
     const settings = useQuery({
         queryKey: HOUSEHOLD_SETTINGS_KEY,
@@ -28,5 +29,6 @@ export function useHouseholdSettings(): {
         defaultServings: computed(() => settings.data.value?.default_servings ?? FALLBACK_SERVINGS),
         currency: computed(() => settings.data.value?.currency ?? FALLBACK_CURRENCY),
         showsStockedNeeds: computed(() => settings.data.value?.show_stocked_needs ?? false),
+        members: computed(() => settings.data.value?.members ?? []),
     };
 }

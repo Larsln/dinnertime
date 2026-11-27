@@ -8,6 +8,11 @@ export interface ImportSettings {
     has_cookies: boolean;
 }
 
+export interface HouseholdMember {
+    id: number;
+    name: string;
+}
+
 /**
  * What the household decided once for everyday use.
  */
@@ -15,6 +20,7 @@ export interface HouseholdSettings {
     default_servings: number;
     currency: string;
     show_stocked_needs: boolean;
+    members: HouseholdMember[];
 }
 
 export const householdSettingsApi = {

@@ -9,7 +9,7 @@ const MAX_SERVINGS = 100;
 function servingsOf(value: unknown): number | undefined {
     const servings = Number(value);
 
-    return Number.isInteger(servings) && servings >= 1 && servings <= MAX_SERVINGS ? servings : undefined;
+    return Number.isFinite(servings) && servings > 0 && servings <= MAX_SERVINGS ? servings : undefined;
 }
 
 export const router = createRouter({

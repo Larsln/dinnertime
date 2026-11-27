@@ -5,6 +5,7 @@ import type {
     MealType,
     PantryItem,
     PlanReason,
+    PortionVerdict,
     ShoppingList,
     ShoppingListItem,
 } from './types';
@@ -14,14 +15,30 @@ export interface Period {
     to: string;
 }
 
+interface Servings {
+    servings: number;
+}
+
+/**
+ * Who eats a meal: the members who join and a number of guests.
+ */
+interface Eaters {
+    eater_ids: number[];
+    guests: number;
+}
+
 export const mealPlanApi = {
     list: (period: Period) => data(api.get<{ data: MealPlanEntry[] }>('/meal-plan', { ...period })),
-    create: (entry: { date: string; meal: MealType; recipe_id: number; servings: number }) =>
+    create: (entry: { date: string; meal: MealType; recipe_id: number } & (Servings | Eaters)) =>
         data(api.post<{ data: MealPlanEntry }>('/meal-plan', entry)),
     update: (
         id: number,
-        changes: { date?: string; meal?: MealType; recipe_id?: number; servings?: number; cooked?: boolean },
+        changes: { date?: string; meal?: MealType; recipe_id?: number; cooked?: boolean } & Partial<
+            Servings & Eaters
+        >,
     ) => data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
+    setPortionFeedback: (id: number, verdict: PortionVerdict | null) =>
+        data(api.put<{ data: MealPlanEntry }>(`/meal-plan/${id}/portion-feedback`, { verdict })),
     remove: (id: number) => api.delete(`/meal-plan/${id}`),
     shift: (from: string, days: number) =>
         data(api.post<{ data: MealPlanEntry[] }>('/meal-plan/shift', { from, days })),

@@ -208,11 +208,22 @@ export interface RecipeImport {
     recipes?: RecipeSummary[];
 }
 
+export type PortionVerdict = 'too_small' | 'right' | 'too_big';
+
+/**
+ * A planned meal. `servings` counts the people who eat, `portions` is
+ * what is cooked: members among the eaters count with the portion that
+ * suits them, guests with a standard one.
+ */
 export interface MealPlanEntry {
     id: number;
     date: string;
     meal: MealType;
     servings: number;
+    portions: number;
+    guests: number;
+    eaters: { user_id: number; name: string | null; factor: number }[] | null;
+    portion_feedback: { user_id: number; verdict: PortionVerdict }[];
     cooked_at: string | null;
     recipe: RecipeSummary;
 }

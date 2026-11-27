@@ -26,6 +26,7 @@ class ShoppingListResource extends JsonResource
             'starts_on' => $this->starts_on->toDateString(),
             'ends_on' => $this->ends_on->toDateString(),
             'leftovers_stocked_at' => $this->leftovers_stocked_at,
+            'in_stock' => $this->in_stock ?? [],
             'items' => ShoppingListItemResource::collection($this->itemsInStoreOrder()),
         ];
     }

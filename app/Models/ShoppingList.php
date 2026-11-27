@@ -14,8 +14,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $starts_on
  * @property CarbonImmutable $ends_on
  * @property ?CarbonImmutable $leftovers_stocked_at
+ * @property ?list<array<string, mixed>> $in_stock
  */
-#[Fillable(['starts_on', 'ends_on', 'leftovers_stocked_at'])]
+#[Fillable(['starts_on', 'ends_on', 'leftovers_stocked_at', 'in_stock'])]
 class ShoppingList extends Model
 {
     use BroadcastsChanges;
@@ -36,6 +37,7 @@ class ShoppingList extends Model
             'starts_on' => 'immutable_date',
             'ends_on' => 'immutable_date',
             'leftovers_stocked_at' => 'immutable_datetime',
+            'in_stock' => 'array',
         ];
     }
 

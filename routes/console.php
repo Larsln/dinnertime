@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('model:prune', ['--model' => [IdempotencyKey::class]])->daily();
+Schedule::call(fn () => Artisan::queue('recipes:fetch-missing-videos')->onQueue('imports'))
+    ->name('recipes:fetch-missing-videos')
+    ->weekly();

@@ -62,7 +62,7 @@ that terminates HTTPS. The database and uploaded images live in the volumes
 | `GEMINI_VIDEO_MODEL`, `GEMINI_TEXT_MODEL` | Models for video analysis and for small tasks. |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID` | Offers sign-in with an OpenID Connect provider next to local accounts. Register a public client with PKCE and the redirect URIs `<APP_URL>/oidc/callback` and `dinnertime://oidc`. |
 | `PASSWORD_LOGIN` | `false` turns off sign-in with username and password, so only the OpenID Connect provider remains. |
-| `KEEP_VIDEOS`, `KEEP_VIDEOS_MAX_MB` | Imported videos are copied into `storage` so recipes outlive their source; `false` turns that off, and videos above the size limit (300 MB) are not kept. `php artisan recipes:fetch-missing-videos` fetches the videos of recipes imported earlier. |
+| `KEEP_VIDEOS`, `KEEP_VIDEOS_MAX_MB` | Imported videos are copied into `storage` so recipes outlive their source; `false` turns that off, and videos above the size limit (300 MB) are not kept. The videos of recipes imported earlier are fetched once a week, or at once with `php artisan recipes:fetch-missing-videos`. |
 | `YTDLP_COOKIES_FILE` | Path inside the container to a Netscape cookie file, for platforms that only serve videos to signed-in users. |
 
 ### Updating

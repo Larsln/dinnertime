@@ -72,6 +72,8 @@ class ShoppingForecaster
         $unquantified = [];
         $unconverted = [];
         $unresolved = [];
+        $staples = [];
+        $stapleUses = [];
 
         foreach ($meals as $meal) {
             $scale = $meal->recipe->servings ? $meal->servings / $meal->recipe->servings : 1;
@@ -81,7 +83,10 @@ class ShoppingForecaster
 
                 if ($product === null) {
                     $unresolved[$line['text']] = true;
-                } elseif (! $product->isStaple()) {
+                } elseif ($product->isStaple()) {
+                    $staples[$product->id] = $product;
+                    $stapleUses[$product->id][$meal->date->toDateString().'-'.$meal->recipe->id] = new Demand($meal->date, $meal->recipe, 0);
+                } else {
                     $products[$product->id] = $product;
 
                     if ($amount === null && $line['quantity'] === null) {
@@ -109,6 +114,7 @@ class ShoppingForecaster
                 $this->unconvertedAmounts($unconverted[$product->id] ?? []),
             ), $products)),
             array_keys($unresolved),
+            array_values(array_map(fn (Product $product) => new StapleNeed($product, array_values($stapleUses[$product->id])), $staples)),
         );
     }
 

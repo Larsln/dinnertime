@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\HouseholdSettings;
+use App\Services\Planning\ShoppingListRefresher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,22 +17,29 @@ class HouseholdSettingsController extends Controller
      */
     public function show(): JsonResponse
     {
-        return response()->json(['data' => [
-            'default_servings' => $this->settings->defaultServings(),
-            'currency' => $this->settings->currency(),
-        ]]);
+        return response()->json(['data' => $this->settings->toArray()]);
     }
 
     /**
-     * Change the number of servings meals are planned for by default.
+     * Change the servings meals are planned for by default or whether the
+     * shopping list notes what is at home already. Running lists are
+     * refreshed, so that those written before carry the notes too.
      */
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, ShoppingListRefresher $refresher): JsonResponse
     {
         $data = $request->validate([
-            'default_servings' => ['required', 'integer', 'between:1,'.HouseholdSettings::MAX_SERVINGS],
+            'default_servings' => ['required_without:show_stocked_needs', 'integer', 'between:1,'.HouseholdSettings::MAX_SERVINGS],
+            'show_stocked_needs' => ['sometimes', 'boolean'],
         ]);
 
-        $this->settings->setDefaultServings($data['default_servings']);
+        if (isset($data['default_servings'])) {
+            $this->settings->setDefaultServings($data['default_servings']);
+        }
+
+        if (isset($data['show_stocked_needs'])) {
+            $this->settings->setShowsStockedNeeds($data['show_stocked_needs']);
+            $refresher->running();
+        }
 
         return $this->show();
     }

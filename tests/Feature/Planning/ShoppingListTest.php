@@ -83,6 +83,30 @@ class ShoppingListTest extends TestCase
         $this->createList()->assertJsonCount(0, 'data.items');
     }
 
+    public function test_it_notes_what_the_meals_need_from_the_stock(): void
+    {
+        $salt = $this->product('Salz', [500], ['is_pantry_staple' => true]);
+        $rice = $this->product('Reis', [500]);
+        $cream = $this->product('Sahne', [200]);
+        $curry = $this->recipe('Curry', [[$salt, 5, 'gram'], [$rice, 150, 'gram'], [$cream, 200, 'gram']]);
+        $this->plan('2026-11-16', $curry);
+        PantryItem::create(['product_id' => $rice->id, 'amount' => 500]);
+
+        $list = $this->createList()->assertJsonCount(1, 'data.items')->json('data');
+
+        $this->assertSame(['Reis', 'Salz'], array_column($list['in_stock'], 'name'));
+        $this->assertEquals(150, $list['in_stock'][0]['needed_amount']);
+        $this->assertFalse($list['in_stock'][0]['is_staple']);
+        $this->assertSame([['date' => '2026-11-16', 'recipe_id' => $curry->id, 'title' => 'Curry', 'amount' => 150]], $list['in_stock'][0]['uses']);
+        $this->assertNull($list['in_stock'][1]['needed_amount']);
+        $this->assertTrue($list['in_stock'][1]['is_staple']);
+        $this->assertSame('Curry', $list['in_stock'][1]['uses'][0]['title']);
+
+        $this->patchJson("/api/v1/shopping-list-items/{$list['items'][0]['id']}", ['checked' => true])->assertOk();
+
+        $this->assertSame(['Reis', 'Salz'], array_column($this->createList()->json('data.in_stock'), 'name'));
+    }
+
     public function test_it_orders_by_store_section_and_lists_unresolved_lines_last(): void
     {
         $sections = StoreSection::pluck('id', 'key');

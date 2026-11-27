@@ -17,13 +17,15 @@ use Illuminate\Support\Facades\DB;
  * nothing to the stock and keep their product off the list. Manual
  * positions survive a refresh. An open
  * position keeps its record, so changes clients made to it offline still
- * find it. Products bought as another one share its position.
+ * find it. Products bought as another one share its position. What the
+ * meals need without a purchase is noted on the list itself.
  */
 class ShoppingListSynchronizer
 {
     public function __construct(
         private readonly ShoppingForecaster $forecaster,
         private readonly ShoppingItemAttributes $attributes,
+        private readonly StockedNeeds $stocked,
     ) {}
 
     public function sync(CarbonImmutable $from, CarbonImmutable $to): ShoppingList
@@ -34,9 +36,10 @@ class ShoppingListSynchronizer
                 ->partition(fn (ShoppingListItem $item) => $item->isSettled());
             [$checked, $dropped] = $settled->partition(fn (ShoppingListItem $item) => $item->isBought());
             $forecast = $this->forecaster->forecastPeriod($from, $to, $this->boughtAmounts($checked));
+            $bought = $this->boughtProducts($checked);
             $kept = [];
 
-            foreach ($this->positions($forecast, $this->boughtProducts($checked)) as $productId => $parts) {
+            foreach ($this->positions($forecast, $bought) as $productId => $parts) {
                 if (! $dropped->contains('product_id', $productId)) {
                     $item = $open->firstWhere('product_id', $productId) ?? $list->items()->make();
                     $item->fill($this->attributes->of($productId, $parts))->save();
@@ -51,6 +54,7 @@ class ShoppingListSynchronizer
             }
 
             $open->whereNotIn('id', $kept)->each->delete();
+            $list->update(['in_stock' => $this->stocked->of($forecast, $bought + array_fill_keys($dropped->pluck('product_id')->filter()->all(), true))]);
 
             return $list;
         });

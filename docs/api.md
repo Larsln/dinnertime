@@ -244,13 +244,15 @@ marks made offline still find it.
 | Method | Path | Body | Answer |
 |---|---|---|---|
 | GET | `/settings/household` | | HouseholdSettings |
-| PATCH | `/settings/household` | `default_servings: 1–50` | HouseholdSettings |
+| PATCH | `/settings/household` | `default_servings: 1–50`, `show_stocked_needs: bool`, at least one | HouseholdSettings |
 
-**HouseholdSettings:** `{default_servings, currency}`. `currency` is the ISO 4217
+**HouseholdSettings:** `{default_servings, currency, show_stocked_needs}`. `currency` is the ISO 4217
 code prices are noted in, set with `APP_CURRENCY`. `default_servings` is the number of servings a meal is
 planned and shopped for unless another number is chosen. Clients preset it
 when planning and show recipes scaled to it. `2` until the household changes
-it.
+it. With `show_stocked_needs` clients note on the shopping list what the
+meals need that is at home already, the list's `in_stock`. Off until the
+household switches it on.
 
 ## Import settings
 
@@ -420,7 +422,13 @@ Without `expires_on` the expiry follows from the product's shelf life.
 | DELETE | `/shopping-list-items/{id}` | | `204` |
 
 - **ShoppingList:** `{id, starts_on, ends_on, leftovers_stocked_at,
-  items: [Item]}`. Items are ordered by store section.
+  in_stock: [StockedNeed], items: [Item]}`. Items are ordered by store
+  section.
+- **StockedNeed:** `{product_id, name, base_unit, needed_amount, is_staple,
+  uses: [{date, recipe_id, title, amount}]}`: a product the meals of the
+  period need that is not bought, because the pantry covers it or because
+  it is a confirmed pantry staple. Staples carry no amounts. Ordered by
+  name and written whenever the list is created or refreshed.
 - **Item:** `{id, label, is_manual, needed_amount, purchase_amount,
   packages: [{package_id, label, amount, count}], leftover_amount,
   wasted_amount, uses: [{date, recipe_id, title, amount}], is_approximate,

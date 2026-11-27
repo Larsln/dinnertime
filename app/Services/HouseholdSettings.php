@@ -14,6 +14,8 @@ class HouseholdSettings
 
     private const string SERVINGS_KEY = 'household.default_servings';
 
+    private const string STOCKED_KEY = 'household.show_stocked_needs';
+
     private const string PEER_KEY = 'household.peer_key';
 
     private const int FALLBACK_SERVINGS = 2;
@@ -25,6 +27,15 @@ class HouseholdSettings
     public function defaultServings(): int
     {
         return (int) (Setting::find(self::SERVINGS_KEY)->value ?? self::FALLBACK_SERVINGS);
+    }
+
+    /**
+     * Whether the shopping list also notes what the meals need that is at
+     * home already.
+     */
+    public function showsStockedNeeds(): bool
+    {
+        return (bool) (Setting::find(self::STOCKED_KEY)->value ?? false);
     }
 
     /**
@@ -48,5 +59,24 @@ class HouseholdSettings
     public function setDefaultServings(int $servings): void
     {
         Setting::updateOrCreate(['key' => self::SERVINGS_KEY], ['value' => $servings]);
+    }
+
+    public function setShowsStockedNeeds(bool $shown): void
+    {
+        Setting::updateOrCreate(['key' => self::STOCKED_KEY], ['value' => $shown]);
+    }
+
+    /**
+     * What clients are told about the household.
+     *
+     * @return array{default_servings: int, currency: string, show_stocked_needs: bool}
+     */
+    public function toArray(): array
+    {
+        return [
+            'default_servings' => $this->defaultServings(),
+            'currency' => $this->currency(),
+            'show_stocked_needs' => $this->showsStockedNeeds(),
+        ];
     }
 }

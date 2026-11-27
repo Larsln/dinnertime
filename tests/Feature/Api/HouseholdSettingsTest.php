@@ -33,6 +33,18 @@ class HouseholdSettingsTest extends TestCase
         $this->getJson('/api/v1/settings/household')->assertJsonPath('data.default_servings', 4);
     }
 
+    public function test_the_note_of_stocked_needs_can_be_switched_on_alone(): void
+    {
+        $this->getJson('/api/v1/settings/household')->assertJsonPath('data.show_stocked_needs', false);
+
+        $this->patchJson('/api/v1/settings/household', ['show_stocked_needs' => true])
+            ->assertOk()
+            ->assertJsonPath('data.show_stocked_needs', true)
+            ->assertJsonPath('data.default_servings', 2);
+
+        $this->patchJson('/api/v1/settings/household', [])->assertUnprocessable();
+    }
+
     public function test_a_meal_is_planned_for_the_default_servings_unless_another_number_is_given(): void
     {
         $recipe = Recipe::factory()->create();

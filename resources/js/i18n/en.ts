@@ -48,6 +48,15 @@ const messages: typeof de = {
         searchPlaceholder: 'Search recipes',
         course: 'Course',
         noCourse: 'None',
+        sides: {
+            title: 'Sides',
+            kind: 'This recipe is a side',
+            noKind: 'No',
+            options: 'Suitable sides',
+            optionsHint:
+                'Planning offers only sides of these kinds. With none chosen the dish is planned without a side.',
+            badge: 'Side: {kind}',
+        },
         favoritesOnly: 'Favorites only',
         favorite: 'Favorite',
         rating: 'Your rating',
@@ -132,6 +141,12 @@ const messages: typeof de = {
         guests: 'Guests',
         eatersHint: 'Guests count with a standard portion. Whoever rates portions gets a size of their own.',
         portion: { label: 'Portion', too_small: 'too small', right: 'just right', too_big: 'too big' },
+        sides: {
+            label: 'Sides',
+            none: 'No recipe is marked as a side of a suitable kind yet.',
+            with: 'with',
+            remove: 'Remove {name}',
+        },
         servingsLong: '{count} servings',
         week: 'Week {number}',
         currentWeek: 'Current week',
@@ -188,7 +203,7 @@ const messages: typeof de = {
         },
         createList: 'Shopping list',
     },
-    upNext: { tomorrow: 'Tomorrow' },
+    upNext: { tomorrow: 'Tomorrow', with: 'with {sides}' },
     dinner: {
         shortcut: 'Rather something else? Decide together',
         title: 'What do we eat tonight?',

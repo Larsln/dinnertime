@@ -6,8 +6,8 @@ import { currentLocale } from '@/i18n';
 const STALE_TIME = 60 * 60 * 1000;
 
 /**
- * Units, store sections, tags and courses in the interface language. They rarely
- * change, so they are cached per language.
+ * Units, store sections, tags, courses and kinds of side in the interface
+ * language. They rarely change, so they are cached per language.
  */
 export function useReferenceData() {
     const locale = computed(() => currentLocale());
@@ -30,6 +30,12 @@ export function useReferenceData() {
         staleTime: STALE_TIME,
     });
 
+    const sideKinds = useQuery({
+        queryKey: ['side-kinds', locale],
+        queryFn: referenceApi.sideKinds,
+        staleTime: STALE_TIME,
+    });
+
     const tags = useQuery({
         queryKey: ['tags', locale],
         queryFn: referenceApi.tags,
@@ -41,5 +47,6 @@ export function useReferenceData() {
         storeSections: computed(() => storeSections.data.value ?? []),
         tags: computed(() => tags.data.value ?? []),
         courses: computed(() => courses.data.value ?? []),
+        sideKinds: computed(() => sideKinds.data.value ?? []),
     };
 }

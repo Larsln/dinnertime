@@ -18,6 +18,7 @@ import { useToasts } from '@/composables/useToasts';
 import { addDays, fromIsoDate, isoWeek, startOfWeek, toIsoDate, weekDays } from '@/lib/dates';
 import { formatDay, formatLongDay } from '@/lib/format';
 import { MEAL_TYPES } from '@/lib/meals';
+import { mealsOf, sidesByMeal } from '@/lib/planSides';
 import { slotKey } from '@/lib/planSlots';
 import PlanEntryCard from '@/components/PlanEntryCard.vue';
 import PlanEntryDialog from '@/components/PlanEntryDialog.vue';
@@ -31,7 +32,7 @@ import StatusBadge from '@/components/ui/StatusBadge.vue';
 /**
  * The meal plan of one week with manual entries, the leftover-aware
  * generator and the step on to the shopping list. Every meal tells why it
- * goes with the others. Meals can be changed, moved, and the whole plan
+ * goes with the others and shows the sides served with it. Meals can be changed, moved, and the whole plan
  * from a day on pushed back or brought forward; the shopping list follows
  * on the server.
  */
@@ -64,7 +65,7 @@ const entriesByDay = computed(() => {
     const groups = new Map<string, MealPlanEntry[]>(days.value.map((day) => [day, []]));
     const order = (entry: MealPlanEntry) => MEAL_TYPES.indexOf(entry.meal);
 
-    for (const entry of entries.data.value ?? []) {
+    for (const entry of mealsOf(entries.data.value ?? [])) {
         groups.get(entry.date)?.push(entry);
     }
 
@@ -72,6 +73,8 @@ const entriesByDay = computed(() => {
 
     return groups;
 });
+
+const sides = computed(() => sidesByMeal(entries.data.value ?? []));
 
 const addingFor = ref(today);
 const isAdding = ref(false);
@@ -218,11 +221,13 @@ const createList = useMutation({
                     v-for="entry in entriesByDay.get(day)"
                     :key="entry.id"
                     :entry="entry"
+                    :sides="sides.get(entry.id)"
                     :reasons="reasonsByEntry.get(entry.id)"
                     @cooked="(cooked) => setCooked.mutate({ id: entry.id, cooked })"
                     @edit="startEditing(entry)"
                     @move="(days) => move.mutate({ entry, days })"
                     @remove="remove.mutate(entry.id)"
+                    @remove-side="(id) => remove.mutate(id)"
                 />
             </ul>
             <p
@@ -235,7 +240,12 @@ const createList = useMutation({
     </div>
 
     <PlanEntryDialog v-model:open="isAdding" :date="addingFor" />
-    <PlanEntryDialog v-model:open="isEditing" :date="editing?.date ?? today" :entry="editing" />
+    <PlanEntryDialog
+        v-model:open="isEditing"
+        :date="editing?.date ?? today"
+        :entry="editing"
+        :sides="editing ? sides.get(editing.id) : undefined"
+    />
 
     <PlanWizard
         v-model:open="isGenerating"

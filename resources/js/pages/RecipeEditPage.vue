@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { ImageUp, X } from 'lucide-vue-next';
 import { recipesApi } from '@/api/recipes';
-import type { CourseKey, Recipe, RecipeInput, TagType, Tool } from '@/api/types';
+import type { CourseKey, Recipe, RecipeInput, SideKindKey, TagType, Tool } from '@/api/types';
 import { useReferenceData } from '@/composables/useReferenceData';
 import { useToasts } from '@/composables/useToasts';
 import {
@@ -19,6 +19,7 @@ import {
     type IngredientRow,
     type StepRow,
 } from '@/lib/recipeGroups';
+import RecipeSidesField from '@/components/RecipeSidesField.vue';
 import RecipeIngredientsEditor from '@/components/RecipeIngredientsEditor.vue';
 import RecipeStepsEditor from '@/components/RecipeStepsEditor.vue';
 import ToolPicker from '@/components/ToolPicker.vue';
@@ -49,6 +50,8 @@ const form = reactive({
     title: '',
     description: '',
     course: null as CourseKey | null,
+    sideKind: null as SideKindKey | null,
+    sideOptions: [] as SideKindKey[],
     servings: null as number | null,
     yieldText: '',
     prepMinutes: null as number | null,
@@ -83,6 +86,8 @@ function fill(recipe: Recipe): void {
         title: recipe.title,
         description: recipe.description ?? '',
         course: recipe.course,
+        sideKind: recipe.side_kind,
+        sideOptions: [...recipe.side_options],
         servings: recipe.servings,
         yieldText: recipe.yield_text ?? '',
         prepMinutes: recipe.prep_minutes,
@@ -149,6 +154,8 @@ function toInput(): RecipeInput {
         title: form.title,
         description: form.description || null,
         course: form.course,
+        side_kind: form.sideKind,
+        side_options: form.sideKind === null ? form.sideOptions : [],
         servings: form.servings,
         yield_text: form.yieldText || null,
         prep_minutes: form.prepMinutes,
@@ -281,6 +288,11 @@ function submit(): void {
                 <FieldLabel>{{ t(`tagTypes.${type}`) }}</FieldLabel>
                 <ChipGroup v-model="tagModels[type].value" :options="tagOptions(type)" />
             </div>
+        </section>
+
+        <section class="rounded-card border border-line bg-surface p-4">
+            <h2 class="mb-3 text-lg font-display font-bold">{{ t('recipes.sides.title') }}</h2>
+            <RecipeSidesField v-model:kind="form.sideKind" v-model:options="form.sideOptions" />
         </section>
 
         <section class="rounded-card border border-line bg-surface p-4">

@@ -160,6 +160,22 @@ class SideTest extends TestCase
         $this->assertLessThan($next->json('data.portions'), $nextSide->json('data.portions'));
     }
 
+    public function test_a_meal_does_not_count_sharing_a_product_with_its_own_side(): void
+    {
+        $butter = $this->product('Butter', [250]);
+        $steak = $this->recipe('Steak', [[$butter, 50, 'gram']]);
+        $steak->update(['side_options' => ['potato']]);
+        $mash = $this->recipe('Kartoffelbrei', [[$butter, 50, 'gram']]);
+        $mash->update(['side_kind' => 'potato']);
+
+        $main = $this->plan($steak, '2026-11-17')->json('data.id');
+        $this->serve($main, $mash)->assertCreated();
+
+        $reasons = collect($this->getJson('/api/v1/meal-plan/reasons?from=2026-11-16&to=2026-11-22')->json('data'));
+
+        $this->assertNotContains('shares', $reasons->pluck('reasons.*.type')->flatten()->all());
+    }
+
     private function side(string $title, string $kind): Recipe
     {
         $recipe = $this->recipe($title, [[$this->product("{$title} Zutat"), 1]]);

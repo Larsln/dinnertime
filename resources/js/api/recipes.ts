@@ -10,6 +10,7 @@ export const recipesApi = {
         page?: number;
     }) => api.get<Paginated<RecipeSummary>>('/recipes', filters),
     get: (id: number) => data(api.get<{ data: Recipe }>(`/recipes/${id}`)),
+    sides: (id: number) => data(api.get<{ data: RecipeSummary[] }>(`/recipes/${id}/sides`)),
     create: (input: RecipeInput) => data(api.post<{ data: Recipe }>('/recipes', input)),
     update: (id: number, input: Partial<RecipeInput>) =>
         data(api.patch<{ data: Recipe }>(`/recipes/${id}`, input)),

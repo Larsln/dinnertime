@@ -37,6 +37,8 @@ export const mealPlanApi = {
             Servings & Eaters
         >,
     ) => data(api.patch<{ data: MealPlanEntry }>(`/meal-plan/${id}`, changes)),
+    addSide: (id: number, recipeId: number) =>
+        data(api.post<{ data: MealPlanEntry }>(`/meal-plan/${id}/sides`, { recipe_id: recipeId })),
     setPortionFeedback: (id: number, verdict: PortionVerdict | null) =>
         data(api.put<{ data: MealPlanEntry }>(`/meal-plan/${id}/portion-feedback`, { verdict })),
     remove: (id: number) => api.delete(`/meal-plan/${id}`),

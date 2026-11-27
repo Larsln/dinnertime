@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { mealPlanApi } from '@/api/planning';
 import { useDinnerRound } from '@/composables/useDinnerRound';
 import { addDays, toIsoDate } from '@/lib/dates';
+import { sidesByMeal } from '@/lib/planSides';
 import { isPlanned, nextMeal } from '@/lib/upNext';
 import DinnerPrompt from '@/components/DinnerPrompt.vue';
 import DinnerStartDialog from '@/components/DinnerStartDialog.vue';
@@ -33,6 +34,7 @@ const { current, round } = useDinnerRound();
 const isStarting = ref(false);
 
 const upNext = computed(() => nextMeal(plan.data.value ?? [], today));
+const sides = computed(() => sidesByMeal(plan.data.value ?? []));
 const isLoaded = computed(() => plan.data.value !== undefined && !current.isPending.value);
 const showsPrompt = computed(
     () => isLoaded.value && (round.value !== null || !isPlanned(plan.data.value ?? [], today)),
@@ -43,7 +45,7 @@ const showsShortcut = computed(() => isLoaded.value && !showsPrompt.value);
 <template>
     <div v-if="showsPrompt || upNext" class="mb-6 space-y-4">
         <DinnerPrompt v-if="showsPrompt" :round="round" @start="isStarting = true" />
-        <UpNextBanner v-if="upNext" :entry="upNext" />
+        <UpNextBanner v-if="upNext" :entry="upNext" :sides="sides.get(upNext.id)" />
         <AppButton v-if="showsShortcut" variant="ghost" size="sm" @click="isStarting = true">
             <Layers class="size-4" />{{ t('dinner.shortcut') }}
         </AppButton>

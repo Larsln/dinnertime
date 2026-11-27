@@ -8,6 +8,7 @@ import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useToasts } from '@/composables/useToasts';
 import { MEAL_TYPES } from '@/lib/meals';
 import PlanEatersField from '@/components/PlanEatersField.vue';
+import PlanSidesField from '@/components/PlanSidesField.vue';
 import RecipePicker from '@/components/RecipePicker.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import DateField from '@/components/ui/DateField.vue';
@@ -16,14 +17,20 @@ import SelectField from '@/components/ui/SelectField.vue';
 
 /**
  * Schedules a recipe for a meal, or changes a planned one: another
- * recipe, another day or meal, other people who eat. Recipe and day can
- * be preset by the place the dialog is opened from.
+ * recipe, another day or meal, other people who eat, other sides. A
+ * dish that names the kinds of side it is served with offers them.
+ * Recipe and day can be preset by the place the dialog is opened from.
  */
 const open = defineModel<boolean>('open', { required: true });
 
 const props = withDefaults(
-    defineProps<{ date: string; recipe?: RecipeSummary | null; entry?: MealPlanEntry | null }>(),
-    { recipe: null, entry: null },
+    defineProps<{
+        date: string;
+        recipe?: RecipeSummary | null;
+        entry?: MealPlanEntry | null;
+        sides?: MealPlanEntry[];
+    }>(),
+    { recipe: null, entry: null, sides: () => [] },
 );
 
 const { t } = useI18n();
@@ -36,6 +43,7 @@ const selectedDate = ref<string | null>(null);
 const meal = ref<MealType | null>('dinner');
 const eaterIds = ref<number[]>([]);
 const guests = ref<number | null>(0);
+const sideIds = ref<number[]>([]);
 
 const headCount = computed(() => eaterIds.value.length + (guests.value ?? 0));
 
@@ -46,6 +54,7 @@ watch(open, (isOpen) => {
         selectedRecipe.value = props.entry?.recipe ?? props.recipe;
         selectedDate.value = props.entry?.date ?? props.date;
         meal.value = props.entry?.meal ?? 'dinner';
+        sideIds.value = props.sides.map((side) => side.recipe.id);
         eaterIds.value = props.entry
             ? (props.entry.eaters ?? []).map((eater) => eater.user_id)
             : members.value.map((member) => member.id);
@@ -57,8 +66,22 @@ watch(open, (isOpen) => {
     }
 });
 
+/**
+ * Take the sides that were deselected off the meal and serve the newly
+ * chosen ones. A side the server dropped already is gone either way.
+ */
+function saveSides(mealId: number): Promise<unknown> {
+    const dropped = props.sides.filter((side) => !sideIds.value.includes(side.recipe.id));
+    const added = sideIds.value.filter((id) => !props.sides.some((side) => side.recipe.id === id));
+
+    return Promise.all([
+        ...dropped.map((side) => mealPlanApi.remove(side.id).catch(() => undefined)),
+        ...added.map((id) => mealPlanApi.addSide(mealId, id)),
+    ]);
+}
+
 const save = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
         const values = {
             date: selectedDate.value ?? props.date,
             meal: meal.value ?? 'dinner',
@@ -67,7 +90,11 @@ const save = useMutation({
             guests: guests.value ?? 0,
         };
 
-        return props.entry ? mealPlanApi.update(props.entry.id, values) : mealPlanApi.create(values);
+        const saved = await (props.entry
+            ? mealPlanApi.update(props.entry.id, values)
+            : mealPlanApi.create(values));
+
+        await saveSides(saved.id);
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['meal-plan'] });
@@ -85,10 +112,20 @@ const save = useMutation({
         :title="t(entry ? 'plan.editEntry' : 'plan.addEntry')"
         :close-label="t('common.close')"
     >
-        <RecipePicker v-if="!recipe" v-model="selectedRecipe" :label="t('plan.recipe')" />
+        <RecipePicker
+            v-if="!recipe"
+            v-model="selectedRecipe"
+            :label="t('plan.recipe')"
+            @update:model-value="sideIds = []"
+        />
         <DateField v-model="selectedDate" :label="t('plan.date')" />
         <SelectField v-model="meal" :options="mealOptions" :label="t('plan.meal')" />
         <PlanEatersField v-model:eater-ids="eaterIds" v-model:guests="guests" :members="members" />
+        <PlanSidesField
+            v-if="selectedRecipe && selectedRecipe.side_options.length > 0"
+            v-model="sideIds"
+            :recipe="selectedRecipe"
+        />
         <template #actions>
             <AppButton
                 variant="primary"

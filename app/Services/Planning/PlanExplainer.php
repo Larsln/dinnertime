@@ -53,7 +53,7 @@ class PlanExplainer
     /**
      * Products several recipes draw from, most perishable first, with the
      * meals each meal shares them with. The same recipe planned twice
-     * shares nothing with itself.
+     * shares nothing with itself, and neither do a meal and its sides.
      *
      * @param  list<PlannedMeal>  $meals
      * @param  Collection<int, PantryItem>  $pantry
@@ -63,13 +63,19 @@ class PlanExplainer
     {
         $products = collect($this->forecaster->forecast($meals, $pantry)->products)
             ->sortBy(fn (ProductForecast $forecast) => $forecast->product->shelf_life_opened_days ?? PHP_INT_MAX);
+        $tables = [];
         $shared = [];
+
+        foreach ($meals as $meal) {
+            $tables[$this->key($meal->date, $meal->recipe)] = $meal->table;
+        }
 
         foreach ($products as $product) {
             $uses = collect($product->uses)->keyBy(fn (Demand $use) => $this->key($use->date, $use->recipe));
 
             foreach ($uses as $key => $use) {
-                $others = $uses->reject(fn (Demand $other) => $other->recipe->is($use->recipe));
+                $others = $uses->reject(fn (Demand $other, string $otherKey) => $other->recipe->is($use->recipe)
+                    || ($tables[$key] !== null && $tables[$key] === $tables[$otherKey]));
 
                 if ($others->isNotEmpty()) {
                     $shared[$key]['products'][] = $product->product->name;

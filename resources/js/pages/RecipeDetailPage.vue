@@ -163,6 +163,9 @@ const remove = useMutation({
                     <StatusBadge v-if="recipe.data.value.course_name" tone="info">
                         {{ recipe.data.value.course_name }}
                     </StatusBadge>
+                    <StatusBadge v-if="recipe.data.value.side_kind_name" tone="info">
+                        {{ t('recipes.sides.badge', { kind: recipe.data.value.side_kind_name }) }}
+                    </StatusBadge>
                     <StatusBadge v-for="name in tagNames" :key="name">{{ name }}</StatusBadge>
                 </p>
                 <div class="space-y-1">

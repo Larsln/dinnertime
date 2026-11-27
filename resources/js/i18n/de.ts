@@ -46,6 +46,15 @@ export default {
         searchPlaceholder: 'Rezept suchen',
         course: 'Speisenkategorie',
         noCourse: 'Keine',
+        sides: {
+            title: 'Beilagen',
+            kind: 'Dieses Rezept ist eine Beilage',
+            noKind: 'Nein',
+            options: 'Passende Beilagen',
+            optionsHint:
+                'Beim Einplanen werden nur Beilagen dieser Arten angeboten. Ohne Auswahl wird das Gericht ohne Beilage geplant.',
+            badge: 'Beilage: {kind}',
+        },
         favoritesOnly: 'Nur Favoriten',
         favorite: 'Favorit',
         rating: 'Deine Bewertung',
@@ -131,6 +140,12 @@ export default {
         eatersHint:
             'Gäste zählen mit einer Standardportion. Wer Portionen bewertet, bekommt seine eigene Größe.',
         portion: { label: 'Portion', too_small: 'zu klein', right: 'passend', too_big: 'zu groß' },
+        sides: {
+            label: 'Beilagen',
+            none: 'Es gibt noch kein Rezept, das als Beilage einer passenden Art markiert ist.',
+            with: 'dazu',
+            remove: '{name} entfernen',
+        },
         servingsLong: '{count} Portionen',
         week: 'KW {number}',
         currentWeek: 'Aktuelle Woche',
@@ -196,7 +211,7 @@ export default {
         },
         createList: 'Einkaufsliste',
     },
-    upNext: { tomorrow: 'Morgen' },
+    upNext: { tomorrow: 'Morgen', with: 'mit {sides}' },
     dinner: {
         shortcut: 'Lieber was anderes? Gemeinsam aussuchen',
         title: 'Was essen wir heute?',

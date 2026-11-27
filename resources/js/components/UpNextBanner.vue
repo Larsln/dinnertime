@@ -9,9 +9,11 @@ import { formatLongDay, formatNumber } from '@/lib/format';
 
 /**
  * The next meal to cook as a wide banner that opens its recipe scaled to
- * the planned number of servings.
+ * the planned number of servings and names the sides served with it.
  */
-const props = defineProps<{ entry: MealPlanEntry }>();
+const props = withDefaults(defineProps<{ entry: MealPlanEntry; sides?: MealPlanEntry[] }>(), {
+    sides: () => [],
+});
 
 const { t, locale } = useI18n();
 
@@ -51,6 +53,9 @@ const day = computed(() => {
             >
                 {{ entry.recipe.title }}
             </h2>
+            <p v-if="sides.length > 0" class="text-ink-muted">
+                {{ t('upNext.with', { sides: sides.map((side) => side.recipe.title).join(', ') }) }}
+            </p>
             <p
                 class="inline-flex items-center gap-1 self-start rounded-full bg-sunken px-2.5 py-1 text-sm text-ink-muted"
             >

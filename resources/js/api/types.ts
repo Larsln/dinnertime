@@ -4,6 +4,7 @@ export type ValueSource = 'ai' | 'user' | 'import';
 export type TagType = 'meal' | 'tag';
 export type CourseKey =
     'starter' | 'soup' | 'salad' | 'main' | 'side' | 'dessert' | 'baking' | 'snack' | 'drink';
+export type SideKindKey = 'potato' | 'rice' | 'pasta' | 'bread' | 'vegetable' | 'salad';
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'dessert' | 'snack';
 export type ImportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -46,6 +47,14 @@ export interface StoreSection {
 
 export interface Course {
     key: CourseKey;
+    name: string;
+}
+
+/**
+ * What a side dish can be based on.
+ */
+export interface SideKind {
+    key: SideKindKey;
     name: string;
 }
 
@@ -129,6 +138,9 @@ export interface RecipeSummary {
     description: string | null;
     course: CourseKey | null;
     course_name: string | null;
+    side_kind: SideKindKey | null;
+    side_kind_name: string | null;
+    side_options: SideKindKey[];
     servings: number | null;
     yield_text: string | null;
     prep_minutes: number | null;
@@ -184,6 +196,8 @@ export interface RecipeInput {
     title: string;
     description: string | null;
     course: CourseKey | null;
+    side_kind: SideKindKey | null;
+    side_options: SideKindKey[];
     servings: number | null;
     yield_text: string | null;
     prep_minutes: number | null;
@@ -217,6 +231,7 @@ export type PortionVerdict = 'too_small' | 'right' | 'too_big';
  */
 export interface MealPlanEntry {
     id: number;
+    parent_id: number | null;
     date: string;
     meal: MealType;
     servings: number;

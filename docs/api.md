@@ -86,7 +86,7 @@ setting `MERCURE_JWT_KEY`.
 | DELETE | `/recipes/{id}` | | `204` |
 
 - **RecipeSummary:** `{id, title, slug, description, course, course_name,
-  side_kind, side_options,
+  side_kind, side_kind_name, side_options,
   servings, yield_text, prep_minutes, cook_minutes, cover_url, cover_thumb_url, tags: [Tag],
   rating, is_favorite, average_rating, rating_count}`. `rating` (0 bad to 10
   good) and `is_favorite` belong to the signed-in user, `average_rating` is

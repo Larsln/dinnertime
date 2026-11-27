@@ -7,20 +7,29 @@ import type { MealPlanEntry, PlanReason } from '@/api/types';
 import { daysUntil } from '@/lib/dates';
 import { formatNumber } from '@/lib/format';
 import PlanReasons from '@/components/PlanReasons.vue';
+import PlanSideRow from '@/components/PlanSideRow.vue';
 import PortionVerdictField from '@/components/PortionVerdictField.vue';
 import ActionMenu from '@/components/ui/ActionMenu.vue';
 import CheckboxField from '@/components/ui/CheckboxField.vue';
 
 /**
- * One planned meal: cover of the recipe, meal, title and portions, why it
- * goes with the rest of the plan, how the portion was once it was eaten, the switch for "cooked" and a menu to
+ * One planned meal: cover of the recipe, meal, title and portions, the
+ * sides served with it, why it goes with the rest of the plan, how the
+ * portion was once it was eaten, the switch for "cooked" and a menu to
  * change, move or remove it.
  */
-const props = withDefaults(defineProps<{ entry: MealPlanEntry; reasons?: PlanReason[] }>(), {
-    reasons: () => [],
-});
+const props = withDefaults(
+    defineProps<{ entry: MealPlanEntry; sides?: MealPlanEntry[]; reasons?: PlanReason[] }>(),
+    { sides: () => [], reasons: () => [] },
+);
 
-const emit = defineEmits<{ cooked: [cooked: boolean]; edit: []; move: [days: number]; remove: [] }>();
+const emit = defineEmits<{
+    cooked: [cooked: boolean];
+    edit: [];
+    move: [days: number];
+    remove: [];
+    removeSide: [id: number];
+}>();
 
 const { t, locale } = useI18n();
 
@@ -77,6 +86,14 @@ const actions = computed(() => [
                 }}
             </p>
             <PortionVerdictField v-if="isEaten" class="mt-2" :entry="entry" />
+            <ul v-if="sides.length > 0" class="mt-2 space-y-1">
+                <PlanSideRow
+                    v-for="side in sides"
+                    :key="side.id"
+                    :side="side"
+                    @remove="$emit('removeSide', side.id)"
+                />
+            </ul>
             <PlanReasons v-if="!isCooked" class="mt-2" :reasons="reasons" />
         </div>
         <CheckboxField

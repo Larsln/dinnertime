@@ -257,6 +257,13 @@ const messages: typeof de = {
         substituteTitle: 'Bought a substitute',
         substituteDescription:
             'What did you buy instead of “{name}”? The position counts as done, and “{name}” is not added to the pantry.',
+        inStock: 'In stock',
+        stockedMark: 'in stock',
+        meals: 'Meals',
+        mealsTitle: 'Meals of this list',
+        mealsDescription: 'The list shops for these meals, each shown with what the list holds for it.',
+        noMeals: 'Nothing is planned in this period.',
+        nothingListed: 'None of it is on the list.',
     },
     pantry: {
         subtitle: 'Opened leftovers the planner uses up first',
@@ -363,6 +370,8 @@ const messages: typeof de = {
             servings: 'Usual number of servings',
             servingsHint:
                 'Recipes are shown, planned and shopped for this many servings unless you choose otherwise.',
+            stocked: 'Show what is in stock on the shopping list',
+            stockedHint: 'What the meals need and is at home already appears as a small note below the list.',
         },
         import: {
             title: 'Import',

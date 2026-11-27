@@ -296,11 +296,25 @@ export interface ShoppingListItem extends ShoppingAmounts {
     product?: Product | null;
 }
 
+/**
+ * A product the meals of a list need that is not bought, because the
+ * pantry covers it or because it is permanently in stock.
+ */
+export interface StockedNeed {
+    product_id: number;
+    name: string;
+    base_unit: BaseUnit;
+    needed_amount: number | null;
+    is_staple: boolean;
+    uses: { date: string; recipe_id: number; title: string; amount: number | null }[];
+}
+
 export interface ShoppingList {
     id: number;
     starts_on: string;
     ends_on: string;
     leftovers_stocked_at: string | null;
+    in_stock: StockedNeed[];
     items: ShoppingListItem[];
 }
 

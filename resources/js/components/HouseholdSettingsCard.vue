@@ -6,14 +6,16 @@ import { householdSettingsApi } from '@/api/settings';
 import { HOUSEHOLD_SETTINGS_KEY, useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useToasts } from '@/composables/useToasts';
 import NumberField from '@/components/ui/NumberField.vue';
+import SwitchField from '@/components/ui/SwitchField.vue';
 
 /**
- * The number of servings meals are planned and shopped for by default.
+ * The number of servings meals are planned and shopped for by default,
+ * and whether the shopping list notes what is at home already.
  */
 const { t } = useI18n();
 const queryClient = useQueryClient();
 const { showError } = useToasts();
-const { defaultServings } = useHouseholdSettings();
+const { defaultServings, showsStockedNeeds } = useHouseholdSettings();
 
 const save = useMutation({
     mutationFn: householdSettingsApi.setDefaultServings,
@@ -29,6 +31,20 @@ const servings = computed({
         }
     },
 });
+
+const saveStocked = useMutation({
+    mutationFn: householdSettingsApi.setShowsStockedNeeds,
+    onSuccess: (updated) => {
+        queryClient.setQueryData(HOUSEHOLD_SETTINGS_KEY, updated);
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+    },
+    onError: showError,
+});
+
+const stocked = computed({
+    get: (): boolean => showsStockedNeeds.value,
+    set: (value: boolean) => saveStocked.mutate(value),
+});
 </script>
 
 <template>
@@ -42,5 +58,11 @@ const servings = computed({
             steppers
         />
         <p class="mt-2 text-sm text-ink-muted">{{ t('settings.household.servingsHint') }}</p>
+        <SwitchField
+            v-model="stocked"
+            class="mt-2"
+            :label="t('settings.household.stocked')"
+            :hint="t('settings.household.stockedHint')"
+        />
     </section>
 </template>

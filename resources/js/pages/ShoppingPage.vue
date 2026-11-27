@@ -2,14 +2,17 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { PackageCheck, RefreshCw } from 'lucide-vue-next';
+import { Info, PackageCheck, RefreshCw } from 'lucide-vue-next';
 import { ApiError } from '@/api/client';
 import { shoppingApi } from '@/api/planning';
 import type { ShoppingListItem } from '@/api/types';
+import { useHouseholdSettings } from '@/composables/useHouseholdSettings';
 import { useToasts } from '@/composables/useToasts';
 import { addDays, startOfWeek, toIsoDate } from '@/lib/dates';
 import { formatDay } from '@/lib/format';
 import ShoppingAddField from '@/components/ShoppingAddField.vue';
+import ShoppingMealsDialog from '@/components/ShoppingMealsDialog.vue';
+import ShoppingStockedNote from '@/components/ShoppingStockedNote.vue';
 import ShoppingTile from '@/components/ShoppingTile.vue';
 import AppButton from '@/components/ui/AppButton.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
@@ -18,7 +21,8 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 
 /**
  * The current shopping list as tiles grouped by store section. What is
- * checked off or skipped moves to the end.
+ * checked off or skipped moves to the end. On request a note lists what
+ * the meals take from the stock.
  */
 const NOT_FOUND = 404;
 const GRID_CLASS = 'grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9';
@@ -26,6 +30,7 @@ const GRID_CLASS = 'grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-7 lg:grid
 const { t, locale } = useI18n();
 const queryClient = useQueryClient();
 const { showError, showSuccess } = useToasts();
+const { showsStockedNeeds } = useHouseholdSettings();
 
 const list = useQuery({
     queryKey: ['shopping-list'],
@@ -40,6 +45,7 @@ const list = useQuery({
 });
 
 const isStocking = ref(false);
+const isShowingMeals = ref(false);
 
 function isSettled(item: ShoppingListItem): boolean {
     return item.checked_at !== null || item.skipped_at !== null;
@@ -106,6 +112,9 @@ const stock = useMutation({
             :title="t('nav.shopping')"
             :subtitle="`${formatDay(list.data.value.starts_on, locale)} – ${formatDay(list.data.value.ends_on, locale)} · ${t('shopping.open', { count: openCount })}`"
         >
+            <AppButton @click="isShowingMeals = true"
+                ><Info class="size-4" />{{ t('shopping.meals') }}</AppButton
+            >
             <AppButton :disabled="sync.isPending.value" @click="sync.mutate()"
                 ><RefreshCw class="size-4" />{{ t('shopping.refresh') }}</AppButton
             >
@@ -129,6 +138,11 @@ const stock = useMutation({
             </ul>
         </section>
 
+        <ShoppingStockedNote
+            v-if="showsStockedNeeds && list.data.value.in_stock.length > 0"
+            :needs="list.data.value.in_stock"
+        />
+
         <section v-if="checkedItems.length > 0" class="mb-6">
             <h2 class="mb-2 text-[15px] font-semibold text-done-mark">
                 {{ t('shopping.done', { count: checkedItems.length }) }}
@@ -138,6 +152,7 @@ const stock = useMutation({
             </ul>
         </section>
 
+        <ShoppingMealsDialog v-model:open="isShowingMeals" :list="list.data.value" />
         <ConfirmDialog
             v-model:open="isStocking"
             :title="t('shopping.stockLeftovers')"

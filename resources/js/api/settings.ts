@@ -14,12 +14,15 @@ export interface ImportSettings {
 export interface HouseholdSettings {
     default_servings: number;
     currency: string;
+    show_stocked_needs: boolean;
 }
 
 export const householdSettingsApi = {
     get: () => data(api.get<{ data: HouseholdSettings }>('/settings/household')),
     setDefaultServings: (servings: number) =>
         data(api.patch<{ data: HouseholdSettings }>('/settings/household', { default_servings: servings })),
+    setShowsStockedNeeds: (shown: boolean) =>
+        data(api.patch<{ data: HouseholdSettings }>('/settings/household', { show_stocked_needs: shown })),
 };
 
 export const importSettingsApi = {

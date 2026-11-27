@@ -265,6 +265,13 @@ export default {
         substituteTitle: 'Ersatz gekauft',
         substituteDescription:
             'Was hast du statt „{name}“ gekauft? Die Position gilt als erledigt, „{name}“ kommt nicht in den Vorrat.',
+        inStock: 'Im Vorrat',
+        stockedMark: 'im Vorrat',
+        meals: 'Gerichte',
+        mealsTitle: 'Gerichte dieser Liste',
+        mealsDescription: 'Für diese Gerichte wird eingekauft, mit dem, was jeweils auf der Liste steht.',
+        noMeals: 'In diesem Zeitraum ist nichts geplant.',
+        nothingListed: 'Nichts davon steht auf der Liste.',
     },
     pantry: {
         subtitle: 'Angebrochene Reste, die der Planer zuerst aufbraucht',
@@ -370,6 +377,9 @@ export default {
             servings: 'Portionen im Normalfall',
             servingsHint:
                 'Für so viele Portionen werden Rezepte angezeigt, eingeplant und eingekauft, solange du nichts anderes wählst.',
+            stocked: 'Vorrätiges auf der Einkaufsliste zeigen',
+            stockedHint:
+                'Was die Gerichte brauchen und schon da ist, steht als kleine Notiz unter der Liste.',
         },
         import: {
             title: 'Import',
